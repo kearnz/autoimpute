@@ -1,2 +1,2 @@
-# autoimpute
-Python package for Imputation Methods
+# AutoImpute
+Python Package for Analysis and Implementation of Imputation Methods
