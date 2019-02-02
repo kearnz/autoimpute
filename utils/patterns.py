@@ -1,6 +1,7 @@
 """Module to assess patterns in missing data, numerically or graphically"""
 
 import numpy as np
+import pandas as pd
 from .checks import check_dimensions
 
 @check_dimensions
@@ -22,7 +23,7 @@ def md_pairs(data):
     return dict(rr=rr, rm=rm, mr=mr, mm=mm)
 
 @check_dimensions
-def inbound_stat(data):
+def inbound_stat(data, cols=None):
     """
     Calculates proportion of usable cases. From Van Buuren:
     'The proportion of usable cases Ijk equals 1 if variable Yk
@@ -34,10 +35,18 @@ def inbound_stat(data):
     pairs = md_pairs(data)
     with np.errstate(divide="ignore", invalid="ignore"):
         inbound = pairs["mr"]/(pairs["mr"]+pairs["mm"])
-    return inbound
+    if cols is None:
+        return inbound
+    elif isinstance(cols, (list, tuple)):
+        if len(cols) == inbound.shape[1]:
+            return pd.DataFrame(inbound, columns=cols, index=cols)
+        else:
+            raise Exception('length of cols must equal inbound shape')
+    else:
+        raise TypeError("optional cols must be list or tuple")
 
 @check_dimensions
-def outbound_stat(data):
+def outbound_stat(data, cols=None):
     """
     Calculates the outbound statistic. From Van Buuren:
     'The outbound statistic Ojk measures how observed data in variable
@@ -50,4 +59,12 @@ def outbound_stat(data):
     pairs = md_pairs(data)
     with np.errstate(divide="ignore", invalid="ignore"):
         outbound = pairs["rm"]/(pairs["rm"]+pairs["rr"])
-    return outbound
+    if cols is None:
+        return outbound
+    elif isinstance(cols, (list, tuple)):
+        if len(cols) == outbound.shape[1]:
+            return pd.DataFrame(outbound, columns=cols, index=cols)
+        else:
+            raise Exception('length of cols must equal outbound shape')
+    else:
+        raise TypeError("optional cols must be list or tuple")
