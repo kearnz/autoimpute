@@ -13,14 +13,14 @@ def check_data_structure(func):
     - pandas: Series, DataFrame
     """
     @functools.wraps(func)
-    def wrapper(data):
+    def wrapper(data, *args, **kwargs):
         """Wrap function to check type"""
         if isinstance(data, np.ndarray):
-            return func(data)
+            return func(data, *args, **kwargs)
         elif isinstance(data, (pd.DataFrame, pd.Series)):
-            return func(data.values)
+            return func(data.values, *args, **kwargs)
         elif isinstance(data, (tuple, list)):
-            return func(np.array(data))
+            return func(np.array(data), *args, **kwargs)
         else:
             err = data.__class__.__name__
             raise TypeError(f"Type '{err}' is not an accepted data structure")
@@ -34,12 +34,12 @@ def check_dimensions(func):
     """
     @functools.wraps(func)
     @check_data_structure
-    def wrapper(data):
+    def wrapper(data, *args, **kwargs):
         """Wrap function to dims"""
         if len(data.shape) == 1:
-            return func(data.reshape(len(data), 1))
+            return func(data.reshape(len(data), 1), *args, **kwargs)
         elif len(data.shape) == 2:
-            return func(data)
+            return func(data, *args, **kwargs)
         else:
             err = len(data.shape)
             raise TypeError(f"{err}-dimensional arrays not supported")
