@@ -1,8 +1,8 @@
 """Module to assess patterns in missing data, numerically or graphically"""
 
 import numpy as np
-import pandas as pd
 from .checks import check_dimensions
+from .helpers import pattern_output
 
 @check_dimensions
 def md_pairs(data):
@@ -35,15 +35,8 @@ def inbound_stat(data, cols=None):
     pairs = md_pairs(data)
     with np.errstate(divide="ignore", invalid="ignore"):
         inbound = pairs["mr"]/(pairs["mr"]+pairs["mm"])
-    if cols is None:
-        return inbound
-    elif isinstance(cols, (list, tuple)):
-        if len(cols) == inbound.shape[1]:
-            return pd.DataFrame(inbound, columns=cols, index=cols)
-        else:
-            raise Exception('length of cols must equal inbound shape')
-    else:
-        raise TypeError("optional cols must be list or tuple")
+    result = pattern_output(inbound, cols, True)
+    return result
 
 @check_dimensions
 def outbound_stat(data, cols=None):
@@ -59,12 +52,5 @@ def outbound_stat(data, cols=None):
     pairs = md_pairs(data)
     with np.errstate(divide="ignore", invalid="ignore"):
         outbound = pairs["rm"]/(pairs["rm"]+pairs["rr"])
-    if cols is None:
-        return outbound
-    elif isinstance(cols, (list, tuple)):
-        if len(cols) == outbound.shape[1]:
-            return pd.DataFrame(outbound, columns=cols, index=cols)
-        else:
-            raise Exception('length of cols must equal outbound shape')
-    else:
-        raise TypeError("optional cols must be list or tuple")
+    result = pattern_output(outbound, cols, True)
+    return result
