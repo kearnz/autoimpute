@@ -57,12 +57,10 @@ def get_stat_for(func, data):
 
 def inbound(data, cols=None):
     """
-    Calculates proportion of usable cases. From Van Buuren:
-    'The proportion of usable cases Ijk equals 1 if variable Yk
-    is observed in all records where Yj is missing.
-    The statistic can be used to quickly select potential predictors
-    Yk for imputing Yj based on the missing data pattern.'
-    High values are preferred.
+    Calculates proportion of usable cases (Ijk)
+    - Ijk = 1 if variable Yk observed in all records where Yj missing
+    - Used to quickly select potential predictors Yk for imputing Yj
+    - High values are preferred
     """
     inbound_coeff = get_stat_for(_inbound, data)
     inbound_ = _pattern_output(inbound_coeff, cols, True)
@@ -70,13 +68,11 @@ def inbound(data, cols=None):
 
 def outbound(data, cols=None):
     """
-    Calculates the outbound statistic. From Van Buuren:
-    'The outbound statistic Ojk measures how observed data in variable
-    Yj connect to missing data in the rest of the data.
-    The quantity Ojk equals 1 if variable Yj is observed in all records where
-    Yk is missing. The statistic can be used to evaluate whether Yj
-    is a potential predictor for imputing Yk.'
-    High values are preferred
+    Calculates the outbound statistic (Ojk)
+    - Ojk measures how observed data Yj connect to rest of missing data
+    - Ojk = 1 if Yj observed in all records where Yk is missing
+    - Used to evaluate whether Yj is a potential predictor for imputing Yk
+    - High values are preferred
     """
     outbound_coeff = get_stat_for(_outbound, data)
     outbound_ = _pattern_output(outbound_coeff, cols, True)
@@ -84,16 +80,14 @@ def outbound(data, cols=None):
 
 def influx(data, cols=None):
     """
-    Calculates the influx coefficient Ij. From Van Buuren:
-    'The coefficient is equal to the number of variable pairs (Yj,Yk)
-    with Yj missing and Yk observed,
-    divided by the total number of observed data cells.
-    The value of Ij depends on the proportion of missing data of the variable.
-    Influx of a completely observed variable is equal to 0,
-    whereas for completely missing variables we have Ij=1.
-    For two variables with the same proportion of missing data,
-    the variable with higher influx is better connected to the observed data,
-    and might thus be easier to impute.
+    Calculates the influx coefficient (Ij)
+    - Ij = # pairs (Yj,Yk) w/ Yj missing & Yk observed / # observed data cells
+    - Value depends on the proportion of missing data of the variable
+    - Influx of a completely observed variable is equal to 0
+    - Influx for completely missing variables is equal to 1
+    - For two variables with the same proportion of missing data:
+        - Var with higher influx is better connected to the observed data
+        - Var with higher influx might thus be easier to impute
     """
     influx_coeff = get_stat_for(_influx, data)
     influx_ = _pattern_output(influx_coeff, cols, True)
@@ -101,16 +95,14 @@ def influx(data, cols=None):
 
 def outflux(data, cols=None):
     """
-    Calculates the outflux coefficient Oj. From Van Buuren:
-    'Oj is the number of variable pairs with Yj observed and Yk missing,
-    divided by the total number of incomplete data cells.
-    Outflux indicates potential usefulness of Yj for imputing other variables.
-    Outflux depends on the proportion of missing data of the variable.
-    Outflux of a completely observed variable is equal to 1,
-    whereas outflux of a completely missing variable is equal to 0.
-    For two variables having the same proportion of missing data,
-    the variable with higher outflux is better connected to the missing data,
-    and thus potentially more useful for imputing other variables.
+    Calculates the outflux coefficient (Oj)
+    - Oj = # pairs w/ Yj observed and Yk missing / # incomplete data cells
+    - Value depends on the proportion of missing data of the variable
+    - Outflux of a completely observed variable is equal to 1
+    - Outflux of a completely missing variable is equal to 0.
+    - For two variables having the same proportion of missing data:
+        - Var with higher outflux is better connected to the missing data
+        - Var with higher outflux more useful for imputing other variables
     """
     outflux_coeff = get_stat_for(_outflux, data)
     outflux_ = _pattern_output(outflux_coeff, cols, True)
