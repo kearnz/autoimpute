@@ -6,14 +6,14 @@ from .checks import check_dimensions
 from .helpers import _pattern_output
 
 @check_dimensions
-def md_pairs(data):
+def md_pairs(data, cols=None):
     """
-    calculates pairwise missing data statistics
-    rr:  response-response pairs
-    rm:  response-missing pairs
-    mr:  missing-response pairs
-    mm:  missing-missing pairs
-    returns a square matrix, where n = number of columns
+    Calculates pairwise missing data statistics
+    - rr: response-response pairs
+    - rm: response-missing pairs
+    - mr: missing-response pairs
+    - mm: missing-missing pairs
+    Returns a square matrix, where n = number of columns
     """
     int_ln = lambda arr: np.logical_not(arr)*1
     r = int_ln(np.isnan(data))
@@ -21,7 +21,32 @@ def md_pairs(data):
     mm = np.matmul(int_ln(r).T, int_ln(r))
     mr = np.matmul(int_ln(r).T, r)
     rm = np.matmul(r.T, int_ln(r))
-    return dict(rr=rr, rm=rm, mr=mr, mm=mm)
+    pairs = dict(rr=rr, rm=rm, mr=mr, mm=mm)
+    pairs = {k: _pattern_output(v, cols, True)
+             for k, v in pairs.items()}
+    return pairs
+
+@check_dimensions
+def md_pattern(data, cols):
+    """
+    Calculates row-wise missing data statistics, where
+    - 0 is missing, 1 is not missing
+    - num rows is num different row patterns
+    - 'nmis' is number of missing values in a row pattern
+    - 'count' is number of total rows with row pattern
+    """
+    r = np.isnan(data)
+    nmis = np.sum(r, axis=0)
+    r = r[:, np.argsort(nmis)]
+    num_string = lambda row: "".join(str(e) for e in row)
+    pat = np.apply_along_axis(num_string, 1, r*1)
+    sort_r = r[np.argsort(pat), :]*1
+    sort_r_df = _pattern_output(sort_r, cols, False)
+    sort_r_df = sort_r_df.groupby(cols).size().reset_index()
+    sort_r_df.columns = cols + ["count"]
+    sort_r_df["nmis"] = sort_r_df[cols].sum(axis=1)
+    sort_r_df[cols] = sort_r_df[cols].apply(np.logical_not)*1
+    return sort_r_df[["count"] + cols + ["nmis"]]
 
 def _inbound(pairs):
     """Helper to get inbound from pairs"""
