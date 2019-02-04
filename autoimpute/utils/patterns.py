@@ -115,7 +115,7 @@ def influx(data, cols=None):
         - Var with higher influx might thus be easier to impute
     """
     influx_coeff = get_stat_for(_influx, data)
-    influx_ = _pattern_output(influx_coeff, cols, True)
+    influx_ = _pattern_output(influx_coeff, cols, False)
     return influx_
 
 def outflux(data, cols=None):
@@ -130,7 +130,7 @@ def outflux(data, cols=None):
         - Var with higher outflux more useful for imputing other variables
     """
     outflux_coeff = get_stat_for(_outflux, data)
-    outflux_ = _pattern_output(outflux_coeff, cols, True)
+    outflux_ = _pattern_output(outflux_coeff, cols, False)
     return outflux_
 
 def flux(data, cols):
