@@ -145,7 +145,7 @@ def flux(data, cols):
     row_mean = lambda row: np.nansum(row)/(len(row) - 1)
     pairs = md_pairs(data)
     with np.errstate(divide="ignore", invalid="ignore"):
-        pobs = np.mean(~np.isnan(data), axis=0)
+        pobs = np.mean(np.logical_not(_is_null(data)), axis=0)
         ainb = np.apply_along_axis(row_mean, 1, _inbound(pairs))
         aout = np.apply_along_axis(row_mean, 1, _outbound(pairs))
         inf = _influx(pairs)
