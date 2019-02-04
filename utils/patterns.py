@@ -3,7 +3,7 @@
 import numpy as np
 import pandas as pd
 from .checks import check_dimensions
-from .helpers import _pattern_output
+from .helpers import _pattern_output, _is_null
 
 @check_dimensions
 def md_pairs(data, cols=None):
@@ -16,7 +16,7 @@ def md_pairs(data, cols=None):
     Returns a square matrix, where n = number of columns
     """
     int_ln = lambda arr: np.logical_not(arr)*1
-    r = int_ln(np.isnan(data))
+    r = int_ln(_is_null(data))
     rr = np.matmul(r.T, r)
     mm = np.matmul(int_ln(r).T, int_ln(r))
     mr = np.matmul(int_ln(r).T, r)
@@ -35,7 +35,7 @@ def md_pattern(data, cols):
     - 'nmis' is number of missing values in a row pattern
     - 'count' is number of total rows with row pattern
     """
-    r = np.isnan(data)
+    r = _is_null(data)
     nmis = np.sum(r, axis=0)
     r = r[:, np.argsort(nmis)]
     num_string = lambda row: "".join(str(e) for e in row)

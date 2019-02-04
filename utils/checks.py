@@ -20,7 +20,7 @@ def check_data_structure(func):
         elif isinstance(data, (pd.DataFrame, pd.Series)):
             return func(data.values, *args, **kwargs)
         elif isinstance(data, (tuple, list)):
-            return func(np.array(data), *args, **kwargs)
+            return func(np.array(data, type=object), *args, **kwargs)
         else:
             err = data.__class__.__name__
             raise TypeError(f"Type '{err}' is not an accepted data structure")
