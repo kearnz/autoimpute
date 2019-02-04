@@ -19,8 +19,18 @@ def _pattern_output(data, cols=None, square=False):
         raise TypeError("Optional cols must be list or tuple")
 
 def _is_null(data):
-    if data.dtype in (np.dtype('float32'), np.dtype('float64')):
-        r = np.isnan(data)
+    """
+    Checks for nullility of different data types
+    np.isnan does not work nicely with non-float arrays
+    pd.isnull designed to handle mixed data-types within arrays
+    """
+    if isinstance(data, (list, tuple)):
+        r = pd.isnull(data)
+    elif isinstance(data, np.ndarray):
+        if data.dtype in (np.dtype('float32'), np.dtype('float64')):
+            r = np.isnan(data)
+        else:
+            r = pd.isnull(data)
     else:
         r = pd.isnull(data)
     return r
