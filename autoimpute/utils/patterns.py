@@ -3,7 +3,7 @@
 import numpy as np
 import pandas as pd
 from .checks import check_dimensions
-from .helpers import _cols_output, _is_null, _index_output
+from .helpers import _cols_output, _index_output
 
 @check_dimensions
 def md_pairs(data, cols=None):
@@ -16,7 +16,7 @@ def md_pairs(data, cols=None):
     Returns a square matrix, where n = number of columns
     """
     int_ln = lambda arr: np.logical_not(arr)*1
-    r = int_ln(_is_null(data))
+    r = int_ln(pd.isnull(data))
     rr = np.matmul(r.T, r)
     mm = np.matmul(int_ln(r).T, int_ln(r))
     mr = np.matmul(int_ln(r).T, r)
@@ -40,7 +40,7 @@ def md_pattern(data, cols):
         cols = list(cols)
     else:
         raise TypeError("Cols must be list, tuple, array, or pd column index")
-    r = _is_null(data)
+    r = pd.isnull(data)
     nmis = np.sum(r, axis=0)
     r = r[:, np.argsort(nmis)]
     num_string = lambda row: "".join(str(e) for e in row)
@@ -147,8 +147,8 @@ def proportions(data, index=None):
     - poms: Proportion of missing size
     - pobs: Proportion of observed size
     """
-    poms = np.mean(_is_null(data), axis=0)
-    pobs = np.mean(np.logical_not(_is_null(data)), axis=0)
+    poms = np.mean(pd.isnull(data), axis=0)
+    pobs = np.mean(np.logical_not(pd.isnull(data)), axis=0)
     proportions_dict = dict(poms=poms, pobs=pobs)
     proportions_ = _index_output(proportions_dict, index)
     return proportions_
