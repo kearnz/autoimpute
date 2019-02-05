@@ -3,7 +3,7 @@
 import numpy as np
 import pandas as pd
 from .checks import check_dimensions
-from .helpers import _pattern_output, _is_null
+from .helpers import _cols_output, _is_null, _index_output
 
 @check_dimensions
 def md_pairs(data, cols=None):
@@ -22,7 +22,7 @@ def md_pairs(data, cols=None):
     mr = np.matmul(int_ln(r).T, r)
     rm = np.matmul(r.T, int_ln(r))
     pairs = dict(rr=rr, rm=rm, mr=mr, mm=mm)
-    pairs = {k: _pattern_output(v, cols, True)
+    pairs = {k: _cols_output(v, cols, True)
              for k, v in pairs.items()}
     return pairs
 
@@ -35,13 +35,18 @@ def md_pattern(data, cols):
     - 'nmis' is number of missing values in a row pattern
     - 'count' is number of total rows with row pattern
     """
+    accepted = (list, tuple, np.ndarray, pd.core.indexes.base.Index)
+    if isinstance(cols, accepted):
+        cols = list(cols)
+    else:
+        raise TypeError("Cols must be list, tuple, array, or pd column index")
     r = _is_null(data)
     nmis = np.sum(r, axis=0)
     r = r[:, np.argsort(nmis)]
     num_string = lambda row: "".join(str(e) for e in row)
     pat = np.apply_along_axis(num_string, 1, r*1)
     sort_r = r[np.argsort(pat), :]*1
-    sort_r_df = _pattern_output(sort_r, cols, False)
+    sort_r_df = _cols_output(sort_r, cols, False)
     sort_r_df = sort_r_df.groupby(cols).size().reset_index()
     sort_r_df.columns = cols + ["count"]
     sort_r_df["nmis"] = sort_r_df[cols].sum(axis=1)
@@ -88,7 +93,7 @@ def inbound(data, cols=None):
     - High values are preferred
     """
     inbound_coeff = get_stat_for(_inbound, data)
-    inbound_ = _pattern_output(inbound_coeff, cols, True)
+    inbound_ = _cols_output(inbound_coeff, cols, True)
     return inbound_
 
 def outbound(data, cols=None):
@@ -100,7 +105,7 @@ def outbound(data, cols=None):
     - High values are preferred
     """
     outbound_coeff = get_stat_for(_outbound, data)
-    outbound_ = _pattern_output(outbound_coeff, cols, True)
+    outbound_ = _cols_output(outbound_coeff, cols, True)
     return outbound_
 
 def influx(data, cols=None):
@@ -116,7 +121,7 @@ def influx(data, cols=None):
     """
     influx_coeff = get_stat_for(_influx, data)
     influx_coeff = influx_coeff.reshape(1, len(influx_coeff))
-    influx_ = _pattern_output(influx_coeff, cols, False)
+    influx_ = _cols_output(influx_coeff, cols, False)
     return influx_
 
 def outflux(data, cols=None):
@@ -132,10 +137,23 @@ def outflux(data, cols=None):
     """
     outflux_coeff = get_stat_for(_outflux, data)
     outflux_coeff = outflux_coeff.reshape(1, len(outflux_coeff))
-    outflux_ = _pattern_output(outflux_coeff, cols, False)
+    outflux_ = _cols_output(outflux_coeff, cols, False)
     return outflux_
 
-def flux(data, cols):
+@check_dimensions
+def proportions(data, index=None):
+    """
+    Calculates the proportions of the data missing and observed
+    - poms: Proportion of missing size
+    - pobs: Proportion of observed size
+    """
+    poms = np.mean(_is_null(data), axis=0)
+    pobs = np.mean(np.logical_not(_is_null(data)), axis=0)
+    proportions_dict = dict(poms=poms, pobs=pobs)
+    proportions_ = _index_output(proportions_dict, index)
+    return proportions_
+
+def flux(data, index=None):
     """
     Port of Van Buuren's flux method in R. Calculates:
     - pobs: Proportion observed
@@ -153,4 +171,5 @@ def flux(data, cols):
         inf = _influx(pairs)
         outf = _outflux(pairs)
         res = dict(pobs=pobs, influx=inf, outflux=outf, ainb=ainb, aout=aout)
-    return pd.DataFrame(res, index=cols)
+    flux_ = _index_output(res, index)
+    return flux_
