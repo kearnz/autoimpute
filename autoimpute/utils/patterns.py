@@ -3,7 +3,7 @@
 import numpy as np
 import pandas as pd
 from .checks import check_dimensions
-from .helpers import _cols_output, _index_output
+from .helpers import _cols_output, _index_output, _col_type
 
 @check_dimensions
 def md_pairs(data, cols=None):
@@ -35,11 +35,7 @@ def md_pattern(data, cols):
     - 'nmis' is number of missing values in a row pattern
     - 'count' is number of total rows with row pattern
     """
-    accepted = (list, tuple, np.ndarray, pd.core.indexes.base.Index)
-    if isinstance(cols, accepted):
-        cols = list(cols)
-    else:
-        raise TypeError("Cols must be list, tuple, array, or pd column index")
+    cols = _col_type(cols)
     r = pd.isnull(data)
     nmis = np.sum(r, axis=0)
     r = r[:, np.argsort(nmis)]
