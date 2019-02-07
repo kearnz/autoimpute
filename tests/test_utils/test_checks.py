@@ -31,7 +31,7 @@ def data_structures_not_allowed():
     ser_ = pd.Series({"a":[1, 2, 3, 4]})
     return [str_, int_, float_, set_, dict_, ser_]
 
-def data_structure_allowed():
+def data_structures_allowed():
     """Types that should not throw an error and should return a valid array"""
     list_ = [[1, 2, 3, 4, np.nan]]
     tuple_ = ((1, 2, 3, 4, np.nan))
@@ -40,13 +40,13 @@ def data_structure_allowed():
     return [list_, tuple_, array_, dataframe_]
 
 @pytest.mark.parametrize("ds", data_structures_not_allowed())
-def test_data_structure_not_allowed(ds):
+def test_data_structures_not_allowed(ds):
     """check that data structure decorator raise a type error for strings"""
     with pytest.raises(TypeError):
         check_data(ds)
 
-@pytest.mark.parametrize("ds", data_structure_allowed())
-def test_data_structure_allowed(ds):
+@pytest.mark.parametrize("ds", data_structures_allowed())
+def test_data_structures_allowed(ds):
     """check that data structure decoractor returns expected types"""
     arr = check_data(ds)
     dtype = arr.dtype
