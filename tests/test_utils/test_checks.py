@@ -33,26 +33,55 @@ def data_structures_not_allowed():
 
 def data_structures_allowed():
     """Types that should not throw an error and should return a valid array"""
-    list_ = [[1, 2, 3, 4, np.nan]]
-    tuple_ = ((1, 2, 3, 4, np.nan))
+    list_ = [1, 2, 3, 4, np.nan]
+    tuple_ = (1, 2, 3, 4, np.nan)
     array_ = np.array([[1, 2, 3, 4, np.nan]])
-    dataframe_ = pd.DataFrame({"A": list_, "B": list_})
-    return [list_, tuple_, array_, dataframe_]
+    df_ = pd.DataFrame({"A": list_, "B": list_})
+    return [list_, tuple_, array_, df_]
+
+def dimensions_not_allowed():
+    """1D and 3D+ arrays that are acceptable data structures but wrong dims"""
+    list_1d = [1, 2, 3, 4, np.nan]
+    array_1d = np.array(list_1d)
+    list_3d = [[[1, 2, 3, 4, np.nan]]]
+    array_3d = np.array(list_3d)
+    return [list_1d, array_1d, list_3d, array_3d]
+
+def dimensions_allowed():
+    """2D arrays that are acceptable and have correct dims"""
+    list_2d = [[1, 2, 3, 4, np.nan]]
+    array_2d = np.array(list_2d)
+    df_1 = pd.DataFrame({"A": [1, 2, 3, np.nan], "B": ["a", "b", "c", None]})
+    df_2 = pd.DataFrame({"A": list_2d, "B": list_2d})
+    return [list_2d, array_2d, df_1, df_2]
 
 @pytest.mark.parametrize("ds", data_structures_not_allowed())
 def test_data_structures_not_allowed(ds):
-    """check that data structure decorator raise a type error for strings"""
+    """check data structure func raises type error for disallowed types"""
     with pytest.raises(TypeError):
         check_data(ds)
 
 @pytest.mark.parametrize("ds", data_structures_allowed())
 def test_data_structures_allowed(ds):
-    """check that data structure decoractor returns expected types"""
+    """check that data structure func returns expected types"""
     arr = check_data(ds)
     dtype = arr.dtype
     assert isinstance(arr, np.ndarray)
-    if isinstance(ds, (list, tuple, pd.DataFrame)):
+    if isinstance(ds, (list, tuple)):
         assert dtype == np.dtype('object')
     if isinstance(ds, np.ndarray):
         assert dtype in (np.dtype('int64'), np.dtype('float64'))
-     
+    if isinstance(ds, pd.DataFrame):
+        assert dtype
+
+@pytest.mark.parametrize("ds", dimensions_not_allowed())
+def test_dimensions_not_allowed(ds):
+    """check that dimensions func raises a type error for 1D, 3D+"""
+    with pytest.raises(TypeError):
+        check_dims(ds)
+
+@pytest.mark.parametrize("ds", dimensions_allowed())
+def test_dimensions_allowed(ds):
+    """check that dimensions func allows 2D data structures"""
+    arr = check_dims(ds)
+    assert len(arr.shape) == 2
