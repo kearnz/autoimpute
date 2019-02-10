@@ -13,6 +13,8 @@ import numpy as np
 import pandas as pd
 import autoimpute.utils.checks as auc
 
+ACCEPTED_TYPES = (list, tuple, np.ndarray, pd.DataFrame)
+
 @auc.check_data_structure
 def check_data(data):
     """wrapper function to test data structure decorator"""
@@ -87,7 +89,7 @@ def test_data_structures_not_allowed(ds):
 @pytest.mark.parametrize("ds", data_structures_allowed())
 def test_data_structures_allowed(ds):
     """check that data structure func returns expected types"""
-    assert isinstance(ds, (list, tuple, np.ndarray, pd.DataFrame))
+    assert isinstance(ds, ACCEPTED_TYPES)
     arr = check_data(ds)
     dtype = arr.dtype
     assert isinstance(arr, np.ndarray)
