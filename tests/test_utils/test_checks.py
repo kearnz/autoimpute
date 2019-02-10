@@ -4,6 +4,8 @@ Pytest for utils.checks
 - check_data_structure should return with np.array
     - lists, tuples, and dataframes are arrays of dtype object
     - traditional numpy arrays and subclasses of arrays are float
+- check_dimensions should enforce that objects are 2D
+- check_missingness should enforce objects have observed and missing values
 """
 
 import pytest
