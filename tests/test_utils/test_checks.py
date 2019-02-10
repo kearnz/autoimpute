@@ -65,17 +65,15 @@ def missingness_not_allowed():
     """Can't impute datasets that are fully complete or incomplete"""
     list_nan = [[np.nan, np.nan, np.nan]]
     list_none = [[None, None, None]]
-    list_mixed = [[np.nan, None, np.nan]]
     array_nan = np.array(list_nan)
     array_none = np.array(list_none)
-    array_mixed = np.array(list_mixed)
     df_none = pd.DataFrame({"A": [np.nan, np.nan, np.nan],
                             "B": [None, None, None]})
     list_full = [[3, 4, 5]]
     array_full = np.array(list_full)
-    df_full = pd.DataFrame({"A": [4, 5, 6], "B": ["a", "b", "c"]})
-    return [list_nan, list_none, list_mixed,
-            array_nan, array_none, array_mixed,
+    df_full = pd.DataFrame({"A": [4, 5, 6],
+                            "B": ["a", "b", "c"]})
+    return [list_nan, list_none, array_nan, array_none,
             df_none, list_full, array_full, df_full]
 
 @pytest.mark.parametrize("ds", data_structures_not_allowed())
@@ -87,15 +85,12 @@ def test_data_structures_not_allowed(ds):
 @pytest.mark.parametrize("ds", data_structures_allowed())
 def test_data_structures_allowed(ds):
     """check that data structure func returns expected types"""
+    assert isinstance(ds, (list, tuple, np.ndarray, pd.DataFrame))
     arr = check_data(ds)
     dtype = arr.dtype
     assert isinstance(arr, np.ndarray)
     if isinstance(ds, (list, tuple)):
         assert dtype == np.dtype('object')
-    if isinstance(ds, np.ndarray):
-        assert dtype in (np.dtype('int64'), np.dtype('float64'))
-    if isinstance(ds, pd.DataFrame):
-        assert dtype
 
 @pytest.mark.parametrize("ds", dimensions_not_allowed())
 def test_dimensions_not_allowed(ds):
