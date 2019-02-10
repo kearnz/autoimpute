@@ -4,7 +4,7 @@ import numpy as np
 import pandas as pd
 
 def _col_type(cols):
-    """allowed types to set indices and columns of dataframes"""
+    """Allowed types to set indices and columns of dataframes"""
     accepted = (list, tuple, np.ndarray, pd.core.indexes.base.Index)
     if isinstance(cols, accepted):
         return list(cols)
