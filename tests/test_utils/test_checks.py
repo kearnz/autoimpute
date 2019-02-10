@@ -39,7 +39,7 @@ def data_structures_not_allowed():
 def data_structures_allowed():
     """Types that should not throw an error and should return a valid array"""
     list_ = [1, 2, 3, 4, np.nan]
-    tuple_ = ("a", "b", "c", None)
+    tuple_ = ("a", "b", "c", "d", None)
     array_ = np.array([[1, 2, 3, 4, np.nan]])
     df_ = pd.DataFrame({"A": list_, "B": tuple_})
     return [list_, tuple_, array_, df_]
