@@ -9,16 +9,21 @@ Pytest for utils.checks
 import pytest
 import numpy as np
 import pandas as pd
-from autoimpute.utils.checks import check_data_structure, check_dimensions
+import autoimpute.utils.checks as auc
 
-@check_data_structure
+@auc.check_data_structure
 def check_data(data):
     """wrapper function to test data structure decorator"""
     return data
 
-@check_dimensions
+@auc.check_dimensions
 def check_dims(data):
     """wrapper function to test data dimensions decorator"""
+    return data
+
+@auc.check_missingness
+def check_miss(data):
+    """wrapper function to test missingness decorator"""
     return data
 
 def data_structures_not_allowed():
@@ -34,9 +39,9 @@ def data_structures_not_allowed():
 def data_structures_allowed():
     """Types that should not throw an error and should return a valid array"""
     list_ = [1, 2, 3, 4, np.nan]
-    tuple_ = (1, 2, 3, 4, np.nan)
+    tuple_ = ("a", "b", "c", None)
     array_ = np.array([[1, 2, 3, 4, np.nan]])
-    df_ = pd.DataFrame({"A": list_, "B": list_})
+    df_ = pd.DataFrame({"A": list_, "B": tuple_})
     return [list_, tuple_, array_, df_]
 
 def dimensions_not_allowed():
@@ -51,9 +56,27 @@ def dimensions_allowed():
     """2D arrays that are acceptable and have correct dims"""
     list_2d = [[1, 2, 3, 4, np.nan]]
     array_2d = np.array(list_2d)
-    df_1 = pd.DataFrame({"A": [1, 2, 3, np.nan], "B": ["a", "b", "c", None]})
+    df_1 = pd.DataFrame({"A": [1, 2, 3, np.nan],
+                         "B": ["a", "b", "c", None]})
     df_2 = pd.DataFrame({"A": list_2d, "B": list_2d})
     return [list_2d, array_2d, df_1, df_2]
+
+def missingness_not_allowed():
+    """Can't impute datasets that are fully complete or incomplete"""
+    list_nan = [[np.nan, np.nan, np.nan]]
+    list_none = [[None, None, None]]
+    list_mixed = [[np.nan, None, np.nan]]
+    array_nan = np.array(list_nan)
+    array_none = np.array(list_none)
+    array_mixed = np.array(list_mixed)
+    df_none = pd.DataFrame({"A": [np.nan, np.nan, np.nan],
+                            "B": [None, None, None]})
+    list_full = [[3, 4, 5]]
+    array_full = np.array(list_full)
+    df_full = pd.DataFrame({"A": [4, 5, 6], "B": ["a", "b", "c"]})
+    return [list_nan, list_none, list_mixed,
+            array_nan, array_none, array_mixed,
+            df_none, list_full, array_full, df_full]
 
 @pytest.mark.parametrize("ds", data_structures_not_allowed())
 def test_data_structures_not_allowed(ds):
@@ -85,3 +108,9 @@ def test_dimensions_allowed(ds):
     """check that dimensions func allows 2D data structures"""
     arr = check_dims(ds)
     assert len(arr.shape) == 2
+
+@pytest.mark.parametrize("ds", missingness_not_allowed())
+def test_missingness_not_allowed(ds):
+    """check data structure func raises type error for disallowed types"""
+    with pytest.raises(ValueError):
+        check_miss(ds)
