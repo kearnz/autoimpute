@@ -20,7 +20,7 @@ def _cols_type(cols):
     if isinstance(cols, ACCEPTED_TYPES):
         return list(cols)
     else:
-        raise TypeError("Cols must be list, tuple, array, or pd column index")
+        raise TypeError("If data not DataFrame, cols must be an iterator")
 
 def _cols_output(data, cols=None, square=False):
     """Return array or dataframe, depending on parameters passed"""

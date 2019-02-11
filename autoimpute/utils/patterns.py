@@ -29,7 +29,7 @@ def md_pairs(data, cols=None):
     return pairs
 
 @check_dimensions
-def md_pattern(data, cols):
+def md_pattern(data, cols=None):
     """
     Calculates row-wise missing data statistics, where
     - 0 is missing, 1 is not missing
@@ -40,7 +40,7 @@ def md_pattern(data, cols):
     data, cols = _cols_decider(data, cols)
     cols = _cols_type(cols)
     r = pd.isnull(data)
-    nmis = np.sum(r, axis=0)
+    nmis = np.sum(r.values, axis=0)
     r = r[:, np.argsort(nmis)]
     num_string = lambda row: "".join(str(e) for e in row)
     pat = np.apply_along_axis(num_string, 1, r*1)
