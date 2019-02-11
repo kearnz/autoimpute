@@ -13,7 +13,7 @@ def _cols_decider(data, cols):
             warnings.warn("WARNING: cols overriden when data is DataFrame")
         return data, data.columns
     else:
-        return cols
+        return data, cols
 
 def _cols_type(cols):
     """Allowed types to set indices and columns of dataframes"""
