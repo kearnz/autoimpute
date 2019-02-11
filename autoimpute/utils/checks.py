@@ -17,12 +17,10 @@ def check_data_structure(func):
     @functools.wraps(func)
     def wrapper(data, *args, **kwargs):
         """Wrapper function to data structure"""
-        if isinstance(data, np.ndarray):
+        if isinstance(data, (np.ndarray, pd.DataFrame)):
             return func(data, *args, **kwargs)
         elif isinstance(data, (tuple, list)):
             return func(np.array(data, dtype=object), *args, **kwargs)
-        elif isinstance(data, pd.DataFrame):
-            return func(data.values, *args, **kwargs)
         else:
             err = data.__class__.__name__
             raise TypeError(f"Type '{err}' is not an accepted data structure")
@@ -59,7 +57,10 @@ def check_missingness(func):
     @check_dimensions
     def wrapper(data, *args, **kwargs):
         """Wrap function to missignness"""
-        missing = pd.isnull(data)
+        if isinstance(data, pd.DataFrame):
+            missing = pd.isnull(data.values)
+        else:
+            missing = pd.isnull(data)
         if missing.all():
             raise ValueError("All values missing, need some complete")
         elif not missing.any():

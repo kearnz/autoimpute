@@ -90,11 +90,9 @@ def test_data_structures_not_allowed(ds):
 def test_data_structures_allowed(ds):
     """check that data structure func returns expected types"""
     assert isinstance(ds, ACCEPTED_TYPES)
-    arr = check_data(ds)
-    dtype = arr.dtype
-    assert isinstance(arr, np.ndarray)
     if isinstance(ds, (list, tuple)):
-        assert dtype == np.dtype('object')
+        arr = check_data(ds)
+        assert arr.dtype == np.dtype('object')
 
 @pytest.mark.parametrize("ds", dimensions_not_allowed())
 def test_dimensions_not_allowed(ds):
