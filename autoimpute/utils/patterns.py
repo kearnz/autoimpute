@@ -43,7 +43,7 @@ def md_pattern(data, cols=None):
         r = pd.isnull(data.values)
     else:
         r = pd.isnull(data)
-    nmis = np.sum(r.values, axis=0)
+    nmis = np.sum(r, axis=0)
     r = r[:, np.argsort(nmis)]
     num_string = lambda row: "".join(str(e) for e in row)
     pat = np.apply_along_axis(num_string, 1, r*1)
