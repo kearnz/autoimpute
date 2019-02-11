@@ -39,7 +39,10 @@ def md_pattern(data, cols=None):
     """
     data, cols = _cols_decider(data, cols)
     cols = _cols_type(cols)
-    r = pd.isnull(data)
+    if isinstance(data, pd.DataFrame):
+        r = pd.isnull(data.values)
+    else:
+        r = pd.isnull(data)
     nmis = np.sum(r.values, axis=0)
     r = r[:, np.argsort(nmis)]
     num_string = lambda row: "".join(str(e) for e in row)
