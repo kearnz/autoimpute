@@ -1,4 +1,4 @@
-"""Module to assess patterns in missing data, numerically or graphically"""
+"""Module to numerically assess patterns in missing data"""
 
 import numpy as np
 import pandas as pd
@@ -13,7 +13,7 @@ def md_pairs(data):
     - rm: response-missing pairs
     - mr: missing-response pairs
     - mm: missing-missing pairs
-    Returns a square matrix, where n = number of columns
+    Returns a square matrix for each, where n = number of columns
     """
     int_ln = lambda arr: np.logical_not(arr)*1
     r = int_ln(pd.isnull(data))
@@ -73,8 +73,8 @@ def get_stat_for(func, data):
     """
     Generic method to get a missing data statistic from data
     Can be used directly in tandem with helper methods, but this is discouraged
-    Instead, use specific methods below (inbound, outbound, etc)
-    These methods utilize this function to compute specific stats
+    Instead, use specific methods below (inbound, outbound, etc.)
+    These special methods utilize this function to compute specific stats
     """
     pairs = md_pairs(data)
     with np.errstate(divide="ignore", invalid="ignore"):
@@ -145,11 +145,10 @@ def proportions(data):
     - poms: Proportion of missing size
     - pobs: Proportion of observed size
     """
-    index = data.columns
     poms = np.mean(pd.isnull(data), axis=0)
     pobs = np.mean(np.logical_not(pd.isnull(data)), axis=0)
     proportions_dict = dict(poms=poms, pobs=pobs)
-    proportions_ = _index_output(proportions_dict, index)
+    proportions_ = _index_output(proportions_dict, data.columns)
     return proportions_
 
 def flux(data):
@@ -163,7 +162,6 @@ def flux(data):
     """
     row_mean = lambda row: np.nansum(row)/(len(row) - 1)
     pairs = md_pairs(data)
-    index = data.columns
     with np.errstate(divide="ignore", invalid="ignore"):
         pobs = proportions(data)["pobs"]
         ainb = np.apply_along_axis(row_mean, 1, _inbound(pairs))
@@ -171,5 +169,5 @@ def flux(data):
         inf = _influx(pairs)
         outf = _outflux(pairs)
         res = dict(pobs=pobs, influx=inf, outflux=outf, ainb=ainb, aout=aout)
-    flux_ = _index_output(res, index)
+    flux_ = _index_output(res, data.columns)
     return flux_

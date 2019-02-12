@@ -3,13 +3,15 @@
 import pandas as pd
 
 def _sq_output(data, cols, square=False):
-    """Return array or dataframe, depending on parameters passed"""
-    data = pd.DataFrame(data, columns=cols)
+    """Return dataframe, where index = columns if sq matrix"""
+    if not isinstance(data, pd.DataFrame):
+        data = pd.DataFrame(data, columns=cols)
     if square:
         data.index = data.columns
     return data
 
 def _index_output(data, index):
-    """Return array or dataframe, with index set"""
-    data = pd.DataFrame(data, index=index)
+    """Return dataframe with index set based on index passed"""
+    if not isinstance(data, pd.DataFrame):
+        data = pd.DataFrame(data, index=index)
     return data
