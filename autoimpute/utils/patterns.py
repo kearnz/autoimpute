@@ -22,7 +22,7 @@ def md_pairs(data):
     mr = np.matmul(int_ln(r).T, r)
     rm = np.matmul(r.T, int_ln(r))
     pairs = dict(rr=rr, rm=rm, mr=mr, mm=mm)
-    pairs = {k: _sq_output(v, True)
+    pairs = {k: _sq_output(v, data.columns, True)
              for k, v in pairs.items()}
     return pairs
 
@@ -89,7 +89,7 @@ def inbound(data):
     - High values are preferred
     """
     inbound_coeff = get_stat_for(_inbound, data)
-    inbound_ = _sq_output(inbound_coeff, True)
+    inbound_ = _sq_output(inbound_coeff, data.columns, True)
     return inbound_
 
 def outbound(data):
@@ -101,7 +101,7 @@ def outbound(data):
     - High values are preferred
     """
     outbound_coeff = get_stat_for(_outbound, data)
-    outbound_ = _sq_output(outbound_coeff, True)
+    outbound_ = _sq_output(outbound_coeff, data.columns, True)
     return outbound_
 
 def influx(data):
@@ -117,7 +117,7 @@ def influx(data):
     """
     influx_coeff = get_stat_for(_influx, data)
     influx_coeff = influx_coeff.reshape(1, len(influx_coeff))
-    influx_ = _sq_output(influx_coeff, False)
+    influx_ = _sq_output(influx_coeff, data.columns, False)
     return influx_
 
 def outflux(data):
@@ -133,7 +133,7 @@ def outflux(data):
     """
     outflux_coeff = get_stat_for(_outflux, data)
     outflux_coeff = outflux_coeff.reshape(1, len(outflux_coeff))
-    outflux_ = _sq_output(outflux_coeff, False)
+    outflux_ = _sq_output(outflux_coeff, data.columns, False)
     return outflux_
 
 @check_dimensions
@@ -159,9 +159,9 @@ def flux(data):
     - influx: Influx coefficient (Ij)
     - outflux: Outflux coefficient (Oj)
     """
-    index = data.columns
     row_mean = lambda row: np.nansum(row)/(len(row) - 1)
     pairs = md_pairs(data)
+    index = data.columns
     with np.errstate(divide="ignore", invalid="ignore"):
         pobs = proportions(data)["pobs"]
         ainb = np.apply_along_axis(row_mean, 1, _inbound(pairs))
