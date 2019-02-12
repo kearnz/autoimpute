@@ -1,26 +1,22 @@
 """Module to check and validate data types that play nicely with imputation"""
 
 import functools
-import numpy as np
 import pandas as pd
 
 def check_data_structure(func):
     """
-    Check if input value is an allowed iterator.
-    Allowed iterators include:
+    Check if input value is a dataframe.
+    Note: Future allowed iterators include:
     - native: tuple, list
     - numpy: ndarray or sublcass of ndarray (such as np.mat)
-    - pandas: DataFrame (Series not supported yet)
-    Decorator returns a numpy ndarray from an iterator.
+    Right now, decorator returns original dataframe
     Least restrictive - simply ensures data type.
     """
     @functools.wraps(func)
     def wrapper(data, *args, **kwargs):
         """Wrapper function to data structure"""
-        if isinstance(data, (np.ndarray, pd.DataFrame)):
+        if isinstance(data, pd.DataFrame):
             return func(data, *args, **kwargs)
-        elif isinstance(data, (tuple, list)):
-            return func(np.array(data, dtype=object), *args, **kwargs)
         else:
             err = data.__class__.__name__
             raise TypeError(f"Type '{err}' is not an accepted data structure")
@@ -57,10 +53,7 @@ def check_missingness(func):
     @check_dimensions
     def wrapper(data, *args, **kwargs):
         """Wrap function to missignness"""
-        if isinstance(data, pd.DataFrame):
-            missing = pd.isnull(data.values)
-        else:
-            missing = pd.isnull(data)
+        missing = pd.isnull(data.values)
         if missing.all():
             raise ValueError("All values missing, need some complete")
         elif not missing.any():
