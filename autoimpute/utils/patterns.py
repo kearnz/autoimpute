@@ -35,7 +35,7 @@ def md_pattern(data):
     - 'nmis' is number of missing values in a row pattern
     - 'count' is number of total rows with row pattern
     """
-    cols = data.columns
+    cols = data.columns.tolist()
     r = pd.isnull(data.values)
     nmis = np.sum(r, axis=0)
     r = r[:, np.argsort(nmis)]
