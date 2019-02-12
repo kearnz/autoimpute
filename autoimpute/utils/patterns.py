@@ -15,7 +15,7 @@ def md_locations(data, both=True):
     - In missing locations, 1 = missing, 0 = not missing
     Returns original dataframe concatenated with missingness dataframe
     """
-    md_df = pd.isnull(data)
+    md_df = pd.isnull(data)*1
     if both:
         md_df = pd.concat([data, md_df], axis=1)
     return md_df
@@ -65,9 +65,21 @@ def md_pattern(data):
     return sort_r_df[["count"] + cols + ["nmis"]]
 
 @check_missingness
+def feature_cov(data):
+    """
+    Calculates the covariance between features in a dataframe
+    - Note that this method DROPS NA VALUES to compute cov
+    - Checks to ensure dataset not fully missing, or else no cov possible
+    Returns dataframe with correlation between each feature
+    """
+    cov_data = data.dropna().cov()
+    return cov_data
+
+@check_missingness
 def feature_corr(data, method="pearson"):
     """
     Calculates the correlation between features in a dataframe
+    - Note that this method DROPS NA VALUES to compute corr
     - Default method is pearson
     - If dataset contains discrete features, method used is spearman
     - Checks to ensure dataset not fully missing, or else no corr possible
