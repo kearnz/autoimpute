@@ -42,7 +42,7 @@ def md_pattern(data):
     num_string = lambda row: "".join(str(e) for e in row)
     pat = np.apply_along_axis(num_string, 1, r*1)
     sort_r = r[np.argsort(pat), :]*1
-    sort_r_df = _sq_output(sort_r, False)
+    sort_r_df = _sq_output(sort_r, cols, False)
     sort_r_df = sort_r_df.groupby(cols).size().reset_index()
     sort_r_df.columns = cols + ["count"]
     sort_r_df["nmis"] = sort_r_df[cols].sum(axis=1)
@@ -118,6 +118,7 @@ def influx(data):
     influx_coeff = get_stat_for(_influx, data)
     influx_coeff = influx_coeff.reshape(1, len(influx_coeff))
     influx_ = _sq_output(influx_coeff, data.columns, False)
+    influx_.index = "Influx"
     return influx_
 
 def outflux(data):
@@ -134,6 +135,7 @@ def outflux(data):
     outflux_coeff = get_stat_for(_outflux, data)
     outflux_coeff = outflux_coeff.reshape(1, len(outflux_coeff))
     outflux_ = _sq_output(outflux_coeff, data.columns, False)
+    outflux_.index = "Outflux"
     return outflux_
 
 @check_dimensions
