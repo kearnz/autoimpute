@@ -118,7 +118,7 @@ def influx(data):
     influx_coeff = get_stat_for(_influx, data)
     influx_coeff = influx_coeff.reshape(1, len(influx_coeff))
     influx_ = _sq_output(influx_coeff, data.columns, False)
-    influx_.index = "Influx"
+    influx_.index = ["Influx"]
     return influx_
 
 def outflux(data):
@@ -135,7 +135,7 @@ def outflux(data):
     outflux_coeff = get_stat_for(_outflux, data)
     outflux_coeff = outflux_coeff.reshape(1, len(outflux_coeff))
     outflux_ = _sq_output(outflux_coeff, data.columns, False)
-    outflux_.index = "Outflux"
+    outflux_.index = ["Outflux"]
     return outflux_
 
 @check_dimensions
