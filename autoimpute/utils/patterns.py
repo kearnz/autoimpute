@@ -3,11 +3,10 @@
 import numpy as np
 import pandas as pd
 from .checks import check_dimensions
-from .helpers import _cols_output, _index_output
-from .helpers import _cols_decider, _cols_type
+from .helpers import _sq_output, _index_output
 
 @check_dimensions
-def md_pairs(data, cols=None):
+def md_pairs(data):
     """
     Calculates pairwise missing data statistics
     - rr: response-response pairs
@@ -16,7 +15,6 @@ def md_pairs(data, cols=None):
     - mm: missing-missing pairs
     Returns a square matrix, where n = number of columns
     """
-    data, cols = _cols_decider(data, cols)
     int_ln = lambda arr: np.logical_not(arr)*1
     r = int_ln(pd.isnull(data))
     rr = np.matmul(r.T, r)
@@ -24,12 +22,12 @@ def md_pairs(data, cols=None):
     mr = np.matmul(int_ln(r).T, r)
     rm = np.matmul(r.T, int_ln(r))
     pairs = dict(rr=rr, rm=rm, mr=mr, mm=mm)
-    pairs = {k: _cols_output(v, cols, True)
+    pairs = {k: _sq_output(v, True)
              for k, v in pairs.items()}
     return pairs
 
 @check_dimensions
-def md_pattern(data, cols=None):
+def md_pattern(data):
     """
     Calculates row-wise missing data statistics, where
     - 0 is missing, 1 is not missing
@@ -37,18 +35,14 @@ def md_pattern(data, cols=None):
     - 'nmis' is number of missing values in a row pattern
     - 'count' is number of total rows with row pattern
     """
-    data, cols = _cols_decider(data, cols)
-    cols = _cols_type(cols)
-    if isinstance(data, pd.DataFrame):
-        r = pd.isnull(data.values)
-    else:
-        r = pd.isnull(data)
+    cols = data.columns
+    r = pd.isnull(data.values)
     nmis = np.sum(r, axis=0)
     r = r[:, np.argsort(nmis)]
     num_string = lambda row: "".join(str(e) for e in row)
     pat = np.apply_along_axis(num_string, 1, r*1)
     sort_r = r[np.argsort(pat), :]*1
-    sort_r_df = _cols_output(sort_r, cols, False)
+    sort_r_df = _sq_output(sort_r, False)
     sort_r_df = sort_r_df.groupby(cols).size().reset_index()
     sort_r_df.columns = cols + ["count"]
     sort_r_df["nmis"] = sort_r_df[cols].sum(axis=1)
@@ -87,19 +81,18 @@ def get_stat_for(func, data):
         stat = func(pairs)
     return stat
 
-def inbound(data, cols=None):
+def inbound(data):
     """
     Calculates proportion of usable cases (Ijk)
     - Ijk = 1 if variable Yk observed in all records where Yj missing
     - Used to quickly select potential predictors Yk for imputing Yj
     - High values are preferred
     """
-    data, cols = _cols_decider(data, cols)
     inbound_coeff = get_stat_for(_inbound, data)
-    inbound_ = _cols_output(inbound_coeff, cols, True)
+    inbound_ = _sq_output(inbound_coeff, True)
     return inbound_
 
-def outbound(data, cols=None):
+def outbound(data):
     """
     Calculates the outbound statistic (Ojk)
     - Ojk measures how observed data Yj connect to rest of missing data
@@ -107,12 +100,11 @@ def outbound(data, cols=None):
     - Used to evaluate whether Yj is a potential predictor for imputing Yk
     - High values are preferred
     """
-    data, cols = _cols_decider(data, cols)
     outbound_coeff = get_stat_for(_outbound, data)
-    outbound_ = _cols_output(outbound_coeff, cols, True)
+    outbound_ = _sq_output(outbound_coeff, True)
     return outbound_
 
-def influx(data, cols=None):
+def influx(data):
     """
     Calculates the influx coefficient (Ij)
     - Ij = # pairs (Yj,Yk) w/ Yj missing & Yk observed / # observed data cells
@@ -123,13 +115,12 @@ def influx(data, cols=None):
         - Var with higher influx is better connected to the observed data
         - Var with higher influx might thus be easier to impute
     """
-    data, cols = _cols_decider(data, cols)
     influx_coeff = get_stat_for(_influx, data)
     influx_coeff = influx_coeff.reshape(1, len(influx_coeff))
-    influx_ = _cols_output(influx_coeff, cols, False)
+    influx_ = _sq_output(influx_coeff, False)
     return influx_
 
-def outflux(data, cols=None):
+def outflux(data):
     """
     Calculates the outflux coefficient (Oj)
     - Oj = # pairs w/ Yj observed and Yk missing / # incomplete data cells
@@ -140,27 +131,26 @@ def outflux(data, cols=None):
         - Var with higher outflux is better connected to the missing data
         - Var with higher outflux more useful for imputing other variables
     """
-    data, cols = _cols_decider(data, cols)
     outflux_coeff = get_stat_for(_outflux, data)
     outflux_coeff = outflux_coeff.reshape(1, len(outflux_coeff))
-    outflux_ = _cols_output(outflux_coeff, cols, False)
+    outflux_ = _sq_output(outflux_coeff, False)
     return outflux_
 
 @check_dimensions
-def proportions(data, index=None):
+def proportions(data):
     """
     Calculates the proportions of the data missing and observed
     - poms: Proportion of missing size
     - pobs: Proportion of observed size
     """
-    data, index = _cols_decider(data, index)
+    index = data.columns
     poms = np.mean(pd.isnull(data), axis=0)
     pobs = np.mean(np.logical_not(pd.isnull(data)), axis=0)
     proportions_dict = dict(poms=poms, pobs=pobs)
     proportions_ = _index_output(proportions_dict, index)
     return proportions_
 
-def flux(data, index=None):
+def flux(data):
     """
     Port of Van Buuren's flux method in R. Calculates:
     - pobs: Proportion observed
@@ -169,7 +159,7 @@ def flux(data, index=None):
     - influx: Influx coefficient (Ij)
     - outflux: Outflux coefficient (Oj)
     """
-    data, index = _cols_decider(data, index)
+    index = data.columns
     row_mean = lambda row: np.nansum(row)/(len(row) - 1)
     pairs = md_pairs(data)
     with np.errstate(divide="ignore", invalid="ignore"):
