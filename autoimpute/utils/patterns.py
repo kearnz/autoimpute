@@ -2,8 +2,23 @@
 
 import numpy as np
 import pandas as pd
-from .checks import check_dimensions
+from .checks import check_dimensions, check_missingness
 from .helpers import _sq_output, _index_output
+
+@check_dimensions
+def md_locations(data, both=True):
+    """
+    Produces locations where values are missing in dataset
+    - Normally, fully complete or fully empty throws error
+    - But this method simply shows missingness locations
+    - So standard for mixed complete-missing not necessary
+    - In missing locations, 1 = missing, 0 = not missing
+    Returns original dataframe concatenated with missingness dataframe
+    """
+    md_df = pd.isnull(data)
+    if both:
+        md_df = pd.concat([data, md_df], axis=1)
+    return md_df
 
 @check_dimensions
 def md_pairs(data):
@@ -48,6 +63,24 @@ def md_pattern(data):
     sort_r_df["nmis"] = sort_r_df[cols].sum(axis=1)
     sort_r_df[cols] = sort_r_df[cols].apply(np.logical_not)*1
     return sort_r_df[["count"] + cols + ["nmis"]]
+
+@check_missingness
+def feature_corr(data, method="pearson"):
+    """
+    Calculates the correlation between features in a dataframe
+    - Default method is pearson
+    - If dataset contains discrete features, method used is spearman
+    - Checks to ensure dataset not fully missing, or else no corr possible
+    Returns dataframe with correlation between each feature
+    """
+    accepted_methods = ("pearson", "kendall", "spearman")
+    if method not in accepted_methods:
+        raise ValueError(f"Correlation method must be in {accepted_methods}")
+    dtypes = [data[c].dtype == np.dtype('O') for c in data]
+    if any(dtypes):
+        method = "spearman"
+    corr_data = data.dropna().corr(method=method)
+    return corr_data
 
 def _inbound(pairs):
     """Helper to get inbound from pairs"""
