@@ -1,6 +1,7 @@
 """Module to check and validate data types that play nicely with imputation"""
 
 import functools
+import warnings
 import pandas as pd
 
 def check_data_structure(func):
@@ -44,7 +45,7 @@ def check_dimensions(func):
 def check_missingness(func):
     """
     Check if data structure is all missing or no missing.
-    If all missing, throw error, as can't impute.
+    If all missing, give warning, as nothing to impute.
     If no missing, throw error, as nothing to impute.
     If some missing, simply return func and data.
     Most restrictive - ensures data type, shape, and missingness.
@@ -56,8 +57,8 @@ def check_missingness(func):
         missing = pd.isnull(data.values)
         if missing.all():
             raise ValueError("All values missing, need some complete")
-        elif not missing.any():
-            raise ValueError("No missing values, nothing to impute")
         else:
+            if not missing.any():
+                warnings.warn("No missing values, so nothing to impute")
             return func(data, *args, **kwargs)
     return wrapper

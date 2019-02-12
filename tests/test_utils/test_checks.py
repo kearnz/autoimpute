@@ -52,9 +52,7 @@ def missingness_not_allowed():
     """Can't impute datasets that are fully complete or incomplete"""
     df_none = pd.DataFrame({"A": [np.nan, np.nan, np.nan],
                             "B": [None, None, None]})
-    df_full = pd.DataFrame({"A": [4, 5, 6],
-                            "B": ["a", "b", "c"]})
-    return [df_none, df_full]
+    return [df_none]
 
 @pytest.mark.parametrize("ds", data_structures_not_allowed())
 def test_data_structures_not_allowed(ds):
