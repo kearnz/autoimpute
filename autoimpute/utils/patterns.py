@@ -31,7 +31,7 @@ def md_pairs(data):
     Returns a square matrix for each, where n = number of columns
     """
     int_ln = lambda arr: np.logical_not(arr)*1
-    r = int_ln(pd.isnull(data))
+    r = int_ln(pd.isnull(data.values))
     rr = np.matmul(r.T, r)
     mm = np.matmul(int_ln(r).T, int_ln(r))
     mr = np.matmul(int_ln(r).T, r)
