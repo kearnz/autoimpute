@@ -72,8 +72,7 @@ def feature_cov(data):
     - Checks to ensure dataset not fully missing, or else no cov possible
     Returns dataframe with correlation between each feature
     """
-    cov_data = data.dropna().cov()
-    return cov_data
+    return data.cov()
 
 @check_missingness
 def feature_corr(data, method="pearson"):
@@ -81,18 +80,14 @@ def feature_corr(data, method="pearson"):
     Calculates the correlation between features in a dataframe
     - Note that this method DROPS NA VALUES to compute corr
     - Default method is pearson
-    - If dataset contains discrete features, method used is spearman
+    - If dataset encodes discrete features, proper method is spearman
     - Checks to ensure dataset not fully missing, or else no corr possible
-    Returns dataframe with correlation between each feature
+    Returns dataframe with correlation between each numerical feature
     """
     accepted_methods = ("pearson", "kendall", "spearman")
     if method not in accepted_methods:
         raise ValueError(f"Correlation method must be in {accepted_methods}")
-    dtypes = [data[c].dtype == np.dtype('O') for c in data]
-    if any(dtypes):
-        method = "spearman"
-    corr_data = data.dropna().corr(method=method)
-    return corr_data
+    return data.corr(method=method)
 
 def _inbound(pairs):
     """Helper to get inbound from pairs"""
