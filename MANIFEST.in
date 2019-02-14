@@ -1,1 +1,2 @@
-include README.md LICENSE
+include README.md AUTHORS.rst LICENSE
+prune tests
