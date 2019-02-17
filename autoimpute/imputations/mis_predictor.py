@@ -19,6 +19,11 @@ class MissingnessPredictor(BaseEstimator, TransformerMixin):
         self.data_dummy = None
         self.preds_df = None
 
+    def _vprint(self, statement):
+        """Printer for verbosity"""
+        if self.verbose:
+            print(statement)
+
     def fit(self, X):
         """Get everything that the transform step needs to make predictions"""
         self.data_mi = pd.isnull(X)*1
@@ -26,30 +31,80 @@ class MissingnessPredictor(BaseEstimator, TransformerMixin):
                                in (np.dtype('int64'), np.dtype('float64'))]]
         dummies = [pd.get_dummies(X[col], prefix=col)
                    for col in X if X[col].dtype == np.dtype('object')]
-        self.data_dummy = pd.concat(dummies, axis=1)
+        len_numeric = len(self.data_numeric.columns)
+        len_dummies = len(dummies)
+        if len_dummies == 0:
+            self.data_dummy = pd.DataFrame()
+        elif len_dummies == 1:
+            self.data_dummy = dummies[0]
+        else:
+            self.data_dummy = pd.concat(dummies, axis=1)
+        self._vprint(f"Number of numeric columns: {len_numeric}")
+        self._vprint(f"Number of categorical columns: {len_dummies}")
         return self
 
     def transform(self, X):
-        """Transform method for the MissingnessPredictor Class"""
+        """Transform values and predict missingness"""
         preds_mi = []
+        num_cols_len = len(self.data_numeric.columns)
+        num_dummy_len = len(self.data_dummy.columns)
         for i, c in enumerate(self.data_mi):
+            # dealing with a numeric column...
             if X[c].dtype != np.dtype('object'):
-                if self.verbose:
-                    num_ = self.data_numeric.drop(c, axis=1).columns.tolist()
-                    print(f"Columns used for {i} - {c}:")
-                    print(f"Numeric: {num_}")
-                    print(f"Dummy: {self.data_dummy.columns.tolist()}")
-                x = np.concatenate([self.data_numeric.drop(c, axis=1).values,
-                                    self.data_dummy.values], axis=1)
+                # if more than 1 numeric column...
+                if num_cols_len > 1:
+                    # drop the current column of interest...
+                    num_cols = self.data_numeric.drop(c, axis=1)
+                    num_str = num_cols.columns.tolist()
+                    # concat values from cat cols or use just numerical
+                    if num_dummy_len > 1:
+                        dummy_str = self.data_dummy.columns.tolist()
+                        cl = [num_cols.values, self.data_dummy.values]
+                        x = np.concatenate(cl, axis=1)
+                    else:
+                        dummy_str = None
+                        x = num_cols.values
+                # if only 1 or no numeric columns...
+                else:
+                    num_str = None
+                    # use categorical columns or throw error
+                    if num_dummy_len > 1:
+                        dummy_str = self.data_dummy.columns.tolist()
+                        x = self.data_dummy.values
+                    else:
+                        raise ValueError("Need at least one predictor column.")
+                self._vprint(f"Columns used for {i} - {c}:")
+                self._vprint(f"Numeric: {num_str}")
+                self._vprint(f"Categorical: {dummy_str}")
+            # dealing with categorical columns
             else:
                 d = [k for k in self.data_dummy.columns if not k.startswith(c)]
-                if self.verbose:
-                    print(f"Columns used for {i} - {c}:")
-                    print(f"Numeric: {self.data_numeric.columns.tolist()}")
-                    print(f"Dummy: {self.data_dummy[d].columns.tolist()}")
-                x = np.concatenate([self.data_numeric.values,
-                                    self.data_dummy[d].values], axis=1)
+                len_d = len(d)
+                # and that dummy is not y...
+                if len_d > 0:
+                    dummy_cols = self.data_dummy[d].values
+                    dummy_str = self.data_dummy[d].columns.tolist()
+                    # check if any numeric columns...
+                    if num_cols_len > 0:
+                        num_str = self.data_numeric.columns.tolist()
+                        cl = [self.data_numeric.values, dummy_cols]
+                        x = np.concatenate(cl, axis=1)
+                    else:
+                        num_str = None
+                        x = dummy_cols
+                else:
+                    dummy_str = None
+                    if num_cols_len > 0:
+                        num_str = self.data_numeric.columns.tolist()
+                        x = self.data_numeric.values
+                    else:
+                        raise ValueError("Need at least one predictor column.")
+                self._vprint(f"Columns used for {i} - {c}:")
+                self._vprint(f"Numeric: {num_str}")
+                self._vprint(f"Categorical: {dummy_str}")
+            # target for predictor
             y = self.data_mi[c].values
+            # make predictions and append to list for pred df
             preds = self.predictor(x, y)
             preds_mi.append(preds)
         preds_mi = np.array(preds_mi).T
@@ -59,5 +114,5 @@ class MissingnessPredictor(BaseEstimator, TransformerMixin):
         return self
 
     def fit_transform(self, X):
-        """convenience method to fit and transform"""
+        """Convenience method for fit and transformation"""
         return self.fit(X).transform(X)
