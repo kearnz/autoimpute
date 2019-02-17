@@ -12,7 +12,7 @@ EMAIL = "josephkearney14@gmail.com, shahidbarkat@gmail.com"
 AUTHOR = "Joseph Kearney, Shahid Barkat"
 REQUIRES_PYTHON = ">=3.6.0"
 VERSION = None
-REQUIRED = ["numpy", "pandas"]
+REQUIRED = ["numpy", "pandas", "xgboost", "sklearn"]
 EXTRAS = {}
 
 here = os.path.abspath(os.path.dirname(__file__))
