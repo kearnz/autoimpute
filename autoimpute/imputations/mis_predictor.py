@@ -33,6 +33,8 @@ class MissingnessPredictor(BaseEstimator, TransformerMixin):
         self.data_mi = pd.isnull(X)*1
         self.data_numeric = X[[col for col in X if X[col].dtype
                                in (np.dtype('int64'), np.dtype('float64'))]]
+
+        # right now, only support for one-hot encoding
         dummies = [pd.get_dummies(X[col], prefix=col)
                    for col in X if X[col].dtype == np.dtype('object')]
         len_numeric = len(self.data_numeric.columns)
@@ -43,6 +45,8 @@ class MissingnessPredictor(BaseEstimator, TransformerMixin):
             self.data_dummy = dummies[0]
         else:
             self.data_dummy = pd.concat(dummies, axis=1)
+
+        # if scaler used, must be from sklearn library
         if self.scaler is not None:
             if hasattr(self.scaler, "fit_transform"):
                 if len_numeric > 0:
@@ -68,6 +72,8 @@ class MissingnessPredictor(BaseEstimator, TransformerMixin):
         preds_mi = []
         len_numeric = len(self.data_numeric.columns)
         len_dummies = len(self.data_dummy.columns)
+
+        # iterative missingness predictor using all remaining columns
         for i, c in enumerate(self.data_mi):
             # dealing with a numeric column...
             if X[c].dtype != np.dtype('object'):
@@ -127,6 +133,8 @@ class MissingnessPredictor(BaseEstimator, TransformerMixin):
             # make predictions and append to list for pred df
             preds = self.predictor(x, y)
             preds_mi.append(preds)
+
+        # preparing final dataframe after transformation
         preds_mi = np.array(preds_mi).T
         self.data_mi.columns = [f"{c}_mis" for c in X.columns]
         pred_cols = [f"{c}_pred" for c in self.data_mi.columns]
