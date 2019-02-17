@@ -18,32 +18,17 @@ def check_data_structure(func):
         """Wrapper function to data structure"""
         if isinstance(d, pd.DataFrame):
             return func(d, *args, **kwargs)
-        elif isinstance(args[0], pd.DataFrame):
-            return func(d, *args, **kwargs)
         else:
-            err = d.__class__.__name__
-            raise TypeError(f"Type '{err}' is not an accepted data structure")
-    return wrapper
-
-def check_dimensions(func):
-    """
-    Check if data structure is 2D.
-    If not, throw an error b/c 1D or 3D+ arrays not supported.
-    Leverages the _check_data_structure decorator.
-    Decorator returns data as is or throws an error.
-    Medium restrictive - ensures data type and shape.
-    """
-    @functools.wraps(func)
-    @check_data_structure
-    def wrapper(d, *args, **kwargs):
-        """Wrap function to dims"""
-        if len(d.shape) == 2:
-            return func(d, *args, **kwargs)
-        elif len(args[0].shape) == 2:
-            return func(d, *args, **kwargs)
-        else:
-            err = len(d.shape)
-            raise TypeError(f"{err}-dimensional arrays not supported")
+            if args:
+                a = args[0]
+                if isinstance(a, pd.DataFrame):
+                    return func(d, *args, **kwargs)
+                else:
+                    err = a.__class__.__name__
+                    raise TypeError(f"Type '{err}' not a dataframe")
+            else:
+                err = d.__class__.__name__
+                raise TypeError(f"Type '{err}' not a dataframe'")
     return wrapper
 
 def check_missingness(func):
@@ -55,13 +40,16 @@ def check_missingness(func):
     Most restrictive - ensures data type, shape, and missingness.
     """
     @functools.wraps(func)
-    @check_dimensions
+    @check_data_structure
     def wrapper(d, *args, **kwargs):
         """Wrap function to missignness"""
         if isinstance(d, pd.DataFrame):
             missing = pd.isnull(d.values)
-        if isinstance(args[0], pd.DataFrame):
-            missing = pd.isnull(args[0].values)
+        else:
+            if args:
+                a = args[0]
+                if isinstance(a, pd.DataFrame):
+                    missing = pd.isnull(args[0].values)
         if missing.all():
             raise ValueError("All values missing, need some complete")
         else:

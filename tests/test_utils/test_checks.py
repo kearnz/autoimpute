@@ -2,8 +2,6 @@
 Pytest for utils.checks
 - check_data_structure requires pandas dataframe
 - check_data_structure raises errors for any other type of data structure
-- check_dimensions should enforce that underlying dataframe is 2D
-- check_dimensions raises errors for data structures of 1D or 3D+ dimensions
 - check_missingness should enforce dataframes have observed and missing values
 - check_missingness raises errors for fully complete or missing dataframes
 """
@@ -11,19 +9,14 @@ Pytest for utils.checks
 import pytest
 import numpy as np
 import pandas as pd
-import autoimpute.utils.checks as auc
+from autoimpute.utils.checks import check_data_structure, check_missingness
 
-@auc.check_data_structure
+@check_data_structure
 def check_data(data):
     """wrapper function to test data structure decorator"""
     return data
 
-@auc.check_dimensions
-def check_dims(data):
-    """wrapper function to test data dimensions decorator"""
-    return data
-
-@auc.check_missingness
+@check_missingness
 def check_miss(data):
     """wrapper function to test missingness decorator"""
     return data
@@ -64,12 +57,6 @@ def test_data_structures_not_allowed(ds):
 def test_data_structures_allowed(ds):
     """check that data structure func returns expected types"""
     assert isinstance(ds, pd.DataFrame)
-
-@pytest.mark.parametrize("ds", data_frame_allowed())
-def test_dimensions_allowed(ds):
-    """check that dimensions func allows 2D data structures"""
-    arr = check_dims(ds)
-    assert len(arr.shape) == 2
 
 @pytest.mark.parametrize("ds", missingness_not_allowed())
 def test_missingness_not_allowed(ds):

@@ -2,10 +2,10 @@
 
 import numpy as np
 import pandas as pd
-from .checks import check_dimensions, check_missingness
-from .helpers import _sq_output, _index_output
+from autoimpute.utils.checks import check_data_structure, check_missingness
+from autoimpute.utils.helpers import _sq_output, _index_output
 
-@check_dimensions
+@check_data_structure
 def md_locations(data, both=True):
     """
     Produces locations where values are missing in dataset
@@ -20,7 +20,7 @@ def md_locations(data, both=True):
         md_df = pd.concat([data, md_df], axis=1)
     return md_df
 
-@check_dimensions
+@check_data_structure
 def md_pairs(data):
     """
     Calculates pairwise missing data statistics
@@ -41,7 +41,7 @@ def md_pairs(data):
              for k, v in pairs.items()}
     return pairs
 
-@check_dimensions
+@check_data_structure
 def md_pattern(data):
     """
     Calculates row-wise missing data statistics, where
@@ -178,7 +178,7 @@ def outflux(data):
     outflux_.index = ["Outflux"]
     return outflux_
 
-@check_dimensions
+@check_data_structure
 def proportions(data):
     """
     Calculates the proportions of the data missing and observed

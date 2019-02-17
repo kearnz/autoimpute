@@ -3,8 +3,8 @@
 import numpy as np
 import pandas as pd
 from sklearn.base import BaseEstimator, TransformerMixin
-from .predictors import xgb_model
-from ..utils.checks import check_missingness
+from autoimpute.imputations.predictors import xgb_model
+from autoimpute.utils.checks import check_missingness
 
 class MissingnessPredictor(BaseEstimator, TransformerMixin):
     """

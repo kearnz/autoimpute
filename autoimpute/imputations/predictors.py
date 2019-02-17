@@ -1,6 +1,6 @@
 """Predictors used in the MissingnessPredictor class"""
 
-import xgboost as xgb
+from xgboost import DMatrix, train
 
 def xgb_model(X, y, param=None, num_round=20):
     """XGB predictor model"""
@@ -12,7 +12,7 @@ def xgb_model(X, y, param=None, num_round=20):
             'objective': 'multi:softprob',
             'num_class': 2
         }
-    xgb_ = xgb.DMatrix(X, y)
-    bst = xgb.train(param, xgb_, num_round)
+    xgb_ = DMatrix(X, y)
+    bst = train(param, xgb_, num_round)
     preds = bst.predict(xgb_)[:, 1]
     return preds
