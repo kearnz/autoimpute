@@ -11,9 +11,10 @@ class MissingnessPredictor(BaseEstimator, TransformerMixin):
     Predicts the likelihood of missingness for a given dataset
     Default method uses xgboost, although other predictors are supported
     """
-    def __init__(self, predictor=xgb_model, verbose=False):
+    def __init__(self, predictor=xgb_model, scaler=None, verbose=False):
         """Create an instance of the MissingnessPredictor"""
         self.predictor = predictor
+        self.scaler = scaler
         self.verbose = verbose
         self.fit_ = False
         self.data_mi = None
@@ -42,6 +43,18 @@ class MissingnessPredictor(BaseEstimator, TransformerMixin):
             self.data_dummy = dummies[0]
         else:
             self.data_dummy = pd.concat(dummies, axis=1)
+        if self.scaler is not None:
+            if hasattr(self.scaler, "fit_transform"):
+                if len_numeric > 0:
+                    cn = self.data_numeric.columns.tolist()
+                    dn = self.scaler.fit_transform(self.data_numeric.values)
+                    self.data_numeric = pd.DataFrame(dn, columns=cn)
+                if len_dummies > 0:
+                    cd = self.data_dummy.columns.tolist()
+                    dd = self.scaler.fit_transform(self.data_dummy.values)
+                    self.data_dummy = pd.DataFrame(dd, columns=cd)
+            else:
+                raise ValueError("Scalers must be from scikit-learn.")
         self.fit_ = True
         self._vprint(f"Number of numeric columns: {len_numeric}")
         self._vprint(f"Number of categorical columns: {len_dummies}")
@@ -53,18 +66,18 @@ class MissingnessPredictor(BaseEstimator, TransformerMixin):
         if not self.fit_:
             raise ValueError("Need to fit data first before transformation.")
         preds_mi = []
-        num_cols_len = len(self.data_numeric.columns)
-        num_dummy_len = len(self.data_dummy.columns)
+        len_numeric = len(self.data_numeric.columns)
+        len_dummies = len(self.data_dummy.columns)
         for i, c in enumerate(self.data_mi):
             # dealing with a numeric column...
             if X[c].dtype != np.dtype('object'):
                 # if more than 1 numeric column...
-                if num_cols_len > 1:
+                if len_numeric > 1:
                     # drop the current column of interest...
                     num_cols = self.data_numeric.drop(c, axis=1)
                     num_str = num_cols.columns.tolist()
                     # concat values from cat cols or use just numerical
-                    if num_dummy_len > 1:
+                    if len_dummies > 1:
                         dummy_str = self.data_dummy.columns.tolist()
                         cl = [num_cols.values, self.data_dummy.values]
                         x = np.concatenate(cl, axis=1)
@@ -75,7 +88,7 @@ class MissingnessPredictor(BaseEstimator, TransformerMixin):
                 else:
                     num_str = None
                     # use categorical columns or throw error
-                    if num_dummy_len > 1:
+                    if len_dummies > 1:
                         dummy_str = self.data_dummy.columns.tolist()
                         x = self.data_dummy.values
                     else:
@@ -92,7 +105,7 @@ class MissingnessPredictor(BaseEstimator, TransformerMixin):
                     dummy_cols = self.data_dummy[d].values
                     dummy_str = self.data_dummy[d].columns.tolist()
                     # check if any numeric columns...
-                    if num_cols_len > 0:
+                    if len_numeric > 0:
                         num_str = self.data_numeric.columns.tolist()
                         cl = [self.data_numeric.values, dummy_cols]
                         x = np.concatenate(cl, axis=1)
@@ -101,7 +114,7 @@ class MissingnessPredictor(BaseEstimator, TransformerMixin):
                         x = dummy_cols
                 else:
                     dummy_str = None
-                    if num_cols_len > 0:
+                    if len_numeric > 0:
                         num_str = self.data_numeric.columns.tolist()
                         x = self.data_numeric.values
                     else:
