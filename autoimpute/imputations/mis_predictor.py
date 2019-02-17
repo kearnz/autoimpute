@@ -4,6 +4,7 @@ import numpy as np
 import pandas as pd
 from sklearn.base import BaseEstimator, TransformerMixin
 from .predictors import xgb_model
+from ..utils.checks import check_missingness
 
 class MissingnessPredictor(BaseEstimator, TransformerMixin):
     """
@@ -14,6 +15,7 @@ class MissingnessPredictor(BaseEstimator, TransformerMixin):
         """Create an instance of the MissingnessPredictor"""
         self.predictor = predictor
         self.verbose = verbose
+        self.fit_ = False
         self.data_mi = None
         self.data_numeric = None
         self.data_dummy = None
@@ -24,6 +26,7 @@ class MissingnessPredictor(BaseEstimator, TransformerMixin):
         if self.verbose:
             print(statement)
 
+    @check_missingness
     def fit(self, X):
         """Get everything that the transform step needs to make predictions"""
         self.data_mi = pd.isnull(X)*1
@@ -39,12 +42,16 @@ class MissingnessPredictor(BaseEstimator, TransformerMixin):
             self.data_dummy = dummies[0]
         else:
             self.data_dummy = pd.concat(dummies, axis=1)
+        self.fit_ = True
         self._vprint(f"Number of numeric columns: {len_numeric}")
         self._vprint(f"Number of categorical columns: {len_dummies}")
         return self
 
+    @check_missingness
     def transform(self, X):
         """Transform values and predict missingness"""
+        if not self.fit_:
+            raise ValueError("Need to fit data first before transformation.")
         preds_mi = []
         num_cols_len = len(self.data_numeric.columns)
         num_dummy_len = len(self.data_dummy.columns)

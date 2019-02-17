@@ -14,12 +14,14 @@ def check_data_structure(func):
     Least restrictive - simply ensures data type.
     """
     @functools.wraps(func)
-    def wrapper(data, *args, **kwargs):
+    def wrapper(d, *args, **kwargs):
         """Wrapper function to data structure"""
-        if isinstance(data, pd.DataFrame):
-            return func(data, *args, **kwargs)
+        if isinstance(d, pd.DataFrame):
+            return func(d, *args, **kwargs)
+        elif isinstance(args[0], pd.DataFrame):
+            return func(d, *args, **kwargs)
         else:
-            err = data.__class__.__name__
+            err = d.__class__.__name__
             raise TypeError(f"Type '{err}' is not an accepted data structure")
     return wrapper
 
@@ -33,12 +35,14 @@ def check_dimensions(func):
     """
     @functools.wraps(func)
     @check_data_structure
-    def wrapper(data, *args, **kwargs):
+    def wrapper(d, *args, **kwargs):
         """Wrap function to dims"""
-        if len(data.shape) == 2:
-            return func(data, *args, **kwargs)
+        if len(d.shape) == 2:
+            return func(d, *args, **kwargs)
+        elif len(args[0].shape) == 2:
+            return func(d, *args, **kwargs)
         else:
-            err = len(data.shape)
+            err = len(d.shape)
             raise TypeError(f"{err}-dimensional arrays not supported")
     return wrapper
 
@@ -52,13 +56,16 @@ def check_missingness(func):
     """
     @functools.wraps(func)
     @check_dimensions
-    def wrapper(data, *args, **kwargs):
+    def wrapper(d, *args, **kwargs):
         """Wrap function to missignness"""
-        missing = pd.isnull(data.values)
+        if isinstance(d, pd.DataFrame):
+            missing = pd.isnull(d.values)
+        if isinstance(args[0], pd.DataFrame):
+            missing = pd.isnull(args[0].values)
         if missing.all():
             raise ValueError("All values missing, need some complete")
         else:
             if not missing.any():
                 warnings.warn("No missing values, so nothing to impute")
-            return func(data, *args, **kwargs)
+            return func(d, *args, **kwargs)
     return wrapper
