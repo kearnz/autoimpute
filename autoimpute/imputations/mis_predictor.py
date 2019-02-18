@@ -1,5 +1,6 @@
 """MissingnessPredictor Class used to generate test sets"""
 
+import warnings
 import numpy as np
 import pandas as pd
 from sklearn.base import BaseEstimator, TransformerMixin
@@ -20,12 +21,24 @@ class MissingnessPredictor(BaseEstimator, TransformerMixin):
         self.data_mi = None
         self.data_numeric = None
         self.data_dummy = None
+        self.single_dummy = []
         self.preds_df = None
 
     def _vprint(self, statement):
         """Printer for verbosity"""
         if self.verbose:
             print(statement)
+
+    def _single_dummy(self, df):
+        """Detect if single category present for a one-hot enocded feature"""
+        cats = df.columns.tolist()
+        if len(cats) == 1:
+            c = cats[0]
+            cf = c.split('_')[0]
+            self.single_dummy.append(c)
+            msg = f"{c} only category for feature {cf}."
+            cons = f"Consider removing {cf} from dataset."
+            warnings.warn(f"{msg} {cons}")
 
     @check_missingness
     def fit(self, X):
@@ -43,7 +56,10 @@ class MissingnessPredictor(BaseEstimator, TransformerMixin):
             self.data_dummy = pd.DataFrame()
         elif len_dummies == 1:
             self.data_dummy = dummies[0]
+            self._single_dummy(dummies[0])
         else:
+            for each_dummy in dummies:
+                self._single_dummy(each_dummy)
             self.data_dummy = pd.concat(dummies, axis=1)
 
         # if scaler used, must be from sklearn library
@@ -83,7 +99,7 @@ class MissingnessPredictor(BaseEstimator, TransformerMixin):
                     num_cols = self.data_numeric.drop(c, axis=1)
                     num_str = num_cols.columns.tolist()
                     # concat values from cat cols or use just numerical
-                    if len_dummies > 1:
+                    if len_dummies > 0:
                         dummy_str = self.data_dummy.columns.tolist()
                         cl = [num_cols.values, self.data_dummy.values]
                         x = np.concatenate(cl, axis=1)
@@ -94,7 +110,7 @@ class MissingnessPredictor(BaseEstimator, TransformerMixin):
                 else:
                     num_str = None
                     # use categorical columns or throw error
-                    if len_dummies > 1:
+                    if len_dummies > 0:
                         dummy_str = self.data_dummy.columns.tolist()
                         x = self.data_dummy.values
                     else:
