@@ -16,6 +16,8 @@ class MissingnessClassifier(BaseEstimator, TransformerMixin):
         """Create an instance of the MissingnessPredictor"""
         self.classifier = classifier
         self.scaler = scaler
+        self.scaled_numeric = None
+        self.scaled_dummy = None
         self.verbose = verbose
         self.fit_ = False
         self.data_mi = None
@@ -75,6 +77,31 @@ class MissingnessClassifier(BaseEstimator, TransformerMixin):
             cons = f"Consider removing {cf} from dataset."
             warnings.warn(f"{msg} {cons}")
 
+    def _scaler_fit(self):
+        """Method to scale data based on scaler provided"""
+        # if scaler used, must be from sklearn library
+        len_numeric = len(self.data_numeric.columns)
+        len_dummies = len(self.data_dummy.columns)
+        if not self.scaler is None:
+            if len_numeric > 0:
+                sc = clone(self.scaler)
+                self.scaled_numeric = sc.fit(self.data_numeric.values)
+            if len_dummies > 0:
+                sc = clone(self.scaler)
+                self.scaled_dummy = sc.fit(self.data_dummy.values)
+
+    def _scaler_transform(self):
+        """Method to transform data using scaled fit"""
+        if not self.scaler is None:
+            if not self.scaled_numeric is None:
+                cn = self.data_numeric.columns.tolist()
+                sn = self.scaled_numeric.transform(self.data_numeric.values)
+                self.data_numeric = pd.DataFrame(sn, columns=cn)
+            if not self.scaled_dummy is None:
+                cd = self.data_dummy.columns.tolist()
+                sd = self.scaled_dummy.transform(self.data_dummy.values)
+                self.data_dummy = pd.DataFrame(sd, columns=cd)
+
     def _prep_dataframes(self, X):
         """Prepare numeric and categorical data for fit method"""
         self.data_mi = pd.isnull(X)*1
@@ -95,19 +122,6 @@ class MissingnessClassifier(BaseEstimator, TransformerMixin):
             for each_dummy in dummies:
                 self._single_dummy(each_dummy)
             self.data_dummy = pd.concat(dummies, axis=1)
-
-        # if scaler used, must be from sklearn library
-        if not self.scaler is None:
-            if len_numeric > 0:
-                sc = clone(self.scaler)
-                cn = self.data_numeric.columns.tolist()
-                dn = sc.fit_transform(self.data_numeric.values)
-                self.data_numeric = pd.DataFrame(dn, columns=cn)
-            if len_dummies > 0:
-                sc = clone(self.scaler)
-                cd = self.data_dummy.columns.tolist()
-                dd = sc.fit_transform(self.data_dummy.values)
-                self.data_dummy = pd.DataFrame(dd, columns=cd)
 
         # print categorical and numeric columns if verbose true
         self._vprint(f"Number of numeric columns: {len_numeric}")
@@ -181,6 +195,7 @@ class MissingnessClassifier(BaseEstimator, TransformerMixin):
     def fit(self, X):
         """Get everything that the transform step needs to make predictions"""
         self._prep_dataframes(X)
+        self._scaler_fit()
         # iterative missingness predictor using all remaining columns
         for i, c in enumerate(self.data_mi):
             x, y = self._prep_classifier_cols(X, i, c)
@@ -192,7 +207,7 @@ class MissingnessClassifier(BaseEstimator, TransformerMixin):
         return self
 
     @check_missingness
-    def transform(self, X):
+    def transform(self, X, new_data=True):
         """Transform a dataset with the same columns"""
         if not self.fit_:
             return ValueError("Must fit a dataset before transforming.")
@@ -201,6 +216,9 @@ class MissingnessClassifier(BaseEstimator, TransformerMixin):
         diff_X = set(X_cols).difference(mi_cols)
         diff_mi = set(mi_cols).difference(X_cols)
         if not diff_X and not diff_mi:
+            if new_data:
+                self._prep_dataframes(X)
+            self._scaler_transform()
             preds_mat = []
             for i, c in enumerate(self.data_mi):
                 x, _ = self._prep_classifier_cols(X, i, c)
@@ -216,4 +234,4 @@ class MissingnessClassifier(BaseEstimator, TransformerMixin):
 
     def fit_transform(self, X):
         """Convenience method for fit and transformation"""
-        return self.fit(X).transform(X)
+        return self.fit(X).transform(X, False)
