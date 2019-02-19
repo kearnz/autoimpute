@@ -1,7 +1,7 @@
 """Manage imputations lib"""
 
 # import the main functions users should use directly
-from autoimpute.imputations.mis_predictor import MissingnessPredictor
+from autoimpute.imputations.mis_classifier import MissingnessClassifier
 
 # override from imputations import * with main functions
-__all__ = ["MissingnessPredictor"]
+__all__ = ["MissingnessClassifier"]
