@@ -29,6 +29,7 @@ class MissingnessClassifier(BaseEstimator, TransformerMixin):
         self.data_mi = None
         self.data_mi_preds = None
         self.preds_mi_fit = {}
+        self.test_indices = {}
 
     @property
     def classifier(self):
@@ -125,7 +126,7 @@ class MissingnessClassifier(BaseEstimator, TransformerMixin):
     def _prep_classifier_cols(self, X, i, c):
         """perpare the data for each classifier"""
         # dealing with a numeric column...
-        if X[c].dtype != np.dtype('object'):
+        if X[c].dtype == np.number:
             # if more than 1 numeric column...
             if self._len_num > 1:
                 # drop the current column of interest...
@@ -239,3 +240,33 @@ class MissingnessClassifier(BaseEstimator, TransformerMixin):
     def fit_transform(self, X):
         """Convenience method for fit and transformation"""
         return self.fit(X).transform(X, False)
+
+    def generate_test_indices(self, thresh=0.5):
+        """Method to indices of false positives for each fitted column"""
+        if self.data_mi_preds is None:
+            s = self.__class__.__name__
+            err = f"Must call {s} 'fit_transform' on data to generate test set"
+            raise NotFittedError(err)
+        for c in self.data_mi:
+            mi_c = self.data_mi[c]
+            not_mi = mi_c[mi_c == 0].index
+            pred_not_mi = self.data_mi_preds.loc[not_mi, f"{c}_pred"]
+            pred_wrong = pred_not_mi[pred_not_mi > thresh].index
+            self.test_indices[c] = pred_wrong
+            if self.verbose:
+                print(f"Test indices for {c}:\n{pred_wrong.values.tolist()}")
+        return self
+
+    def test(self, X, thresh=0.5, inplace=False):
+        """Convenience method to return test set as actual dataframe"""
+        if not inplace:
+            X = X.copy()
+        if not self.test_indices:
+            self.fit_transform(X).generate_test_indices(thresh)
+        for c in X:
+            ix_ = self.test_indices[c]
+            if X[c].dtype == np.number:
+                X.loc[ix_, c] = np.nan
+            else:
+                X.loc[ix_, c] = None
+        return X
