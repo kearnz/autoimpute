@@ -64,7 +64,7 @@ class MissingnessClassifier(BaseEstimator, TransformerMixin):
             else:
                 self._scaler = s
 
-    def _single_dummy(self, X):
+    def _check_if_single_dummy(self, X):
         """Detect if single category present for a one-hot enocded feature"""
         cats = X.columns.tolist()
         if len(cats) == 1:
@@ -105,16 +105,16 @@ class MissingnessClassifier(BaseEstimator, TransformerMixin):
         # right now, only support for one-hot encoding
         dummies = [pd.get_dummies(X[col], prefix=col)
                    for col in X.select_dtypes(include=(np.object,))]
-        self._len_dum = len(dummies)
-        if self._len_dum == 0:
+        ld = len(dummies)
+        if ld == 0:
             self._data_dum = pd.DataFrame()
-        elif self._len_dum == 1:
+        elif ld == 1:
             self._data_dum = dummies[0]
-            self._single_dummy(dummies[0])
+            self._check_if_single_dummy(self._data_dum)
         else:
-            for each_dummy in dummies:
-                self._single_dummy(each_dummy)
             self._data_dum = pd.concat(dummies, axis=1)
+            for each_dum in dummies:
+                self._check_if_single_dummy(each_dum)
         self._len_dum = len(self._data_dum.columns)
 
         # print categorical and numeric columns if verbose true
