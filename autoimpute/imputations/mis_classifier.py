@@ -3,8 +3,9 @@
 import warnings
 import numpy as np
 import pandas as pd
-from sklearn.base import clone, BaseEstimator, TransformerMixin
 from xgboost import XGBClassifier
+from sklearn.exceptions import NotFittedError
+from sklearn.base import clone, BaseEstimator, TransformerMixin
 from autoimpute.utils.checks import check_missingness
 
 class MissingnessClassifier(BaseEstimator, TransformerMixin):
@@ -16,15 +17,17 @@ class MissingnessClassifier(BaseEstimator, TransformerMixin):
         """Create an instance of the MissingnessPredictor"""
         self.classifier = classifier
         self.scaler = scaler
-        self.scaled_numeric = None
-        self.scaled_dummy = None
         self.verbose = verbose
-        self.fit_ = False
+        self._scaled_num = None
+        self._scaled_dum = None
+        self._fit = False
+        self._len_num = 0
+        self._len_dum = 0
+        self._data_num = None
+        self._data_dum = None
+        self._single_dum = []
         self.data_mi = None
         self.data_mi_preds = None
-        self.data_numeric = None
-        self.data_dummy = None
-        self.single_dummy = []
         self.preds_mi_fit = {}
 
     @property
@@ -45,7 +48,7 @@ class MissingnessClassifier(BaseEstimator, TransformerMixin):
         else:
             m = "predict_proba"
             if not hasattr(c, m):
-                raise TypeError(f"Classifier must implement {m} method.")
+                raise ValueError(f"Classifier must implement {m} method.")
             else:
                 self._classifier = c
 
@@ -57,14 +60,9 @@ class MissingnessClassifier(BaseEstimator, TransformerMixin):
         else:
             m = "fit_transform"
             if not hasattr(s, m):
-                raise TypeError(f"Scaler must implement {m} method.")
+                raise ValueError(f"Scaler must implement {m} method.")
             else:
                 self._scaler = s
-
-    def _vprint(self, statement):
-        """Printer for verbosity"""
-        if self.verbose:
-            print(statement)
 
     def _single_dummy(self, X):
         """Detect if single category present for a one-hot enocded feature"""
@@ -72,7 +70,7 @@ class MissingnessClassifier(BaseEstimator, TransformerMixin):
         if len(cats) == 1:
             c = cats[0]
             cf = c.split('_')[0]
-            self.single_dummy.append(c)
+            self._single_dum.append(c)
             msg = f"{c} only category for feature {cf}."
             cons = f"Consider removing {cf} from dataset."
             warnings.warn(f"{msg} {cons}")
@@ -80,70 +78,63 @@ class MissingnessClassifier(BaseEstimator, TransformerMixin):
     def _scaler_fit(self):
         """Method to scale data based on scaler provided"""
         # if scaler used, must be from sklearn library
-        len_numeric = len(self.data_numeric.columns)
-        len_dummies = len(self.data_dummy.columns)
-        if not self.scaler is None:
-            if len_numeric > 0:
-                sc = clone(self.scaler)
-                self.scaled_numeric = sc.fit(self.data_numeric.values)
-            if len_dummies > 0:
-                sc = clone(self.scaler)
-                self.scaled_dummy = sc.fit(self.data_dummy.values)
+        if self._len_num > 0:
+            sc = clone(self.scaler)
+            self._scaled_num = sc.fit(self._data_num.values)
+        if self._len_dum > 0:
+            sc = clone(self.scaler)
+            self._scaled_dum = sc.fit(self._data_dum.values)
 
     def _scaler_transform(self):
         """Method to transform data using scaled fit"""
-        if not self.scaler is None:
-            if not self.scaled_numeric is None:
-                cn = self.data_numeric.columns.tolist()
-                sn = self.scaled_numeric.transform(self.data_numeric.values)
-                self.data_numeric = pd.DataFrame(sn, columns=cn)
-            if not self.scaled_dummy is None:
-                cd = self.data_dummy.columns.tolist()
-                sd = self.scaled_dummy.transform(self.data_dummy.values)
-                self.data_dummy = pd.DataFrame(sd, columns=cd)
+        if not self._scaled_num is None:
+            cn = self._data_num.columns.tolist()
+            sn = self._scaled_num.transform(self._data_num.values)
+            self._data_num = pd.DataFrame(sn, columns=cn)
+        if not self._scaled_dum is None:
+            cd = self._data_dum.columns.tolist()
+            sd = self._scaled_dum.transform(self._data_dum.values)
+            self._data_dum = pd.DataFrame(sd, columns=cd)
 
     def _prep_dataframes(self, X):
         """Prepare numeric and categorical data for fit method"""
         self.data_mi = pd.isnull(X)*1
-        self.data_numeric = X[[col for col in X if X[col].dtype
-                               in (np.dtype('int64'), np.dtype('float64'))]]
+        self._data_num = X.select_dtypes(include=(np.number,))
+        self._len_num = len(self._data_num.columns)
 
         # right now, only support for one-hot encoding
         dummies = [pd.get_dummies(X[col], prefix=col)
-                   for col in X if X[col].dtype == np.dtype('object')]
-        len_numeric = len(self.data_numeric.columns)
-        len_dummies = len(dummies)
-        if len_dummies == 0:
-            self.data_dummy = pd.DataFrame()
-        elif len_dummies == 1:
-            self.data_dummy = dummies[0]
+                   for col in X.select_dtypes(include=(np.object,))]
+        self._len_dum = len(dummies)
+        if self._len_dum == 0:
+            self._data_dum = pd.DataFrame()
+        elif self._len_dum == 1:
+            self._data_dum = dummies[0]
             self._single_dummy(dummies[0])
         else:
             for each_dummy in dummies:
                 self._single_dummy(each_dummy)
-            self.data_dummy = pd.concat(dummies, axis=1)
+            self._data_dum = pd.concat(dummies, axis=1)
+        self._len_dum = len(self._data_dum.columns)
 
         # print categorical and numeric columns if verbose true
-        self._vprint(f"Number of numeric columns: {len_numeric}")
-        self._vprint(f"Number of categorical columns: {len_dummies}")
+        if self.verbose:
+            print(f"Number of numeric columns: {self._len_num}")
+            print(f"Number of categorical columns: {self._len_dum}")
 
     def _prep_classifier_cols(self, X, i, c):
         """perpare the data for each classifier"""
-        # get dataframe lengths for numerical and categorical
-        len_numeric = len(self.data_numeric.columns)
-        len_dummies = len(self.data_dummy.columns)
-
         # dealing with a numeric column...
         if X[c].dtype != np.dtype('object'):
             # if more than 1 numeric column...
-            if len_numeric > 1:
+            if self._len_num > 1:
                 # drop the current column of interest...
-                num_cols = self.data_numeric.drop(c, axis=1)
+                num_cols = self._data_num.drop(c, axis=1)
                 num_str = num_cols.columns.tolist()
                 # concat values from cat cols or use just numerical
-                if len_dummies > 0:
-                    dummy_str = self.data_dummy.columns.tolist()
-                    cl = [num_cols.values, self.data_dummy.values]
+                if self._len_dum > 0:
+                    dummy_str = self._data_dum.columns.tolist()
+                    cl = [num_cols.values, self._data_dum.values]
                     x = np.concatenate(cl, axis=1)
                 else:
                     dummy_str = None
@@ -152,41 +143,43 @@ class MissingnessClassifier(BaseEstimator, TransformerMixin):
             else:
                 num_str = None
                 # use categorical columns or throw error
-                if len_dummies > 0:
-                    dummy_str = self.data_dummy.columns.tolist()
-                    x = self.data_dummy.values
+                if self._len_dum > 0:
+                    dummy_str = self._data_dum.columns.tolist()
+                    x = self._data_dum.values
                 else:
                     raise ValueError("Need at least one predictor column.")
-            self._vprint(f"Columns used for {i} - {c}:")
-            self._vprint(f"Numeric: {num_str}")
-            self._vprint(f"Categorical: {dummy_str}")
+            if self.verbose:
+                print(f"Columns used for {i} - {c}:")
+                print(f"Numeric: {num_str}")
+                print(f"Categorical: {dummy_str}")
         # dealing with categorical columns
         else:
-            d = [k for k in self.data_dummy.columns
+            d = [k for k in self._data_dum.columns
                  if not k.startswith(f"{c}_")]
             len_d = len(d)
             # and that dummy is not y...
             if len_d > 0:
-                dummy_cols = self.data_dummy[d].values
-                dummy_str = self.data_dummy[d].columns.tolist()
+                dummy_cols = self._data_dum[d].values
+                dummy_str = self._data_dum[d].columns.tolist()
                 # check if any numeric columns...
-                if len_numeric > 0:
-                    num_str = self.data_numeric.columns.tolist()
-                    cl = [self.data_numeric.values, dummy_cols]
+                if self._len_num > 0:
+                    num_str = self._data_num.columns.tolist()
+                    cl = [self._data_num.values, dummy_cols]
                     x = np.concatenate(cl, axis=1)
                 else:
                     num_str = None
                     x = dummy_cols
             else:
                 dummy_str = None
-                if len_numeric > 0:
-                    num_str = self.data_numeric.columns.tolist()
-                    x = self.data_numeric.values
+                if self._len_num > 0:
+                    num_str = self._data_num.columns.tolist()
+                    x = self._data_num.values
                 else:
                     raise ValueError("Need at least one predictor column.")
-            self._vprint(f"Columns used for {i} - {c}:")
-            self._vprint(f"Numeric: {num_str}")
-            self._vprint(f"Categorical: {dummy_str}")
+            if self.verbose:
+                print(f"Columns used for {i} - {c}:")
+                print(f"Numeric: {num_str}")
+                print(f"Categorical: {dummy_str}")
         # target for predictor
         y = self.data_mi[c].values
         return x, y
@@ -195,22 +188,28 @@ class MissingnessClassifier(BaseEstimator, TransformerMixin):
     def fit(self, X):
         """Get everything that the transform step needs to make predictions"""
         self._prep_dataframes(X)
-        self._scaler_fit()
-        # iterative missingness predictor using all remaining columns
+        if not self.scaler is None:
+            self._scaler_fit()
+
+        # iterate missingness fit using classifier and all remaining columns
         for i, c in enumerate(self.data_mi):
             x, y = self._prep_classifier_cols(X, i, c)
-            # make predictions and append to list for pred df
             clf = clone(self.classifier)
             cls_fit = clf.fit(x, y)
             self.preds_mi_fit[c] = cls_fit
-        self.fit_ = True
+        self._fit = True
         return self
 
     @check_missingness
     def transform(self, X, new_data=True):
         """Transform a dataset with the same columns"""
-        if not self.fit_:
-            return ValueError("Must fit a dataset before transforming.")
+        # raise error fit not performed
+        if not self._fit:
+            s = self.__class__.__name__
+            err = f"Must fit {s} to data before performing transformation."
+            raise NotFittedError(err)
+
+        # check dataset features are the same for both fit and transform
         X_cols = X.columns.tolist()
         mi_cols = self.data_mi.columns.tolist()
         diff_X = set(X_cols).difference(mi_cols)
@@ -218,13 +217,18 @@ class MissingnessClassifier(BaseEstimator, TransformerMixin):
         if not diff_X and not diff_mi:
             if new_data:
                 self._prep_dataframes(X)
-            self._scaler_transform()
+            if not self.scaler is None:
+                self._scaler_transform()
+
+            # predictions for each column using respective fit classifier
             preds_mat = []
             for i, c in enumerate(self.data_mi):
                 x, _ = self._prep_classifier_cols(X, i, c)
                 cls_fit = self.preds_mi_fit[c]
                 y_pred = cls_fit.predict_proba(x)[:, 1]
                 preds_mat.append(y_pred)
+
+            # store the predictor matrix as a dataframe
             preds_mat = np.array(preds_mat).T
             pred_cols = [f"{cl}_pred" for cl in X.columns]
             self.data_mi_preds = pd.DataFrame(preds_mat, columns=pred_cols)
