@@ -236,7 +236,6 @@ class MissingnessClassifier(BaseEstimator, TransformerMixin):
         """Convenience method for fit and transformation"""
         return self.fit(X).transform(X, False)
 
-    @check_missingness
     def generate_test_indices(self, thresh=0.5):
         """Method to indices of false positives for each fitted column"""
         if self.data_mi_preds is None:
