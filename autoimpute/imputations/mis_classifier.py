@@ -127,12 +127,9 @@ class MissingnessClassifier(BaseEstimator, TransformerMixin):
         """perpare the data for each classifier"""
         # dealing with a numeric column...
         if X[c].dtype == np.number:
-            # if more than 1 numeric column...
             if self._len_num > 1:
-                # drop the current column of interest...
                 num_cols = self._data_num.drop(c, axis=1)
                 num_str = num_cols.columns.tolist()
-                # concat values from cat cols or use just numerical
                 if self._len_dum > 0:
                     dummy_str = self._data_dum.columns.tolist()
                     cl = [num_cols.values, self._data_dum.values]
@@ -140,10 +137,8 @@ class MissingnessClassifier(BaseEstimator, TransformerMixin):
                 else:
                     dummy_str = None
                     x = num_cols.values
-            # if only 1 or no numeric columns...
             else:
                 num_str = None
-                # use categorical columns or throw error
                 if self._len_dum > 0:
                     dummy_str = self._data_dum.columns.tolist()
                     x = self._data_dum.values
@@ -153,16 +148,15 @@ class MissingnessClassifier(BaseEstimator, TransformerMixin):
                 print(f"Columns used for {i} - {c}:")
                 print(f"Numeric: {num_str}")
                 print(f"Categorical: {dummy_str}")
-        # dealing with categorical columns
+        
+        # dealing with categorical columns...
         else:
             d = [k for k in self._data_dum.columns
                  if not k.startswith(f"{c}_")]
             len_d = len(d)
-            # and that dummy is not y...
             if len_d > 0:
                 dummy_cols = self._data_dum[d].values
                 dummy_str = self._data_dum[d].columns.tolist()
-                # check if any numeric columns...
                 if self._len_num > 0:
                     num_str = self._data_num.columns.tolist()
                     cl = [self._data_num.values, dummy_cols]
@@ -181,7 +175,8 @@ class MissingnessClassifier(BaseEstimator, TransformerMixin):
                 print(f"Columns used for {i} - {c}:")
                 print(f"Numeric: {num_str}")
                 print(f"Categorical: {dummy_str}")
-        # target for predictor
+        
+        # return all predictors and target for predictor
         y = self.data_mi[c].values
         return x, y
 
@@ -215,27 +210,28 @@ class MissingnessClassifier(BaseEstimator, TransformerMixin):
         mi_cols = self.data_mi.columns.tolist()
         diff_X = set(X_cols).difference(mi_cols)
         diff_mi = set(mi_cols).difference(X_cols)
-        if not diff_X and not diff_mi:
-            if new_data:
-                self._prep_dataframes(X)
-            if not self.scaler is None:
-                self._scaler_transform()
+        if diff_X or diff_mi:
+            raise ValueError("Same columns must appear in fit and transform.") 
+        
+        # if not error, check if new data
+        if new_data:
+            self._prep_dataframes(X)
+        if not self.scaler is None:
+            self._scaler_transform()
 
-            # predictions for each column using respective fit classifier
-            preds_mat = []
-            for i, c in enumerate(self.data_mi):
-                x, _ = self._prep_classifier_cols(X, i, c)
-                cls_fit = self.preds_mi_fit[c]
-                y_pred = cls_fit.predict_proba(x)[:, 1]
-                preds_mat.append(y_pred)
+        # predictions for each column using respective fit classifier
+        preds_mat = []
+        for i, c in enumerate(self.data_mi):
+            x, _ = self._prep_classifier_cols(X, i, c)
+            cls_fit = self.preds_mi_fit[c]
+            y_pred = cls_fit.predict_proba(x)[:, 1]
+            preds_mat.append(y_pred)
 
-            # store the predictor matrix as a dataframe
-            preds_mat = np.array(preds_mat).T
-            pred_cols = [f"{cl}_pred" for cl in X.columns]
-            self.data_mi_preds = pd.DataFrame(preds_mat, columns=pred_cols)
-        else:
-            raise ValueError("Same columns must appear in fit and transform.")
-        return self
+        # store the predictor matrix as a dataframe
+        preds_mat = np.array(preds_mat).T
+        pred_cols = [f"{cl}_pred" for cl in X.columns]
+        return pd.DataFrame(preds_mat, columns=pred_cols)
+    
 
     def fit_transform(self, X):
         """Convenience method for fit and transformation"""
