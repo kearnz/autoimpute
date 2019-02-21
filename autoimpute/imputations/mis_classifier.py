@@ -237,12 +237,14 @@ class MissingnessClassifier(BaseEstimator, TransformerMixin):
         """Convenience method for fit and transformation"""
         return self.fit(X).transform(X, new_data)
 
-    def generate_test_indices(self, thresh=0.5):
+    @check_missingness
+    def generate_test_indices(self, X, thresh=0.5, new_data=False):
         """Method to indices of false positives for each fitted column"""
-        if self.data_mi_preds is None:
-            s = self.__class__.__name__
-            err = f"Must call {s} 'fit_transform' on data to generate test set"
-            raise NotFittedError(err)
+        # ALWAYS fit_transform with dataset, as test vals can change
+        self.test_indices = {}
+        self.fit_transform(X, new_data)
+
+        # loop through missing data indicators, eval new set for missing
         for c in self.data_mi:
             mi_c = self.data_mi[c]
             not_mi = mi_c[mi_c == 0].index
@@ -254,23 +256,19 @@ class MissingnessClassifier(BaseEstimator, TransformerMixin):
         return self
 
     @check_missingness
-    def generate_test_dataframe(self, X, thresh=0.5, new_data=True,
-                                min_=0.05, inplace=False):
+    def generate_test_dataframe(self, X, thresh=0.5, min_=0.05,
+                                inplace=False, new_data=False):
         """Convenience method to return test set as actual dataframe"""
-        # checks and preps before creating test
         if not inplace:
             X = X.copy()
-        if not self.test_indices:
-            self.fit_transform(X, new_data)
 
-        # generate test data and return dataframe with new NA
-        self.generate_test_indices(thresh)
+        self.generate_test_indices(X, thresh, new_data)
         min_num = np.floor(min_*len(X.index))
         for c in X:
             ix_ = self.test_indices[c]
             if len(ix_) <= min_num:
-                w = f"Fewer than {min_*100}% set to NA ({min_num} total) for"
-                warnings.warn(f"{w} {c}")
+                w = f"Fewer than {min_*100}% set to missing for {c}"
+                warnings.warn(w)
             if X[c].dtype == np.number:
                 X.loc[ix_, c] = np.nan
             else:
