@@ -233,9 +233,9 @@ class MissingnessClassifier(BaseEstimator, TransformerMixin):
         self.data_mi_preds = pd.DataFrame(preds_mat, columns=pred_cols)
         return self.data_mi_preds
 
-    def fit_transform(self, X):
+    def fit_transform(self, X, new_data=False):
         """Convenience method for fit and transformation"""
-        return self.fit(X).transform(X, False)
+        return self.fit(X).transform(X, new_data)
 
     def generate_test_indices(self, thresh=0.5):
         """Method to indices of false positives for each fitted column"""
@@ -254,13 +254,14 @@ class MissingnessClassifier(BaseEstimator, TransformerMixin):
         return self
 
     @check_missingness
-    def generate_test_dataframe(self, X, thresh=0.5, min_=0.05, inplace=False):
+    def generate_test_dataframe(self, X, thresh=0.5, new_data=True,
+                                min_=0.05, inplace=False):
         """Convenience method to return test set as actual dataframe"""
         # checks and preps before creating test
         if not inplace:
             X = X.copy()
         if not self.test_indices:
-            self.fit_transform(X)
+            self.fit_transform(X, new_data)
 
         # generate test data and return dataframe with new NA
         self.generate_test_indices(thresh)
@@ -268,8 +269,8 @@ class MissingnessClassifier(BaseEstimator, TransformerMixin):
         for c in X:
             ix_ = self.test_indices[c]
             if len(ix_) <= min_num:
-                w = f"Fewer than {min_*100}% set to missing ({min_num} total)"
-                warnings.warn(w)
+                w = f"Fewer than {min_*100}% set to NA ({min_num} total) for"
+                warnings.warn(f"{w} {c}")
             if X[c].dtype == np.number:
                 X.loc[ix_, c] = np.nan
             else:
