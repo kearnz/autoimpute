@@ -148,7 +148,7 @@ class MissingnessClassifier(BaseEstimator, TransformerMixin):
                 print(f"Columns used for {i} - {c}:")
                 print(f"Numeric: {num_str}")
                 print(f"Categorical: {dummy_str}")
-        
+
         # dealing with categorical columns...
         else:
             d = [k for k in self._data_dum.columns
@@ -175,7 +175,7 @@ class MissingnessClassifier(BaseEstimator, TransformerMixin):
                 print(f"Columns used for {i} - {c}:")
                 print(f"Numeric: {num_str}")
                 print(f"Categorical: {dummy_str}")
-        
+
         # return all predictors and target for predictor
         y = self.data_mi[c].values
         return x, y
@@ -211,8 +211,8 @@ class MissingnessClassifier(BaseEstimator, TransformerMixin):
         diff_X = set(X_cols).difference(mi_cols)
         diff_mi = set(mi_cols).difference(X_cols)
         if diff_X or diff_mi:
-            raise ValueError("Same columns must appear in fit and transform.") 
-        
+            raise ValueError("Same columns must appear in fit and transform.")
+
         # if not error, check if new data
         if new_data:
             self._prep_dataframes(X)
@@ -231,12 +231,12 @@ class MissingnessClassifier(BaseEstimator, TransformerMixin):
         preds_mat = np.array(preds_mat).T
         pred_cols = [f"{cl}_pred" for cl in X.columns]
         return pd.DataFrame(preds_mat, columns=pred_cols)
-    
 
     def fit_transform(self, X):
         """Convenience method for fit and transformation"""
         return self.fit(X).transform(X, False)
 
+    @check_missingness
     def generate_test_indices(self, thresh=0.5):
         """Method to indices of false positives for each fitted column"""
         if self.data_mi_preds is None:
@@ -253,14 +253,23 @@ class MissingnessClassifier(BaseEstimator, TransformerMixin):
                 print(f"Test indices for {c}:\n{pred_wrong.values.tolist()}")
         return self
 
-    def test(self, X, thresh=0.5, inplace=False):
+    @check_missingness
+    def generate_test_dataframe(self, X, thresh=0.5, min_=0.05, inplace=False):
         """Convenience method to return test set as actual dataframe"""
+        # checks and preps before creating test
         if not inplace:
             X = X.copy()
         if not self.test_indices:
-            self.fit_transform(X).generate_test_indices(thresh)
+            self.fit_transform(X)
+
+        # generate test data and return dataframe with new NA
+        self.generate_test_indices(thresh)
+        min_num = np.floor(min_*len(X.index))
         for c in X:
             ix_ = self.test_indices[c]
+            if len(ix_) <= min_num:
+                w = f"Fewer than {min_*100}% set to missing ({min_num} total)"
+                warnings.warn(w)
             if X[c].dtype == np.number:
                 X.loc[ix_, c] = np.nan
             else:
