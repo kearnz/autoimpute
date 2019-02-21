@@ -230,12 +230,14 @@ class MissingnessClassifier(BaseEstimator, TransformerMixin):
         # store the predictor matrix as a dataframe
         preds_mat = np.array(preds_mat).T
         pred_cols = [f"{cl}_pred" for cl in X.columns]
-        return pd.DataFrame(preds_mat, columns=pred_cols)
+        self.data_mi_preds = pd.DataFrame(preds_mat, columns=pred_cols)
+        return self.data_mi_preds
 
     def fit_transform(self, X):
         """Convenience method for fit and transformation"""
         return self.fit(X).transform(X, False)
 
+    @check_missingness
     def generate_test_indices(self, thresh=0.5):
         """Method to indices of false positives for each fitted column"""
         if self.data_mi_preds is None:
