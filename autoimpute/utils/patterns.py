@@ -6,14 +6,15 @@ from autoimpute.utils.checks import check_data_structure, check_missingness
 from autoimpute.utils.helpers import _sq_output, _index_output
 
 @check_data_structure
-def md_locations(data, both=True):
+def md_locations(data, both=False):
     """
     Produces locations where values are missing in dataset
     - Normally, fully complete or fully empty throws error
     - But this method simply shows missingness locations
     - So standard for mixed complete-missing not necessary
     - In missing locations, 1 = missing, 0 = not missing
-    Returns original dataframe concatenated with missingness dataframe
+    If both is false, return missingness dataframe only
+    Else return original concatenated with missingness dataframe
     """
     md_df = pd.isnull(data)*1
     if both:
