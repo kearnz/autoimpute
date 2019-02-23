@@ -45,7 +45,11 @@ df_outbound = pd.DataFrame({
 }, index=["A", "B", "C"])
 
 # hard coded, known values based on flux / proportions from Van Buuren 4.1
-
+df_flux = pd.DataFrame({
+    "pobs": [0.75, 0.625, 0.625],
+    "influx": [0.125, 0.250, 0.375],
+    "outflux": [0.5, 0.375, 0.625]
+}, index=["A", "B", "C"])
 
 def test_md_locations():
     """Missingness locations should equal np.isnan for each col"""
@@ -87,3 +91,11 @@ def test_outbound():
     assert all(outbound_["A"] == df_outbound["A"])
     assert all(outbound_["B"] == df_outbound["B"])
     assert all(outbound_["C"] == df_outbound["C"])
+
+def test_flux():
+    """Assert that columns in flux are correct"""
+    flux_ = flux(df_general)
+    assert isinstance(flux_, pd.DataFrame)
+    assert all(flux_["pobs"] == df_flux["pobs"])
+    assert all(flux_["influx"] == df_flux["influx"])
+    assert all(flux_["outflux"] == df_flux["outflux"])
