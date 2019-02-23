@@ -33,16 +33,16 @@ dict_pairs["mm"] = pair_df([[2, 2, 0], [2, 3, 0], [0, 0, 3]])
 
 # hard coded, known values based on inbound / outbound from Van Buuren 4.1
 df_inbound = pd.DataFrame({
-    "A": [0, 0.333, 1],
+    "A": [0, 1/3, 1],
     "B": [0, 0, 1],
     "C": [1, 1, 0]
-})
+}, index=["A", "B", "C"])
 
 df_outbound = pd.DataFrame({
     "A": [0, 0, 0.4],
-    "B": [0.167, 0, 0.6],
+    "B": [1/6, 0, 0.6],
     "C": [0.5, 0.6, 0]
-})
+}, index=["A", "B", "C"])
 
 # hard coded, known values based on flux / proportions from Van Buuren 4.1
 
