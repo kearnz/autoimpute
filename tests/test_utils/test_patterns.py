@@ -3,6 +3,7 @@
 import numpy as np
 import pandas as pd
 from autoimpute.utils.patterns import md_locations, md_pairs, md_pattern
+from autoimpute.utils.patterns import inbound, outbound, flux, proportions
 
 # simulated data that matches Van Buuren 4.1 - general
 # verifiable because known values for influx, outflux, etc from text itself
@@ -30,6 +31,21 @@ dict_pairs["rm"] = pair_df([[0, 1, 3], [0, 0, 3], [2, 3, 0]])
 dict_pairs["mr"] = pair_df([[0, 0, 2], [1, 0, 3], [3, 3, 0]])
 dict_pairs["mm"] = pair_df([[2, 2, 0], [2, 3, 0], [0, 0, 3]])
 
+# hard coded, known values based on inbound / outbound from Van Buuren 4.1
+df_inbound = pd.DataFrame({
+    "A": [0, 0.333, 1],
+    "B": [0, 0, 1],
+    "C": [1, 1, 0]
+})
+
+df_outbound = pd.DataFrame({
+    "A": [0, 0, 0.4],
+    "B": [0.167, 0, 0.6],
+    "C": [0.5, 0.6, 0]
+})
+
+# hard coded, known values based on flux / proportions from Van Buuren 4.1
+
 
 def test_md_locations():
     """Missingness locations should equal np.isnan for each col"""
@@ -55,3 +71,19 @@ def test_md_pairs():
     assert all(md_pair["mr"] == dict_pairs["mr"])
     assert all(md_pair["rm"] == dict_pairs["rm"])
     assert all(md_pair["mm"] == dict_pairs["mm"])
+
+def test_inbound():
+    """Assert that the inbound statistic returns expected"""
+    inbound_ = inbound(df_general)
+    assert isinstance(inbound_, pd.DataFrame)
+    assert all(inbound_["A"] == df_inbound["A"])
+    assert all(inbound_["B"] == df_inbound["B"])
+    assert all(inbound_["C"] == df_inbound["C"])
+
+def test_outbound():
+    """Assert that the inbound statistic returns expected"""
+    outbound_ = outbound(df_general)
+    assert isinstance(outbound_, pd.DataFrame)
+    assert all(outbound_["A"] == df_outbound["A"])
+    assert all(outbound_["B"] == df_outbound["B"])
+    assert all(outbound_["C"] == df_outbound["C"])
