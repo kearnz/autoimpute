@@ -5,10 +5,12 @@ import numpy as np
 import pandas as pd
 from xgboost import XGBClassifier
 from sklearn.exceptions import NotFittedError
-from sklearn.base import clone, BaseEstimator, TransformerMixin
+from sklearn.base import clone, BaseEstimator, ClassifierMixin
 from autoimpute.utils.checks import check_missingness
+# pylint:disable=attribute-defined-outside-init
+# pylint:disable=arguments-differ
 
-class MissingnessClassifier(BaseEstimator, TransformerMixin):
+class MissingnessClassifier(BaseEstimator, ClassifierMixin):
     """
     Predicts the likelihood of missingness for a given dataset
     Default method uses xgboost, although other predictors are supported
@@ -28,6 +30,7 @@ class MissingnessClassifier(BaseEstimator, TransformerMixin):
         self._single_dum = []
         self.data_mi = None
         self.data_mi_preds = None
+        self.data_mi_proba = None
         self.preds_mi_fit = {}
         self.test_indices = {}
 
@@ -180,29 +183,12 @@ class MissingnessClassifier(BaseEstimator, TransformerMixin):
         y = self.data_mi[c].values
         return x, y
 
-    @check_missingness
-    def fit(self, X):
-        """Get everything that the transform step needs to make predictions"""
-        self._prep_dataframes(X)
-        if not self.scaler is None:
-            self._scaler_fit()
-
-        # iterate missingness fit using classifier and all remaining columns
-        for i, c in enumerate(self.data_mi):
-            x, y = self._prep_classifier_cols(X, i, c)
-            clf = clone(self.classifier)
-            cls_fit = clf.fit(x, y)
-            self.preds_mi_fit[c] = cls_fit
-        self._fit = True
-        return self
-
-    @check_missingness
-    def transform(self, X, new_data=True):
-        """Transform a dataset with the same columns"""
+    def _prep_predictor(self, X, new_data):
+        """Make necessary checks and adjustments before prediction"""
         # raise error fit not performed
         if not self._fit:
             s = self.__class__.__name__
-            err = f"Must fit {s} to data before performing transformation."
+            err = f"Must fit {s} to data before performing prediction."
             raise NotFittedError(err)
 
         # check dataset features are the same for both fit and transform
@@ -211,7 +197,7 @@ class MissingnessClassifier(BaseEstimator, TransformerMixin):
         diff_X = set(X_cols).difference(mi_cols)
         diff_mi = set(mi_cols).difference(X_cols)
         if diff_X or diff_mi:
-            raise ValueError("Same columns must appear in fit and transform.")
+            raise ValueError("Same columns must appear in fit and predict.")
 
         # if not error, check if new data
         if new_data:
@@ -219,55 +205,101 @@ class MissingnessClassifier(BaseEstimator, TransformerMixin):
         if not self.scaler is None:
             self._scaler_transform()
 
+    @check_missingness
+    def fit(self, X, **kwargs):
+        """Get everything that the transform step needs to make predictions"""
+        self._prep_dataframes(X)
+        if not self.scaler is None:
+            self._scaler_fit()
+        if self.verbose:
+            print("FITTING...")
+        # iterate missingness fit using classifier and all remaining columns
+        for i, c in enumerate(self.data_mi):
+            x, y = self._prep_classifier_cols(X, i, c)
+            clf = clone(self.classifier)
+            cls_fit = clf.fit(x, y, **kwargs)
+            self.preds_mi_fit[c] = cls_fit
+        self._fit = True
+        return self
+
+    @check_missingness
+    def predict(self, X, new_data=True, **kwargs):
+        """Make class predictions: 1 for missing 0 for not missing"""
         # predictions for each column using respective fit classifier
+        self._prep_predictor(X, new_data)
+        if self.verbose:
+            print("PREDICTING CLASS MEMBERSHIP...")
         preds_mat = []
         for i, c in enumerate(self.data_mi):
             x, _ = self._prep_classifier_cols(X, i, c)
             cls_fit = self.preds_mi_fit[c]
-            y_pred = cls_fit.predict_proba(x)[:, 1]
+            y_pred = cls_fit.predict(x, **kwargs)
             preds_mat.append(y_pred)
 
-        # store the predictor matrix as a dataframe
+        # store the predictor matrix class membership as a dataframe
         preds_mat = np.array(preds_mat).T
         pred_cols = [f"{cl}_pred" for cl in X.columns]
         self.data_mi_preds = pd.DataFrame(preds_mat, columns=pred_cols)
         return self.data_mi_preds
 
-    def fit_transform(self, X, new_data=False):
-        """Convenience method for fit and transformation"""
-        return self.fit(X).transform(X, new_data)
+    @check_missingness
+    def predict_proba(self, X, new_data=True, **kwargs):
+        """Determine class prediction probabilities for missingness"""
+        self._prep_predictor(X, new_data)
+        if self.verbose:
+            print("PREDICTING CLASS PROBABILITY...")
+        preds_mat = []
+        for i, c in enumerate(self.data_mi):
+            x, _ = self._prep_classifier_cols(X, i, c)
+            cls_fit = self.preds_mi_fit[c]
+            y_pred = cls_fit.predict_proba(x, **kwargs)[:, 1]
+            preds_mat.append(y_pred)
+
+        # store the predictor matrix probabilities as a dataframe
+        preds_mat = np.array(preds_mat).T
+        pred_cols = [f"{cl}_pred" for cl in X.columns]
+        self.data_mi_proba = pd.DataFrame(preds_mat, columns=pred_cols)
+        return self.data_mi_proba
+
+    def fit_predict(self, X, new_data=False):
+        """Convenience method for fit and class prediction"""
+        return self.fit(X).predict(X, new_data)
+
+    def fit_predict_proba(self, X, new_data=False):
+        """Convenience method for fit and class probability prediction"""
+        return self.fit(X).predict_proba(X, new_data)
 
     @check_missingness
-    def generate_test_indices(self, X, thresh=0.5, new_data=False):
+    def gen_test_indices(self, X, thresh=0.5, new_data=False, use_exist=False):
         """Method to indices of false positives for each fitted column"""
         # ALWAYS fit_transform with dataset, as test vals can change
         self.test_indices = {}
-        self.fit_transform(X, new_data)
+        if not use_exist:
+            self.fit_predict_proba(X, new_data)
 
         # loop through missing data indicators, eval new set for missing
         for c in self.data_mi:
             mi_c = self.data_mi[c]
             not_mi = mi_c[mi_c == 0].index
-            pred_not_mi = self.data_mi_preds.loc[not_mi, f"{c}_pred"]
+            pred_not_mi = self.data_mi_proba.loc[not_mi, f"{c}_pred"]
             pred_wrong = pred_not_mi[pred_not_mi > thresh].index
             self.test_indices[c] = pred_wrong
             if self.verbose:
                 print(f"Test indices for {c}:\n{pred_wrong.values.tolist()}")
         return self
 
-    @check_missingness
-    def generate_test_dataframe(self, X, thresh=0.5, min_=0.05,
-                                inplace=False, new_data=False):
+    def gen_test_df(self, X, thresh=.5, m=.05, inplace=False,
+                    new_data=False, use_exist=False):
         """Convenience method to return test set as actual dataframe"""
         if not inplace:
             X = X.copy()
 
-        self.generate_test_indices(X, thresh, new_data)
-        min_num = np.floor(min_*len(X.index))
+        self.gen_test_indices(X, thresh, new_data, use_exist)
+        min_num = np.floor(m*len(X.index))
         for c in X:
             ix_ = self.test_indices[c]
             if len(ix_) <= min_num:
-                w = f"Fewer than {min_*100}% set to missing for {c}"
+                w = f"Fewer than {m*100}% set to missing for {c}"
                 warnings.warn(w)
             if X[c].dtype == np.number:
                 X.loc[ix_, c] = np.nan

@@ -3,7 +3,7 @@
 import numpy as np
 import pandas as pd
 from autoimpute.utils.patterns import md_locations, md_pairs, md_pattern
-from autoimpute.utils.patterns import inbound, outbound, flux, proportions
+from autoimpute.utils.patterns import inbound, outbound, flux
 
 # simulated data that matches Van Buuren 4.1 - general
 # verifiable because known values for influx, outflux, etc from text itself
@@ -25,31 +25,22 @@ df_pattern = pd.DataFrame({
 # hard coded, known values based on md.pairs function from Van Buuren 4.1
 dict_pairs = {}
 ci = ["A", "B", "C"]
-pair_df = lambda v: pd.DataFrame(v, columns=ci, index=ci)
-dict_pairs["rr"] = pair_df([[6, 5, 3], [5, 5, 2], [3, 2, 5]])
-dict_pairs["rm"] = pair_df([[0, 1, 3], [0, 0, 3], [2, 3, 0]])
-dict_pairs["mr"] = pair_df([[0, 0, 2], [1, 0, 3], [3, 3, 0]])
-dict_pairs["mm"] = pair_df([[2, 2, 0], [2, 3, 0], [0, 0, 3]])
+create_df = lambda v: pd.DataFrame(v, columns=ci, index=ci)
+dict_pairs["rr"] = create_df([[6, 5, 3], [5, 5, 2], [3, 2, 5]])
+dict_pairs["rm"] = create_df([[0, 1, 3], [0, 0, 3], [2, 3, 0]])
+dict_pairs["mr"] = create_df([[0, 0, 2], [1, 0, 3], [3, 3, 0]])
+dict_pairs["mm"] = create_df([[2, 2, 0], [2, 3, 0], [0, 0, 3]])
 
 # hard coded, known values based on inbound / outbound from Van Buuren 4.1
-df_inbound = pd.DataFrame({
-    "A": [0, 1/3, 1],
-    "B": [0, 0, 1],
-    "C": [1, 1, 0]
-}, index=["A", "B", "C"])
-
-df_outbound = pd.DataFrame({
-    "A": [0, 0, 0.4],
-    "B": [1/6, 0, 0.6],
-    "C": [0.5, 0.6, 0]
-}, index=["A", "B", "C"])
+df_inbound = create_df([[0, 1/3, 1], [0, 0, 1], [1, 1, 0]]).T
+df_outbound = create_df([[0, 0, 0.4], [1/6, 0, 0.6], [0.5, 0.6, 0]]).T
 
 # hard coded, known values based on flux / proportions from Van Buuren 4.1
 df_flux = pd.DataFrame({
     "pobs": [0.75, 0.625, 0.625],
     "influx": [0.125, 0.250, 0.375],
     "outflux": [0.5, 0.375, 0.625]
-}, index=["A", "B", "C"])
+}, index=ci)
 
 def test_md_locations():
     """Missingness locations should equal np.isnan for each col"""
@@ -87,6 +78,7 @@ def test_inbound():
 def test_outbound():
     """Assert that the inbound statistic returns expected"""
     outbound_ = outbound(df_general)
+    print(df_inbound)
     assert isinstance(outbound_, pd.DataFrame)
     assert all(outbound_["A"] == df_outbound["A"])
     assert all(outbound_["B"] == df_outbound["B"])
