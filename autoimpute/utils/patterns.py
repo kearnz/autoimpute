@@ -21,7 +21,7 @@ Todo:
     * Add futher functionality to assess missing data patterns
         - Examples include those in missingno package
         - Other R packages have EDA not contained in VB 4.1
-    * Add examples of each method in respective function docstrings.
+    * Add examples of each method in respective function docstrings
 """
 
 import numpy as np

@@ -1,9 +1,20 @@
-"""
-Pytest for utils.checks
+"""Tests written to ensure the decorators in the utils package work correctly.
+
+Tests use the pytest library. The tests in this module ensure the following:
 - check_data_structure requires pandas dataframe
 - check_data_structure raises errors for any other type of data structure
 - check_missingness should enforce dataframes have observed and missing values
-- check_missingness raises errors for fully complete or missing dataframes
+- check_missingness raises errors for fully missing dataframes
+- check_missingness issues a warning for fully complete dataframes
+
+Tests:
+    test_data_structures_not_allowed(ds)
+    test_data_structures_allowed(ds)
+    test_missingness_not_allowed(ds)
+
+Todo:
+    * Rewrite tests when numpy array and scipy sparse matrices accepted
+    * Extend missingness tests to arrays and sparse matrices
 """
 
 import pytest
@@ -13,12 +24,12 @@ from autoimpute.utils.checks import check_data_structure, check_missingness
 
 @check_data_structure
 def check_data(data):
-    """wrapper function to test data structure decorator"""
+    """Helper function to test data structure decorator"""
     return data
 
 @check_missingness
 def check_miss(data):
-    """wrapper function to test missingness decorator"""
+    """Helper function to test missingness decorator"""
     return data
 
 def data_structures_not_allowed():
@@ -35,7 +46,7 @@ def data_structures_not_allowed():
     return [str_, int_, float_, set_, dict_,
             list_, tuple_, arr_, ser_]
 
-def data_frame_allowed():
+def data_stuctures_allowed():
     """Types that should not throw an error and should return a valid array"""
     df_ = pd.DataFrame({"A": [1, 2, 3, 4],
                         "B": ["a", "b", "c", "d"]})
@@ -49,17 +60,55 @@ def missingness_not_allowed():
 
 @pytest.mark.parametrize("ds", data_structures_not_allowed())
 def test_data_structures_not_allowed(ds):
-    """check data structure func raises type error for disallowed types"""
+    """Check data structure func raises type error for disallowed types
+
+    Utilizes the pytest.mark.parametize method to run test on numerous data
+    structures. Those data structures are returned from the helper method
+    `data_structures_not_allowed()` which returns a list of data structures
+    for which this method should throw an error. Each item in the list
+    takes the on the "ds" name in pytest.
+
+    Args:
+        ds (any -> iterator): any data structure within an iterator. ds is the
+            alias each item in the iterator takes when being tested
+
+    Raises:
+        TypeError: data structure ds is not allowed
+    """
     with pytest.raises(TypeError):
         check_data(ds)
 
-@pytest.mark.parametrize("ds", data_frame_allowed())
+@pytest.mark.parametrize("ds", data_stuctures_allowed())
 def test_data_structures_allowed(ds):
-    """check that data structure func returns expected types"""
+    """Check that data structure func returns expected types
+
+    Utilizes the pytest.mark.parametize method to run test on numerous data
+    structures. Those data structures are returned from the helper method
+    `data_structures_allowed()`, which right now returns a DataFrame only.
+
+    Args:
+        ds (any -> iterator): any data structure within an iterator. ds is the
+            alias each item in the iterator takes when being tested
+
+    Returns:
+        None: makes an assertion as to what the appropriate type is
+    """
     assert isinstance(ds, pd.DataFrame)
 
 @pytest.mark.parametrize("ds", missingness_not_allowed())
 def test_missingness_not_allowed(ds):
-    """check data structure func raises type error for disallowed types"""
+    """Check missingness func raises ValueError for fully missing DataFrame
+
+    Also utilizes the pytest.mark.parametize method to run test. Tests run on
+    items in iterator returned from `missingness_not_allowed()`, which right
+    now returns a fully missing DataFrame only.
+
+    Args:
+        ds (any -> iterator): any data structure within an iterator. ds is the
+            alias each item in the iterator takes when being tested
+
+    Raises:
+        ValueError: if the DataFrame is fully missing
+    """
     with pytest.raises(ValueError):
         check_miss(ds)

@@ -1,1 +1,1 @@
-"""Manage visuals lib"""
+"""Manage the visuals lib from the autoimpute package."""

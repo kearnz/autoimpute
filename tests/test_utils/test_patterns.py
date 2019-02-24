@@ -1,19 +1,37 @@
-"""Pytest for utils.patterns"""
+"""Tests written to ensure the patterns in the utils package work correctly.
+
+The methods below check the results of the functions in the patterns module.
+These methods are essentially ports from Flexible Imputation of Missing Data,
+Van Buuren, Section 4.1. The `df_general` variable below is a simulation of
+the "general" pattern in section 4.1. The subsequent dataframes are hard coded
+results from Van Buuren's book. They can be used to verify that this
+implementation in python is working as expected. The methods being tested
+(i.e. inbound, outbound, flux, etc.) all use `df_general` to calculate
+statistic. This allows for comparison to results from VB.
+
+Tests:
+    test_md_locations()
+    test_md_pattern()
+    test_md_pairs()
+    test_inbound()
+    test_outbound()
+    test_flux()
+
+Todo:
+    * Extend tests to DataFrame with categorical variables
+"""
 
 import numpy as np
 import pandas as pd
 from autoimpute.utils.patterns import md_locations, md_pairs, md_pattern
 from autoimpute.utils.patterns import inbound, outbound, flux
 
-# simulated data that matches Van Buuren 4.1 - general
-# verifiable because known values for influx, outflux, etc from text itself
 df_general = pd.DataFrame({
     "A": [1, 5, 9, 6, 12, 11, np.nan, np.nan],
     "B": [2, 4, 3, 6, 11, np.nan, np.nan, np.nan],
     "C": [-1, 1, np.nan, np.nan, np.nan, -1, 1, 0]
 })
 
-# hard coded, known values based on md.pattern function from Van Buuren 4.1
 df_pattern = pd.DataFrame({
     "count": [2, 3, 1, 2],
     "A": [1, 1, 1, 0],
@@ -22,7 +40,6 @@ df_pattern = pd.DataFrame({
     "nmis": [0, 1, 1, 2]
 })
 
-# hard coded, known values based on md.pairs function from Van Buuren 4.1
 dict_pairs = {}
 ci = ["A", "B", "C"]
 create_df = lambda v: pd.DataFrame(v, columns=ci, index=ci)
@@ -31,11 +48,9 @@ dict_pairs["rm"] = create_df([[0, 1, 3], [0, 0, 3], [2, 3, 0]])
 dict_pairs["mr"] = create_df([[0, 0, 2], [1, 0, 3], [3, 3, 0]])
 dict_pairs["mm"] = create_df([[2, 2, 0], [2, 3, 0], [0, 0, 3]])
 
-# hard coded, known values based on inbound / outbound from Van Buuren 4.1
 df_inbound = create_df([[0, 1/3, 1], [0, 0, 1], [1, 1, 0]]).T
 df_outbound = create_df([[0, 0, 0.4], [1/6, 0, 0.6], [0.5, 0.6, 0]]).T
 
-# hard coded, known values based on flux / proportions from Van Buuren 4.1
 df_flux = pd.DataFrame({
     "pobs": [0.75, 0.625, 0.625],
     "influx": [0.125, 0.250, 0.375],
@@ -43,7 +58,12 @@ df_flux = pd.DataFrame({
 }, index=ci)
 
 def test_md_locations():
-    """Missingness locations should equal np.isnan for each col"""
+    """Test to ensure that missingness locations are identified.
+
+    Missingness locations should equal np.isnan for each col.
+    Assert that md_locations returns a DataFrame, and then check
+    that each column equals what is expected from np.isnan.
+    """
     md_loc = md_locations(df_general)
     assert isinstance(md_loc, pd.DataFrame)
     assert all(md_loc["A"] == np.isnan(df_general["A"]))
@@ -51,7 +71,12 @@ def test_md_locations():
     assert all(md_loc["C"] == np.isnan(df_general["C"]))
 
 def test_md_pattern():
-    """Missing data pattern should equal hard coded md.pattern from VB 4.1"""
+    """Test that missing data pattern equal to expected results
+
+    `df_pattern` name assigned to DataFrame in module's scope that contains
+    the expected pattern from VB 4.1 `md.pattern()` example in R. Result
+    is hard coded, and python version tested with assertions below.
+    """
     md_pat = md_pattern(df_general)
     assert isinstance(md_pat, pd.DataFrame)
     assert all(md_pat["count"] == df_pattern["count"])
@@ -59,7 +84,13 @@ def test_md_pattern():
     assert all(md_pat["nmis"] == df_pattern["nmis"])
 
 def test_md_pairs():
-    """Missing data pairs should equal hard coded md.pairs from VB 4.1"""
+    """Test that missing data pairs equal expected results.
+
+    `dict_pairs` contains 4 keys - one for each pair expected. The pairs
+    are `rr`, `mr`, `rm`, and `mm`. Pair types described in the docstrings
+    of the md_pairs method in the utils.patterns module. Missing data pairs
+    should equal expected pairs from VB 4.1 `md.pairs() in R.
+    """
     md_pair = md_pairs(df_general)
     assert isinstance(md_pair, dict)
     assert all(md_pair["rr"] == dict_pairs["rr"])
@@ -68,7 +99,11 @@ def test_md_pairs():
     assert all(md_pair["mm"] == dict_pairs["mm"])
 
 def test_inbound():
-    """Assert that the inbound statistic returns expected"""
+    """Test that the inbound statistic equals expected results.
+
+    `df_inbound` contains hard-coded expected result. Tested against the
+    inbound function, which takes `df_general` as an input.
+    """
     inbound_ = inbound(df_general)
     assert isinstance(inbound_, pd.DataFrame)
     assert all(inbound_["A"] == df_inbound["A"])
@@ -76,7 +111,11 @@ def test_inbound():
     assert all(inbound_["C"] == df_inbound["C"])
 
 def test_outbound():
-    """Assert that the inbound statistic returns expected"""
+    """Test that the outbound statistic equals expected results.
+
+    `df_outbound` contains hard-coded expected result. Tested against the
+    outbound function, which takes `df_general` as an input.
+    """
     outbound_ = outbound(df_general)
     print(df_inbound)
     assert isinstance(outbound_, pd.DataFrame)
@@ -85,7 +124,12 @@ def test_outbound():
     assert all(outbound_["C"] == df_outbound["C"])
 
 def test_flux():
-    """Assert that columns in flux are correct"""
+    """Test that the flux coeffs and proportions equals expected results.
+
+    `df_flux` contains hard-coded expected result. Tested against the
+    influx, outflux, and proportions functions, which all take `df_general`
+    as an input.
+    """
     flux_ = flux(df_general)
     assert isinstance(flux_, pd.DataFrame)
     assert all(flux_["pobs"] == df_flux["pobs"])
