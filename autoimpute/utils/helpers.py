@@ -1,17 +1,19 @@
-"""Helper functions that are used throughout other methods in utils dir.
+"""Helper functions that are used throughout other methods in automipute.
 
 This module contains helper functions which are intended for private use
-within other functions. The methods are used mainly within the utils lib,
-although they may appear anywhere needed throughout the package. The
-methods perform small checks, if/else handling, and property setting.
-They abstract away functionality needed by many methods, for example,
+within other functions. The methods are used both within the utils lib
+and anywhere needed throughout the package, such as imputations and visuals.
+The methods generally perform small checks, if/else handling, and property
+setting. They abstract away functionality needed by many methods, for example,
 in the patterns.py file.
 
 Methods:
     _sq_output(data, cols, square=False)
     _index_output(data, index)
+    _nan_col_dropper(data)
 """
 
+import warnings
 import pandas as pd
 
 def _sq_output(data, cols, square=False):
@@ -52,4 +54,22 @@ def _index_output(data, index):
     """
     if not isinstance(data, pd.DataFrame):
         data = pd.DataFrame(data, index=index)
+    return data
+
+def _nan_col_dropper(data):
+    """Drop columns with missing all rows missing from a DataFrame.
+
+    Args:
+        data (pd.DataFrame): DataFrame with potentially NaN columns
+
+    Returns:
+        pd.DataFrame
+    """
+    cb = set(data.columns.tolist())
+    data.dropna(axis=1, how='all', inplace=True)
+    ca = set(data.columns.tolist())
+    cdiff = cb.difference(ca)
+    if cdiff:
+        wrn = f"{cdiff} dropped from DataFrame because all rows were missing."
+        warnings.warn(wrn)
     return data

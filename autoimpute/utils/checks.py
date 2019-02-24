@@ -1,13 +1,15 @@
 """Check and validate data that play nicely with imputation
 
 This module is a series of decorators used throughout this package.
-The decorators perform checks on data to ensure it is well formatted
-prior to the rest of the function running. There are two main decorators
-at the time of this writing: check_data_structure & check_missingness
+The decorators perform checks or transformations on data to ensure it
+is well formatted prior to the rest of the function running.
+There are three main decorators at the time of this writing:
+check_data_structure, check_missingness, & remove_nan_columns.
 
 Methods:
     check_data_structure(func)
     check_missingness(func)
+    remove_nan_columns(func)
 
 Todo:
     * Support data structures other than pandas dataframe. Consider:
@@ -25,6 +27,7 @@ Todo:
 import functools
 import warnings
 import pandas as pd
+from autoimpute.utils.helpers import _nan_col_dropper
 
 def check_data_structure(func):
     """Check if the data input to a function is a pandas dataframe.
@@ -34,7 +37,7 @@ def check_data_structure(func):
     Because this package has many functions which require a dataframe
     as their first argument, this decorator makes it easy to verify this
     requirement regardless of what the rest of the function does. It
-    utilizes the functools.wrap module to keep function names in tact.
+    utilizes the `functools.wrap` decorator to keep function names in tact.
 
     Args:
         func (function): The function that will be decorated
@@ -92,11 +95,11 @@ def check_missingness(func):
     missing or real values. This method leverages the check_data_structure
     decorator above to first verify that the data is a dataframe, and then
     verify that the data contains real and missing values. This decorator
-    also works well with classes and utilizes the functools.wrap module
-    to keep function names in tact.
+    also works well with classes and utilizes the `functools.wrap`
+    decorator to keep function names in tact.
 
     Args:
-        func (function):
+        func (function): The function that will be decorated.
 
     Returns:
         function: decorators return functions they wrap.
@@ -124,7 +127,6 @@ def check_missingness(func):
 
         Raises:
             ValueError: If all values in dataframe are missing
-
         """
         if isinstance(d, pd.DataFrame):
             missing = pd.isnull(d.values)
@@ -139,4 +141,39 @@ def check_missingness(func):
             if not missing.any():
                 warnings.warn("No missing values, so nothing to impute")
             return func(d, *args, **kwargs)
+    return wrapper
+
+def remove_nan_columns(func):
+    """Removes columns inplace in DataFrame if column all missing values.
+
+    This method acts as a decorator. It first leverages the decorator
+    `check_missingness` to verify that a proper DataFrame is passed. It
+    then drops the columns with all rows missing from said DataFrame.
+    Again, leverages `functools.wrap` to keep func names in place.
+
+    Args:
+        func (function): The function that will be decorated.
+
+    Returns:
+        function: decorators return functions they wrap.
+    """
+    @functools.wraps(func)
+    @check_missingness
+    def wrapper(d, *args, **kwargs):
+        """Wrap function that removes columns w/ all rows missing.
+
+        The wrapper leverages the `_nan_col_dropper` helper function,
+        which removes columns from a DataFrame that have all rows missing.
+
+        Args:
+            d (pd.DataFrame): Dataframe to check, if not in args
+            *args: Variable number of arguments, first of which may be df.
+            **kwargs: Keyword arguments from original function.
+        """
+        if isinstance(d, pd.DataFrame):
+            _nan_col_dropper(d)
+        else:
+            if args:
+                _nan_col_dropper(args[0])
+        return func(d, *args, **kwargs)
     return wrapper
