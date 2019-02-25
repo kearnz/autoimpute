@@ -61,7 +61,7 @@ class SingleImputer(BaseEstimator, TransformerMixin):
         self.copy = copy
         self.statistics_ = {}
         self._strats = {}
-        self._fit = True
+        self._fit = False
 
     @property
     def strategy(self):

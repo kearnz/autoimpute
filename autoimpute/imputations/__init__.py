@@ -9,6 +9,7 @@ The module overrides the `from imputations import *` with the __all__ var
 """
 
 from autoimpute.imputations.mis_classifier import MissingnessClassifier
+from autoimpute.imputations.single import SingleImputer
 from autoimpute.imputations.deletion import listwise_delete
 
-__all__ = ["MissingnessClassifier", "listwise_delete"]
+__all__ = ["MissingnessClassifier", "SingleImputer", "listwise_delete"]
