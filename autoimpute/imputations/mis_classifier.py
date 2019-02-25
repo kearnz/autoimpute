@@ -208,6 +208,7 @@ class MissingnessClassifier(BaseEstimator, ClassifierMixin):
     @check_missingness
     def fit(self, X, **kwargs):
         """Get everything that the transform step needs to make predictions"""
+        self._fit = False
         self._prep_dataframes(X)
         if not self.scaler is None:
             self._scaler_fit()

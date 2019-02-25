@@ -19,7 +19,7 @@ Todo:
 from autoimpute.utils.checks import remove_nan_columns
 
 @remove_nan_columns
-def listwise_delete(data, inplace=False, verbose=False):
+def listwise_delete(data, copy=False, verbose=False):
     """Delete all rows from a dataframe where any missing values exist.
 
     Deletion one way to handle missing values. This method removes any
@@ -29,7 +29,7 @@ def listwise_delete(data, inplace=False, verbose=False):
     MCAR, listwise deletion can lead to bias and is NOT preferred method.
 
     Args:
-        data (pd.DataFrame): DataFrame used to delete missing rows.
+        data (pd.DataFrame): DataFrame used to delete missing rows
         inplace (boolean, optional): perform operation inplace
         verbose (boolean, optional): print information to console
 
@@ -37,13 +37,15 @@ def listwise_delete(data, inplace=False, verbose=False):
         pd.DataFrame: rows with missing values removed. Rows of DataFrame
             will have <= the number of rows of the original
     """
-    num_records_before = len(data.index)
-    if inplace:
-        data.dropna(inplace=inplace)
+    if not verbose:
+        return data.dropna(inplace=copy)
     else:
-        data = data.dropna(inplace=inplace)
-    num_records_after = len(data.index)
-    if verbose:
+        num_records_before = len(data.index)
+        if not copy:
+            data.dropna(inplace=True)
+        else:
+            data = data.dropna(inplace=False)
+        num_records_after = len(data.index)
         print(f"Number of records before delete: {num_records_before}")
         print(f"Number of records after delete: {num_records_after}")
-    return data
+        return data
