@@ -21,6 +21,7 @@ import pytest
 import numpy as np
 import pandas as pd
 from autoimpute.utils.checks import check_data_structure, check_missingness
+from autoimpute.utils.checks import remove_nan_columns
 
 @check_data_structure
 def check_data(data):
@@ -30,6 +31,11 @@ def check_data(data):
 @check_missingness
 def check_miss(data):
     """Helper function to test missingness decorator"""
+    return data
+
+@remove_nan_columns
+def check_remove(data):
+    """Helper function to test removal of nan columns"""
     return data
 
 def data_structures_not_allowed():
@@ -112,3 +118,31 @@ def test_missingness_not_allowed(ds):
     """
     with pytest.raises(ValueError):
         check_miss(ds)
+
+def test_nan_column_removal():
+    """Check that missing columns removed when using removal decorator
+
+    The `remove_nan_columns` decorator should remove columns in place
+    if the columns have all values missing. Therefore, we simulate a
+    data in a DataFrame where two of the columns have all missing vals.
+    The df is below, and after removal, it should contain 2 fewer cols.
+    B and C should be removed b/c all their values are missing.
+
+    Args:
+        None: DataFrame hard-coded internally
+    """
+    df = pd.DataFrame({
+        "A": [1, np.nan, 3, 4],
+        "B": [None, None, None, None],
+        "C": [np.nan, np.nan, np.nan, np.nan],
+        "D": ["a", "b", None, "d"]
+    })
+    assert "B" in df.columns
+    assert "C" in df.columns
+    df_cols_before = len(df.columns)
+    check_remove(df)
+    assert isinstance(df, pd.DataFrame)
+    df_cols_after = len(df.columns)
+    assert (df_cols_before - df_cols_after) == 2
+    assert "B" not in df.columns
+    assert "C" not in df.columns
