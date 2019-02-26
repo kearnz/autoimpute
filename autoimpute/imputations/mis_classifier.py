@@ -1,4 +1,22 @@
-"""MissingnessClassifier Class used to generate test sets"""
+"""Class to predict missingness in a dataset and generate test cases.
+
+The main class in this module is the MissingnessClassifier. It has numerous
+use cases. First, it fits the columns of a DataFrame and predicts whether
+or not a given observation is missing or not, based on all available
+information in other columns (todo: allow for flexible column specification).
+Second, it allows users to generate test cases for imputation analysis. Test
+cases are values that are truly observed but have a high probability of being
+missing. These cases make the imputation process supervised as opposed to
+unsupervised. A user never knows the true value of missing data, but a user
+can verify imputation methods on test cases for which the true value is known.
+More information regarding each feature is available in the docstrings of
+instance methods within the MissingnessClassifier.
+
+Todo:
+    * Allow for flexible column specification used in predictor.
+    * Update docstrings for class initialization and instance methods.
+    * Add examples of proper usage for the class and its instance methods.
+"""
 
 import warnings
 import numpy as np

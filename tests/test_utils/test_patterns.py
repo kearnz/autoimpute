@@ -4,10 +4,10 @@ The methods below check the results of the functions in the patterns module.
 These methods are essentially ports from Flexible Imputation of Missing Data,
 Van Buuren, Section 4.1. The `df_general` variable below is a simulation of
 the "general" pattern in section 4.1. The subsequent dataframes are hard coded
-results from Van Buuren's book. They can be used to verify that this
+results of patterns from Van Buuren's book. They are used to verify that this
 implementation in python is working as expected. The methods being tested
-(i.e. inbound, outbound, flux, etc.) all use `df_general` to calculate
-statistic. This allows for comparison to results from VB.
+(i.e. inbound, outbound, flux, etc.) all use `df_general` to calculate their
+respective statistic. This allows for comparison to results from Van Buuren.
 
 Tests:
     test_md_locations()
@@ -18,7 +18,7 @@ Tests:
     test_flux()
 
 Todo:
-    * Extend tests to DataFrame with categorical variables
+    * Extend tests to DataFrame with categorical variables.
 """
 
 import numpy as np
@@ -63,6 +63,12 @@ def test_md_locations():
     Missingness locations should equal np.isnan for each col.
     Assert that md_locations returns a DataFrame, and then check
     that each column equals what is expected from np.isnan.
+
+    Args:
+        None: DataFrame for testing created internally.
+
+    Returns:
+        None: asserts locations for missingness are as expected.
     """
     md_loc = md_locations(df_general)
     assert isinstance(md_loc, pd.DataFrame)
@@ -71,11 +77,17 @@ def test_md_locations():
     assert all(md_loc["C"] == np.isnan(df_general["C"]))
 
 def test_md_pattern():
-    """Test that missing data pattern equal to expected results
+    """Test that missing data pattern equal to expected results.
 
     `df_pattern` name assigned to DataFrame in module's scope that contains
     the expected pattern from VB 4.1 `md.pattern()` example in R. Result
     is hard coded, and python version tested with assertions below.
+
+    Args:
+        None: DataFrame for testing created internally.
+
+    Returns:
+        None: asserts missingness patterns are as expected.
     """
     md_pat = md_pattern(df_general)
     assert isinstance(md_pat, pd.DataFrame)
@@ -84,12 +96,18 @@ def test_md_pattern():
     assert all(md_pat["nmis"] == df_pattern["nmis"])
 
 def test_md_pairs():
-    """Test that missing data pairs equal expected results.
+    """Test that missing data pairs equal to expected results.
 
     `dict_pairs` contains 4 keys - one for each pair expected. The pairs
     are `rr`, `mr`, `rm`, and `mm`. Pair types described in the docstrings
     of the md_pairs method in the utils.patterns module. Missing data pairs
     should equal expected pairs from VB 4.1 `md.pairs() in R.
+
+    Args:
+        None: Pairs for testing created internally.
+
+    Returns:
+        None: asserts pairs are as expected.
     """
     md_pair = md_pairs(df_general)
     assert isinstance(md_pair, dict)
@@ -99,10 +117,16 @@ def test_md_pairs():
     assert all(md_pair["mm"] == dict_pairs["mm"])
 
 def test_inbound():
-    """Test that the inbound statistic equals expected results.
+    """Test that the inbound statistic equal to expected results.
 
     `df_inbound` contains hard-coded expected result. Tested against the
     inbound function, which takes `df_general` as an input.
+
+    Args:
+        None: DataFrame for testing created internally.
+
+    Returns:
+        None: asserts inbound statistic results are as expected.
     """
     inbound_ = inbound(df_general)
     assert isinstance(inbound_, pd.DataFrame)
@@ -111,10 +135,16 @@ def test_inbound():
     assert all(inbound_["C"] == df_inbound["C"])
 
 def test_outbound():
-    """Test that the outbound statistic equals expected results.
+    """Test that the outbound statistic equal to expected results.
 
     `df_outbound` contains hard-coded expected result. Tested against the
     outbound function, which takes `df_general` as an input.
+
+    Args:
+        None: DataFrame for testing created internally.
+
+    Returns:
+        None: asserts outbound statistic results are as expected.
     """
     outbound_ = outbound(df_general)
     print(df_inbound)
@@ -124,11 +154,17 @@ def test_outbound():
     assert all(outbound_["C"] == df_outbound["C"])
 
 def test_flux():
-    """Test that the flux coeffs and proportions equals expected results.
+    """Test that the flux coeffs and proportions equal to expected results.
 
     `df_flux` contains hard-coded expected result. Tested against the
     influx, outflux, and proportions functions, which all take `df_general`
     as an input.
+
+    Args:
+        None: DataFrame for testing created internally.
+
+    Returns:
+        None: asserts pobs, influx, and outflux results are as expected.
     """
     flux_ = flux(df_general)
     assert isinstance(flux_, pd.DataFrame)

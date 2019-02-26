@@ -1,11 +1,17 @@
 """Manage the imputations lib from the autoimpute package.
 
 This module handles imports from the imputations library that should be
-accessible whenever someone imports autoimpute.imputations. Included are the
-MissingnessClassifier and deletion / imputation methods from their
-respective files.
+accessible whenever someone imports autoimpute.imputations. The list below
+specifies the methods and classes that are currently available on import.
 
-The module overrides the `from imputations import *` with the __all__ var
+Imported:
+    MissingnessClassifier
+    SingleImputer
+    listwise_delete
+
+This module handles `from autoimpute.imputations import *` with the __all__
+variable below. This command imports the main public classes and methods
+from autoimpute.imputations.
 """
 
 from autoimpute.imputations.mis_classifier import MissingnessClassifier

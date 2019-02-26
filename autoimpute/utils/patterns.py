@@ -18,10 +18,10 @@ Methods:
     flux(data)
 
 Todo:
-    * Add futher functionality to assess missing data patterns
-        - Examples include those in missingno package
-        - Other R packages have EDA not contained in VB 4.1
-    * Add examples of each method in respective function docstrings
+    * Add futher functionality to assess missing data patterns.
+        - Examples include those in missingno package.
+        - Other R packages have EDA not contained in VB 4.1.
+    * Add examples of each method in respective function docstrings.
 """
 
 import numpy as np
@@ -34,17 +34,20 @@ def md_locations(data, both=False):
     """Produces locations where values are missing in a DataFrame.
 
     Takes in a DataFrame and identifies locations where data is complete or
-    missing. Normally, fully complete or fully empty throws error, but
-    this method simply shows missingness locations, so standard for mixed
-    complete-missing not necessary. Method marks 1 = missing, 0 = not missing.
+    missing. Normally, fully complete issues warning, and fully incomplete
+    throws error, but this method simply shows missingness locations,
+    so the general standard for mixed complete-missing pattern not necessary.
+    Method marks 1 = missing, 0 = not missing.
 
     Args:
-        data (pd.DataFrame): data to locate missing and complete
+        data (pd.DataFrame): DataFrame to find missing & complete observations.
         both (boolean, optional): return data along with missingness indicator.
             Defaults to False, so just missingness indicator returned.
 
     Returns:
-        pd.DataFrame: missingness indicator DataFrame.
+        pd.DataFrame: missingness indicator DataFrame OR
+        pd.DataFrame: missingness indicator DataFrame concatenated column-wise
+            with original DataFame.
 
     Raises:
         TypeError: if data is not a DataFrame. Error raised through decorator.
@@ -56,17 +59,17 @@ def md_locations(data, both=False):
 
 @check_data_structure
 def md_pairs(data):
-    """Calculates pairwise missing data statistics
+    """Calculates pairwise missing data statistics.
 
-    This method mimics the behavior of MICE md.pairs
+    This method mimics the behavior of MICE md.pairs.
     - rr: response-response pairs
     - rm: response-missing pairs
     - mr: missing-response pairs
     - mm: missing-missing pairs
-    Returns a square matrix for each, where n = number of columns
+    Returns a square matrix for each, where n = number of columns.
 
     Args:
-        data (pd.DataFrame): data to calculate pairwise stats.
+        data (pd.DataFrame): DataFrame to calculate pairwise stats.
 
     Returns:
         dict: keys are pair types, values are DataFrames w/ pair stats.
@@ -89,18 +92,18 @@ def md_pairs(data):
 def md_pattern(data):
     """Calculates row-wise missing data statistics in input data.
 
-    Method is a port of md.pattern method from VB 4.1
-    - 0 is missing, 1 is not missing
-    - num rows is num different row patterns
-    - 'nmis' is number of missing values in a row pattern
-    - 'count' is number of total rows with row pattern
+    Method is a port of md.pattern method from VB 4.1. The number of rows
+    indicates the number of different row patterns of missingness. The 'nmis'
+    column is the number of missing values in a given row pattern. The
+    'count' is number of total rows with a given row pattern.
+    In this method, 0 = missing, 1 = missing.
 
     Args:
-        data (pd.DataFrame): data to calculate missing data pattern.
+        data (pd.DataFrame): DataFrame to calculate missing data pattern.
 
     Returns:
         pd.DataFrame: DataFrame with missing data pattern and two
-            additional cols w/ row-wise stats: count and nmis
+            additional columns w/ row-wise stats: `count` and `nmis`.
     """
     cols = data.columns.tolist()
     r = pd.isnull(data.values)
@@ -118,21 +121,22 @@ def md_pattern(data):
 
 @check_missingness
 def feature_cov(data):
-    """Calculates the covariance between features in a DataFrame
+    """Calculates the covariance between features in a DataFrame.
 
-    Method to calculate covariance:
-    - Note that this method DROPS NA VALUES to compute cov
-    - Checks to ensure dataset not fully missing, or else no cov possible
+    Leverages pandas method to calculate covariance. Note that this method
+    DROPS NA VALUES to compute covariance. It also employs `check_missingness`
+    decorator to ensure DataFrame not fully missing.
 
     Args:
-        data (pd.DataFrame): data to calculate covariance matrix.
+        data (pd.DataFrame): DataFrame to calculate covariance matrix.
 
     Returns:
         pd.DataFrame: DataFrame with covariance between each feature.
 
     Raises:
-        TypeError: If data not pd.DataFrame
+        TypeError: If data not pd.DataFrame. Raised through decorator.
         ValueError: If DataFrame values all missing and none complete.
+            Also raised through decorator.
     """
     return data.cov()
 
@@ -140,23 +144,24 @@ def feature_cov(data):
 def feature_corr(data, method="pearson"):
     """Calculates the correlation between features in a DataFrame.
 
-    Method to calculate correlation:
-    - Note that this method DROPS NA VALUES to compute corr
-    - Default method is pearson
-    - If dataset encodes discrete features, proper method is spearman
-    - Checks to ensure dataset not fully missing, or else no corr possible
+    Leverages pandas method to calculate correlation. Note that this method
+    DROPS NA VALUES to compute correlation. It also employs `check_missingness`
+    decorator to ensure DataFrame not fully missing. Rerarding the correlation
+    method, the default is `pearson`. If dataset encodes discrete and / or
+    ordinal features, proper method to use is `spearman`.
 
     Args:
-        data (pd.DataFrame): data to calculate correlation matrix.
-        method (string, optional): corr method to use. Default is pearson,
-            but spearman should be used if any features categorically encoded.
+        data (pd.DataFrame): DataFrame to calculate correlation matrix.
+        method (string, optional): correlation method to use. Default pearson,
+            but spearman should be used with categorical or ordinal encoding.
 
     Returns:
         pd.DataFrame: DataFrame with correlation between each feature.
 
     Raises:
-        TypeError: If data not pd.DataFrame.
+        TypeError: If data not pd.DataFrame. Raised through decorator.
         ValueError: If DataFrame values all missing and none complete.
+            Also raised through decorator.
         ValueError: If method for correlation not an accepted method.
     """
     accepted_methods = ("pearson", "kendall", "spearman")
@@ -168,10 +173,10 @@ def _inbound(pairs):
     """Helper to get inbound from pairs. Intended for private use.
 
     Args:
-        pairs (dict): Pairs generated from md_pairs function
+        pairs (dict): Pairs generated from md_pairs function.
 
     Returns:
-        np.ndarray: Pairwise stat for inbound
+        np.ndarray: Pairwise stat for inbound.
     """
     return pairs["mr"]/(pairs["mr"]+pairs["mm"])
 
@@ -179,10 +184,10 @@ def _outbound(pairs):
     """Helper to get outbound from pairs. Intended for private use.
 
     Args:
-        pairs (dict): Pairs generated from md_pairs function
+        pairs (dict): Pairs generated from md_pairs function.
 
     Returns:
-        np.ndarray: Pairwise stat for outbound
+        np.ndarray: Pairwise stat for outbound.
     """
     return pairs["rm"]/(pairs["rm"]+pairs["rr"])
 
@@ -190,10 +195,10 @@ def _influx(pairs):
     """Helper to get influx from pairs. Intended for private use.
 
     Args:
-        pairs (dict): Pairs generated from md_pairs function
+        pairs (dict): Pairs generated from md_pairs function.
 
     Returns:
-        np.ndarray: Pairwise stat for influx
+        np.ndarray: Pairwise stat for influx.
     """
     num = np.nansum(pairs["mr"], axis=1)
     denom = np.nansum(pairs["mr"]+pairs["rr"], axis=1)
@@ -203,10 +208,10 @@ def _outflux(pairs):
     """Helper to get outflux from pairs. Intended for private use.
 
     Args:
-        pairs (dict): Pairs generated from md_pairs function
+        pairs (dict): Pairs generated from md_pairs function.
 
     Returns:
-        np.ndarray: Pairwise stat for outflux
+        np.ndarray: Pairwise stat for outflux.
     """
     num = np.nansum(pairs["rm"], axis=1)
     denom = np.nansum(pairs["rm"]+pairs["mm"], axis=1)
@@ -215,14 +220,13 @@ def _outflux(pairs):
 def get_stat_for(func, data):
     """Generic method to get a missing data statistic from data.
 
-    This method can be used directly in tandem with helper methods,
-    but this behavior is discouraged. Instead, use specific methods below
-    (inbound, outbound, etc.). These special methods utilize this function
-    to compute specific stats.
+    This method can be used directly with helper methods, but this behavior
+    is discouraged. Instead, use specific public methods below. These special
+    methods utilize this function internally to compute summary statistics.
 
     Args:
-        func (function): Function that calculates a statistic
-        data (pd.DataFrame): data on which to run the function
+        func (function): Function that calculates a statistic.
+        data (pd.DataFrame): DataFrame on which to run the function.
 
     Returns:
         np.ndarray: Output from statistic chosen.
@@ -233,58 +237,58 @@ def get_stat_for(func, data):
     return stat
 
 def inbound(data):
-    """Calculates proportion of usable cases (Ijk) from Van Buuren 4.1
+    """Calculates proportion of usable cases (Ijk) from Van Buuren 4.1.
 
-    Method ported from VB, called "inbound statistic".
-    - Ijk = 1 if variable Yk observed in all records where Yj missing
-    - Used to quickly select potential predictors Yk for imputing Yj
-    - High values are preferred
+    Method ported from VB, called "inbound statistic", Ijk.
+    Ijk = 1 if variable Yk observed in all records where Yj missing.
+    Used to quickly select potential predictors Yk for imputing Yj.
+    High values are preferred.
 
     Args:
-        data (pd.DataFrame): Data to calculate inbound stat.
+        data (pd.DataFrame): DataFrame to calculate inbound statistic.
 
     Returns:
-        pd.DataFrame: inbound statistic b/w each feature and other features.
-            Inbound b/w a feature and itself is 0.
+        pd.DataFrame: inbound statistic between each of the features.
+            Inbound between a feature and itself is 0.
     """
     inbound_coeff = get_stat_for(_inbound, data)
     inbound_ = _sq_output(inbound_coeff, data.columns, True)
     return inbound_
 
 def outbound(data):
-    """Calculates the outbound statistic (Ojk) from Van Buuren 4.1
+    """Calculates the outbound statistic (Ojk) from Van Buuren 4.1.
 
-    Method ported from VB, called "outbound statistic".
-    - Ojk measures how observed data Yj connect to rest of missing data
-    - Ojk = 1 if Yj observed in all records where Yk is missing
-    - Used to evaluate whether Yj is a potential predictor for imputing Yk
-    - High values are preferred
+    Method ported from VB, called "outbound statistic", Ojk.
+    Ojk measures how observed data Yj connect to rest of missing data.
+    Ojk = 1 if Yj observed in all records where Yk is missing.
+    Used to evaluate whether Yj is a potential predictor for imputing Yk.
+    High values are preferred.
 
     Args:
-        data (pd.DataFrame): Data to calculate outbound stat.
+        data (pd.DataFrame): DataFrame to calculate outbound statistic.
 
     Returns:
-        pd.DataFrame: outbound statistic b/w each feature and other features.
-            Outbound b/w a feature and itself is 0.
+        pd.DataFrame: outbound statistic between each of the features.
+            Outbound between a feature and itself is 0.
     """
     outbound_coeff = get_stat_for(_outbound, data)
     outbound_ = _sq_output(outbound_coeff, data.columns, True)
     return outbound_
 
 def influx(data):
-    """Calculates the influx coefficient (Ij) from Van Buuren 4.1
+    """Calculates the influx coefficient (Ij) from Van Buuren 4.1.
 
-    Method ported from VB, called "influx coefficient"
-    - Ij = # pairs (Yj,Yk) w/ Yj missing & Yk observed / # observed data cells
-    - Value depends on the proportion of missing data of the variable
-    - Influx of a completely observed variable is equal to 0
-    - Influx for completely missing variables is equal to 1
-    - For two variables with the same proportion of missing data:
-        - Var with higher influx is better connected to the observed data
-        - Var with higher influx might thus be easier to impute
+    Method ported from VB, called "influx coefficient", Ij.
+    Ij = # pairs (Yj,Yk) w/ Yj missing & Yk observed / # observed data cells.
+    Value depends on the proportion of missing data of the variable.
+    Influx of a completely observed variable is equal to 0.
+    Influx for completely missing variables is equal to 1.
+    For two variables with the same proportion of missing data:
+    - Variable with higher influx is better connected to the observed data.
+    - Variable with higher influx might thus be easier to impute.
 
     Args:
-        data (pd.DataFrame): Data to calculate influx coefficient.
+        data (pd.DataFrame): DataFrame to calculate influx coefficient.
 
     Returns:
         pd.DataFrame: influx coefficient for each column.
@@ -296,19 +300,19 @@ def influx(data):
     return influx_
 
 def outflux(data):
-    """Calculates the outflux coefficient (Oj) from Van Buuren 4.1
+    """Calculates the outflux coefficient (Oj) from Van Buuren 4.1.
 
-    Method ported from VB, called "outflux coefficient"
-    - Oj = # pairs w/ Yj observed and Yk missing / # incomplete data cells
-    - Value depends on the proportion of missing data of the variable
-    - Outflux of a completely observed variable is equal to 1
-    - Outflux of a completely missing variable is equal to 0.
-    - For two variables having the same proportion of missing data:
-        - Var with higher outflux is better connected to the missing data
-        - Var with higher outflux more useful for imputing other variables
+    Method ported from VB, called "outflux coefficient", Oj.
+    Oj = # pairs w/ Yj observed and Yk missing / # incomplete data cells.
+    Value depends on the proportion of missing data of the variable.
+    Outflux of a completely observed variable is equal to 1.
+    Outflux of a completely missing variable is equal to 0.
+    For two variables having the same proportion of missing data:
+    - Variable with higher outflux is better connected to the missing data.
+    - Variable with higher outflux more useful for imputing other variables.
 
     Args:
-        data (pd.DataFrame): Data to calculate outflux coefficient.
+        data (pd.DataFrame): DataFrame to calculate outflux coefficient.
 
     Returns:
         pd.DataFrame: outflux coefficient for each column.
@@ -321,18 +325,18 @@ def outflux(data):
 
 @check_data_structure
 def proportions(data):
-    """Calculates the proportions of the data missing and observed.
+    """Calculates the proportions of the data missing and data observed.
 
     Method calculates two arrays:
-    - poms: Proportion of missing size
-    - pobs: Proportion of observed size
+    - `poms`: Proportion of missing data.
+    - `pobs`: Proportion of observed data.
 
     Args:
-        data (pd.DataFrame): Data to calculate proportions.
+        data (pd.DataFrame): DataFrame to calculate proportions.
 
     Returns:
-        pd.DataFrame: two columns, one for poms and one for pobs. The
-            sum of each row should equal 1. Index = original data cols.
+        pd.DataFrame: two columns, one for `poms` and one for `pobs`.
+            The sum of each row should equal 1. Index = original data cols.
 
     Raises:
         TypeError: if data not DataFrame. Error raised through decorator.
@@ -344,20 +348,22 @@ def proportions(data):
     return proportions_
 
 def flux(data):
-    """Caclulates inbound, influx, outbound, outflux, pobs, for data
+    """Caclulates inbound, influx, outbound, outflux, pobs, for DataFrame.
 
     Port of Van Buuren's flux method in R. Calculates:
-    - pobs: Proportion observed
-    - ainb: Average inbound statistic
-    - aout: Average outbound statistic
-    - influx: Influx coefficient (Ij)
-    - outflux: Outflux coefficient (Oj)
+    - `pobs`: Proportion observed (column from the `proportions` method).
+    - `ainb`: Average inbound statistic.
+    - aout: Average outbound statistic.
+    - influx: Influx coefficient, Ij (from the `influx` method).
+    - outflux: Outflux coefficient, Oj (from the `outflux` method).
 
     Args:
-        data (pd.DataFrame): Data to calculate proportions.
+        data (pd.DataFrame): DataFrame to calculate relevant statistics.
 
     Returns:
-        pd.DataFrame: one column for each summary statistic. Index = data cols.
+        pd.DataFrame: one column for each summary statistic.
+            Columns of DataFrame equal the name of the summary statistics.
+            Indices of DataFrame equal the original DataFrame columns.
     """
     row_mean = lambda row: np.nansum(row)/(len(row) - 1)
     pairs = md_pairs(data)

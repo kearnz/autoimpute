@@ -29,6 +29,8 @@ def _default(series):
 
 def _mode_helper(series, mode, strategy):
     """helper function for mode"""
+    if not series.name:
+        raise ValueError("Series must have a name.")
     num_modes = len(mode)
     if num_modes == 1:
         return series.fillna(mode[0], inplace=True)

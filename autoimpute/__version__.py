@@ -1,4 +1,4 @@
-"""Version specification"""
+"""Version specification."""
 
 VERSION = (0, 0, 1)
 
