@@ -27,10 +27,12 @@ def _default(series):
     if is_string_dtype(series):
         return _mode(series)
 
+def _random(series):
+    """return random values to select from"""
+    return series[~series.isnull()].unique(), "random"
+
 def _mode_helper(series, mode, strategy):
     """helper function for mode"""
-    if not series.name:
-        raise ValueError("Series must have a name.")
     num_modes = len(mode)
     if num_modes == 1:
         return series.fillna(mode[0], inplace=True)
@@ -52,7 +54,8 @@ class SingleImputer(BaseEstimator, TransformerMixin):
         "mean": _mean,
         "median": _median,
         "mode":  _mode,
-        "default": _default
+        "default": _default,
+        "random": _random
     }
 
     def __init__(self, strategy="default", fill_value=None,
@@ -169,8 +172,12 @@ class SingleImputer(BaseEstimator, TransformerMixin):
         for col_name, fit_data in self.statistics_.items():
             strat = fit_data["strategy"]
             fill_val = fit_data["param"]
-            if strat != "mode":
-                X[col_name].fillna(fill_val, inplace=True)
-            else:
+            if strat == "mode":
                 _mode_helper(X[col_name], fill_val, self.fill_value)
+            elif strat == "random":
+                ind = X[col_name][X[col_name].isnull()].index
+                fills = np.random.choice(fill_val, len(ind))
+                X.loc[ind, col_name] = fills
+            else:
+                X[col_name].fillna(fill_val, inplace=True)
         return X
