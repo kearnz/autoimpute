@@ -131,13 +131,10 @@ def check_missingness(func):
             if args:
                 a = args[0]
                 if isinstance(a, pd.DataFrame):
-                    missing = pd.isnull(args[0].values)
+                    missing = pd.isnull(a.values)
         if missing.all():
             raise ValueError("All values missing, need some complete.")
-        else:
-            if not missing.any():
-                warnings.warn("No missing values, so nothing to impute.")
-            return func(d, *args, **kwargs)
+        return func(d, *args, **kwargs)
     return wrapper
 
 def remove_nan_columns(func):
