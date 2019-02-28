@@ -3,8 +3,9 @@
 import numpy as np
 from pandas.api.types import is_string_dtype
 from pandas.api.types import is_numeric_dtype
-from sklearn.exceptions import NotFittedError
 from sklearn.base import BaseEstimator, TransformerMixin
+from sklearn.utils.validation import check_is_fitted
+from autoimpute.utils.checks import check_missingness
 # pylint:disable=attribute-defined-outside-init
 # pylint:disable=arguments-differ
 
@@ -64,9 +65,6 @@ class SingleImputer(BaseEstimator, TransformerMixin):
         self.fill_value = fill_value
         self.verbose = verbose
         self.copy = copy
-        self.statistics_ = {}
-        self._strats = {}
-        self._fit = False
 
     @property
     def strategy(self):
@@ -137,10 +135,11 @@ class SingleImputer(BaseEstimator, TransformerMixin):
             for k, v in self._strats.items():
                 print(f"Column: {k}, Strategy: {v}")
 
+    @check_missingness
     def fit(self, X):
         """Fit method for single imputer"""
-        self._fit = False
         self._fit_strategy_validator(X)
+        self.statistics_ = {}
         for col_name, func_name in self._strats.items():
             f = self.strategies[func_name]
             fit_param, fit_name = f(X[col_name])
@@ -148,18 +147,16 @@ class SingleImputer(BaseEstimator, TransformerMixin):
                                           "strategy": fit_name}
             if self.verbose:
                 print(f"{col_name} has {func_name} equal to {fit_param}")
-        self._fit = True
         return self
 
+    @check_missingness
     def transform(self, X):
         """Transform method for a single imputer"""
         # initial checks before transformation
+        check_is_fitted(self, 'statistics_')
+
         if self.copy:
             X = X.copy()
-        if not self._fit:
-            s = self.__class__.__name__
-            err = f"Must fit {s} to data before performing transformation."
-            raise NotFittedError(err)
         # check columns
         X_cols = X.columns.tolist()
         fit_cols = set(self._strats.keys())

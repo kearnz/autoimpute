@@ -23,7 +23,6 @@ Todo:
 """
 
 import functools
-import warnings
 import pandas as pd
 from autoimpute.utils.helpers import _nan_col_dropper
 
@@ -108,8 +107,6 @@ def check_missingness(func):
 
         This wrapper within the decorator does the actual verification. It
         checks that a DataFrame has both missing and real values. If the
-        DataFrame is already complete, a warning is issued that there will
-        be nothing to impute should an imputation method be used. If the
         DataFrame is fully incomplete, an error is raised.
 
         Args:
@@ -128,10 +125,8 @@ def check_missingness(func):
         if isinstance(d, pd.DataFrame):
             missing = pd.isnull(d.values)
         else:
-            if args:
-                a = args[0]
-                if isinstance(a, pd.DataFrame):
-                    missing = pd.isnull(a.values)
+            a = args[0]
+            missing = pd.isnull(a.values)
         if missing.all():
             raise ValueError("All values missing, need some complete.")
         return func(d, *args, **kwargs)
@@ -168,7 +163,7 @@ def remove_nan_columns(func):
         if isinstance(d, pd.DataFrame):
             _nan_col_dropper(d)
         else:
-            if args:
-                _nan_col_dropper(args[0])
+            a = args[0]
+            _nan_col_dropper(a)
         return func(d, *args, **kwargs)
     return wrapper
