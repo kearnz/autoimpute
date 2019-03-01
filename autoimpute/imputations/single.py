@@ -112,10 +112,9 @@ class SingleImputer(BaseEstimator, TransformerMixin):
         # if list or tuple, ensure same number of cols in X as strategies
         if isinstance(self.strategy, (list, tuple)):
             s_l = len(self.strategy)
-            c_l = len(cols)
-            nc_l = len(self._nc)
-            if s_l != c_l + nc_l:
-                err = f"# columns ({c_l}) not equal to # strategies ({s_l})"
+            o_l = len(o_cols)
+            if s_l != o_l:
+                err = f"Original columns ({o_l}) must equal strategies ({s_l})"
                 raise ValueError(err)
             else:
                 if self._nc:
