@@ -177,9 +177,6 @@ class SingleImputer(BaseEstimator, TransformerMixin):
         check_is_fitted(self, 'statistics_')
         if self.copy:
             X = X.copy()
-
-        # columns will be dropped if fit operation happened in place
-        if not self.copy:
             if self._nc:
                 wrn = f"Dropping {self._nc} since they were not fit."
                 warnings.warn(wrn)
