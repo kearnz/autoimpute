@@ -77,7 +77,7 @@ class SingleImputer(BaseEstimator, TransformerMixin):
     def strategy(self, s):
         """validate the strategy property"""
         strat_names = self.strategies.keys()
-        err_op = f"Strategies must be one of {strat_names}."
+        err_op = f"Strategies must be one of {list(strat_names)}."
         if isinstance(s, str):
             if s in strat_names:
                 self._strategy = s
@@ -163,7 +163,12 @@ class SingleImputer(BaseEstimator, TransformerMixin):
         # perform fit on each column, depending on that column's strategy
         for col_name, func_name in self._strats.items():
             f = self.strategies[func_name]
-            fit_param, fit_name = f(X[col_name])
+            try:
+                fit_param, fit_name = f(X[col_name])
+            except TypeError as te:
+                typ = X[col_name].dtype
+                err = f"{func_name} not appropriate for column with type {typ}"
+                raise TypeError(err) from te
             self.statistics_[col_name] = {"param":fit_param,
                                           "strategy": fit_name}
             if self.verbose:
@@ -182,9 +187,9 @@ class SingleImputer(BaseEstimator, TransformerMixin):
                 warnings.warn(wrn)
                 try:
                     X.drop(self._nc, axis=1, inplace=True)
-                except ValueError:
+                except ValueError as ve:
                     err = "Same columns must appear in fit and transform."
-                    raise ValueError(err)
+                    raise ValueError(err) from ve
 
         # check columns
         X_cols = X.columns.tolist()
