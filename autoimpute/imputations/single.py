@@ -177,10 +177,17 @@ class SingleImputer(BaseEstimator, TransformerMixin):
         check_is_fitted(self, 'statistics_')
         if self.copy:
             X = X.copy()
-        if self._nc:
-            wrn = f"{self._nc} dropped in transform since they were not fit."
-            warnings.warn(wrn)
-            X.drop(self._nc, axis=1, inplace=True)
+
+        # columns will be dropped if fit operation happened in place
+        if not self.copy:
+            if self._nc:
+                wrn = f"Dropping {self._nc} since they were not fit."
+                warnings.warn(wrn)
+                try:
+                    X.drop(self._nc, axis=1, inplace=True)
+                except ValueError:
+                    err = "Same columns must appear in fit and transform."
+                    raise ValueError(err)
 
         # check columns
         X_cols = X.columns.tolist()
@@ -188,7 +195,8 @@ class SingleImputer(BaseEstimator, TransformerMixin):
         diff_X = set(X_cols).difference(fit_cols)
         diff_fit = set(fit_cols).difference(X_cols)
         if diff_X or diff_fit:
-            raise ValueError("Same columns must appear in fit and transform.")
+            err = "Same columns must appear in fit and transform."
+            raise ValueError(err)
 
         # transformation logic
         for col_name, fit_data in self.statistics_.items():
