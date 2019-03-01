@@ -100,9 +100,10 @@ class SingleImputer(BaseEstimator, TransformerMixin):
 
     def _fit_strategy_validator(self, X):
         """helper method to ensure right number of strategies"""
+        # remove nan columns and store colnames
+        o_cols = X.columns.tolist()
+        X, self._nc = _nan_col_dropper(X)
         cols = X.columns.tolist()
-        c_l = len(cols)
-        s_l = len(self.strategy)
 
         # if strategy is string, extend strategy to all cols
         if isinstance(self.strategy, str):
@@ -110,14 +111,26 @@ class SingleImputer(BaseEstimator, TransformerMixin):
 
         # if list or tuple, ensure same number of cols in X as strategies
         if isinstance(self.strategy, (list, tuple)):
-            if c_l == s_l:
-                self._strats = {c[0]:c[1] for c in zip(cols, self.strategy)}
-            else:
+            s_l = len(self.strategy)
+            c_l = len(cols)
+            nc_l = len(self._nc)
+            if s_l != c_l + nc_l:
                 err = f"# columns ({c_l}) not equal to # strategies ({s_l})"
                 raise ValueError(err)
+            else:
+                if self._nc:
+                    i = 0
+                    for ind, name in enumerate(o_cols):
+                        if name in self._nc:
+                            del self.strategy[ind-i]
+                            i += 1
+                self._strats = {c[0]:c[1] for c in zip(cols, self.strategy)}
 
         # if strategy is dict, ensure keys in strategy match cols in X
         if isinstance(self.strategy, dict):
+            if self._nc:
+                for k in self._nc:
+                    self.strategy.pop(k, None)
             keys = set(self.strategy.keys())
             cols = set(cols)
             kdiff = keys.difference(cols)
@@ -137,15 +150,18 @@ class SingleImputer(BaseEstimator, TransformerMixin):
             for k, v in self._strats.items():
                 print(f"Column: {k}, Strategy: {v}")
 
-        # if strategies pass validation, remove nan columns and store colnames
-        X, self._nc = _nan_col_dropper(X)
         return X
 
     @check_missingness
     def fit(self, X):
         """Fit method for single imputer"""
+        # copy, validate, and create statistics if validated
+        if self.copy:
+            X = X.copy()
         self._fit_strategy_validator(X)
         self.statistics_ = {}
+
+        # perform fit on each column, depending on that column's strategy
         for col_name, func_name in self._strats.items():
             f = self.strategies[func_name]
             fit_param, fit_name = f(X[col_name])
@@ -160,15 +176,13 @@ class SingleImputer(BaseEstimator, TransformerMixin):
         """Transform method for a single imputer"""
         # initial checks before transformation
         check_is_fitted(self, 'statistics_')
-
-        # remove columns in transform if they were removed in fit
+        if self.copy:
+            X = X.copy()
         if self._nc:
             wrn = f"{self._nc} dropped in transform since they were not fit."
             warnings.warn(wrn)
             X.drop(self._nc, axis=1, inplace=True)
 
-        if self.copy:
-            X = X.copy()
         # check columns
         X_cols = X.columns.tolist()
         fit_cols = set(self._strats.keys())
