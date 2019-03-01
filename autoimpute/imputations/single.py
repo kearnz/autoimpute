@@ -1,11 +1,13 @@
 """Single imputation lib"""
 
+import warnings
 import numpy as np
 from pandas.api.types import is_string_dtype
 from pandas.api.types import is_numeric_dtype
 from sklearn.base import BaseEstimator, TransformerMixin
 from sklearn.utils.validation import check_is_fitted
 from autoimpute.utils.checks import check_missingness
+from autoimpute.utils.helpers import _nan_col_dropper
 # pylint:disable=attribute-defined-outside-init
 # pylint:disable=arguments-differ
 
@@ -135,6 +137,10 @@ class SingleImputer(BaseEstimator, TransformerMixin):
             for k, v in self._strats.items():
                 print(f"Column: {k}, Strategy: {v}")
 
+        # if strategies pass validation, remove nan columns and store colnames
+        X, self._nc = _nan_col_dropper(X)
+        return X
+
     @check_missingness
     def fit(self, X):
         """Fit method for single imputer"""
@@ -154,6 +160,12 @@ class SingleImputer(BaseEstimator, TransformerMixin):
         """Transform method for a single imputer"""
         # initial checks before transformation
         check_is_fitted(self, 'statistics_')
+
+        # remove columns in transform if they were removed in fit
+        if self._nc:
+            wrn = f"{self._nc} dropped in transform since they were not fit."
+            warnings.warn(wrn)
+            X.drop(self._nc, axis=1, inplace=True)
 
         if self.copy:
             X = X.copy()

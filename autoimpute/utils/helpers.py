@@ -79,4 +79,4 @@ def _nan_col_dropper(data):
     if cdiff:
         wrn = f"{cdiff} dropped from DataFrame because all rows were missing."
         warnings.warn(wrn)
-    return data
+    return data, cdiff

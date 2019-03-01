@@ -22,9 +22,10 @@ import warnings
 import numpy as np
 import pandas as pd
 from xgboost import XGBClassifier
-from sklearn.exceptions import NotFittedError
 from sklearn.base import clone, BaseEstimator, ClassifierMixin
+from sklearn.utils.validation import check_is_fitted
 from autoimpute.utils.checks import check_missingness
+from autoimpute.utils.helpers import _nan_col_dropper
 # pylint:disable=attribute-defined-outside-init
 # pylint:disable=arguments-differ
 
@@ -38,19 +39,6 @@ class MissingnessClassifier(BaseEstimator, ClassifierMixin):
         self.classifier = classifier
         self.scaler = scaler
         self.verbose = verbose
-        self._scaled_num = None
-        self._scaled_dum = None
-        self._fit = False
-        self._len_num = 0
-        self._len_dum = 0
-        self._data_num = None
-        self._data_dum = None
-        self._single_dum = []
-        self.data_mi = None
-        self.data_mi_preds = None
-        self.data_mi_proba = None
-        self.preds_mi_fit = {}
-        self.test_indices = {}
 
     @property
     def classifier(self):
@@ -92,7 +80,6 @@ class MissingnessClassifier(BaseEstimator, ClassifierMixin):
         if len(cats) == 1:
             c = cats[0]
             cf = c.split('_')[0]
-            self._single_dum.append(c)
             msg = f"{c} only category for feature {cf}."
             cons = f"Consider removing {cf} from dataset."
             warnings.warn(f"{msg} {cons}")
@@ -120,6 +107,7 @@ class MissingnessClassifier(BaseEstimator, ClassifierMixin):
 
     def _prep_dataframes(self, X):
         """Prepare numeric and categorical data for fit method"""
+        X, self._nc = _nan_col_dropper(X)
         self.data_mi = pd.isnull(X)*1
         self._data_num = X.select_dtypes(include=(np.number,))
         self._len_num = len(self._data_num.columns)
@@ -203,11 +191,14 @@ class MissingnessClassifier(BaseEstimator, ClassifierMixin):
 
     def _prep_predictor(self, X, new_data):
         """Make necessary checks and adjustments before prediction"""
-        # raise error fit not performed
-        if not self._fit:
-            s = self.__class__.__name__
-            err = f"Must fit {s} to data before performing prediction."
-            raise NotFittedError(err)
+        # initial checks before transformation
+        check_is_fitted(self, 'statistics_')
+
+        # remove columns in transform if they were removed in fit
+        if self._nc:
+            wrn = f"{self._nc} dropped in transform since they were not fit."
+            warnings.warn(wrn)
+            X.drop(self._nc, axis=1, inplace=True)
 
         # check dataset features are the same for both fit and transform
         X_cols = X.columns.tolist()
@@ -226,8 +217,8 @@ class MissingnessClassifier(BaseEstimator, ClassifierMixin):
     @check_missingness
     def fit(self, X, **kwargs):
         """Get everything that the transform step needs to make predictions"""
-        self._fit = False
         self._prep_dataframes(X)
+        self.statistics_ = {}
         if not self.scaler is None:
             self._scaler_fit()
         if self.verbose:
@@ -237,8 +228,7 @@ class MissingnessClassifier(BaseEstimator, ClassifierMixin):
             x, y = self._prep_classifier_cols(X, i, c)
             clf = clone(self.classifier)
             cls_fit = clf.fit(x, y, **kwargs)
-            self.preds_mi_fit[c] = cls_fit
-        self._fit = True
+            self.statistics_[c] = cls_fit
         return self
 
     @check_missingness
@@ -251,7 +241,7 @@ class MissingnessClassifier(BaseEstimator, ClassifierMixin):
         preds_mat = []
         for i, c in enumerate(self.data_mi):
             x, _ = self._prep_classifier_cols(X, i, c)
-            cls_fit = self.preds_mi_fit[c]
+            cls_fit = self.statistics_[c]
             y_pred = cls_fit.predict(x, **kwargs)
             preds_mat.append(y_pred)
 
@@ -270,7 +260,7 @@ class MissingnessClassifier(BaseEstimator, ClassifierMixin):
         preds_mat = []
         for i, c in enumerate(self.data_mi):
             x, _ = self._prep_classifier_cols(X, i, c)
-            cls_fit = self.preds_mi_fit[c]
+            cls_fit = self.statistics_[c]
             y_pred = cls_fit.predict_proba(x, **kwargs)[:, 1]
             preds_mat.append(y_pred)
 
