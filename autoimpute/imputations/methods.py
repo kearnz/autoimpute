@@ -48,7 +48,7 @@ def _random(series):
 
 def _interp(series, method):
     """Interpolation wrapper"""
-    series.interpolate(method="linear",
+    series.interpolate(method=method,
                        limit=None,
                        limit_direction="both",
                        inplace=True)
