@@ -1,15 +1,13 @@
 """Imputation methods used by different Imputer Classes."""
 
-import numpy as np
 from pandas.api.types import is_string_dtype
 from pandas.api.types import is_numeric_dtype
+# pylint:disable=unused-argument
 
 def _none(series):
     """don't impute a series. leave as is"""
-    if is_string_dtype(series):
-        return None
-    else:
-        return np.nan
+    method = "none"
+    return None, method
 
 def _mean(series):
     """helper mean"""
@@ -53,6 +51,4 @@ def _linear(series):
         typ = series.dtype
         err = f"{method} not appropriate for Series with type {typ}"
         raise TypeError(err)
-    return series.interpolation(method="linear",
-                                limit=None,
-                                limit_direction="both"), method
+    return None, method

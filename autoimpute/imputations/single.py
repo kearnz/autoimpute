@@ -112,6 +112,14 @@ class SingleImputer(BaseEstimator, TransformerMixin):
                 ind = X[col_name][X[col_name].isnull()].index
                 fills = np.random.choice(fill_val, len(ind))
                 X.loc[ind, col_name] = fills
+            elif strat == "linear":
+                X[col_name].interpolation(method="linear",
+                                          limit=None,
+                                          limit_direction="both",
+                                          inplace=True)
+            elif strat == "none":
+                # don't do anything to columns with no strategy
+                pass
             else:
                 X[col_name].fillna(fill_val, inplace=True)
         return X
