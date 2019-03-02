@@ -4,6 +4,7 @@ import pytest
 import numpy as np
 import pandas as pd
 from autoimpute.imputations.single import SingleImputer
+# pylint:disable=len-as-condition
 
 # missingness lambdas
 eq_miss = lambda x: np.random.choice([x, np.nan], 1)[0]
@@ -30,14 +31,38 @@ df_all_miss = pd.DataFrame({
     "B": [np.nan, np.nan]
 })
 
+# DataFrame to test default with added time column
+df_ts = pd.DataFrame({
+    "date": pd.to_datetime(['2018-01-04', '2018-01-05', '2018-01-06',
+                            '2018-01-07', '2018-01-08', '2018-01-09']),
+    "values": [271238, 329285, np.nan, 260260, 263711, np.nan],
+    "cats": ["red", None, "green", "green", "red", "green"]
+})
+
 def test_default_imputer():
     """Ensuring the _default method and values work for SingleImputer()"""
     imp = SingleImputer()
+    # test numerical columns first
     imp.fit_transform(df_num)
     for strat in imp.statistics_.values():
         assert strat["strategy"] == "mean"
     for key in imp.statistics_:
         assert imp.statistics_[key]["param"] == df_num[key].mean()
+    # test df_ts next
+    imp.fit_transform(df_ts)
+    assert imp.statistics_["date"]["strategy"] == "none"
+    assert imp.statistics_["values"]["strategy"] == "mean"
+    assert imp.statistics_["cats"]["strategy"] == "mode"
+
+def test_custom_imputer():
+    """Ensure custom methods when not using the _default"""
+    imp_str = SingleImputer(strategy="linear")
+    imp_str.fit_transform(df_num)
+    for strat in imp_str.statistics_.values():
+        assert strat["strategy"] == "linear"
+    imp_dict = SingleImputer(strategy={"values": "mean", "cats": "mode"})
+    imp_dict.fit_transform(df_ts)
+    assert len(imp_dict.statistics_) == 2
 
 def test_bad_strategy():
     """test bad imputers"""

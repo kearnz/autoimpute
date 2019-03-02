@@ -96,10 +96,9 @@ class SingleImputer(BaseEstimator, TransformerMixin):
         # check columns
         X_cols = X.columns.tolist()
         fit_cols = set(self._strats.keys())
-        diff_X = set(X_cols).difference(fit_cols)
         diff_fit = set(fit_cols).difference(X_cols)
-        if diff_X or diff_fit:
-            err = "Same columns must appear in fit and transform."
+        if diff_fit:
+            err = "Same columns that were fit must appear in transform."
             raise ValueError(err)
 
         # transformation logic

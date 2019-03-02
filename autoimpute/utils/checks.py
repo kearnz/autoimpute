@@ -244,7 +244,8 @@ def _check_fit_strat(strategy, nc, o_cols, cols):
         strategy(str, iterator, dict): strategies passed for columns.
             String = 1 strategy, broadcast to all columns.
             Iterator = multiple strategies, must match col index and length.
-            Dict = multiple strategies, must match col name and length.
+            Dict = multiple strategies, must match col name, but NOT all
+                   columns are mandatory. Will simply impute based on name.
         nc(set): any columns removed because they are fully missing.
         o_cols: original columns before nc determined.
         cols: columns remaining after nc determined.
@@ -256,6 +257,7 @@ def _check_fit_strat(strategy, nc, o_cols, cols):
         return {c:strategy for c in cols}
 
     # if list or tuple, ensure same number of cols in X as strategies
+    # note that list/tuple must have strategy specified for every column
     if isinstance(strategy, (list, tuple)):
         s_l = len(strategy)
         if s_l != o_l:
@@ -271,18 +273,13 @@ def _check_fit_strat(strategy, nc, o_cols, cols):
             return {c[0]:c[1] for c in zip(cols, strategy)}
 
     # if strategy is dict, ensure keys in strategy match cols in X
+    # note that dict is preferred way to impute SOME columns and not all
     if isinstance(strategy, dict):
-        k_l = len(strategy.keys())
         if nc:
             for k in nc:
                 strategy.pop(k, None)
-        k_l = len(strategy.keys())
-        if k_l != o_l:
-            err = f"Original columns ({o_l}) must equal strategies ({s_l})"
-            raise ValueError(err)
         diff_s = set(strategy.keys()).difference(cols)
-        diff_c = set(cols).difference(strategy.keys())
-        if diff_s or diff_c:
+        if diff_s:
             err = f"Keys of strategies and column names must match"
             raise ValueError(err)
         else:

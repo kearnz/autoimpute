@@ -36,8 +36,10 @@ def _single_default(series):
     """helper function for default"""
     if is_numeric_dtype(series):
         return _mean(series)
-    if is_string_dtype(series):
+    elif is_string_dtype(series):
         return _mode(series)
+    else:
+        return _none(series)
 
 def _random(series):
     """return random values to select from"""
