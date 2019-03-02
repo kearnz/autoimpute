@@ -15,7 +15,7 @@ def _mode(series):
     """helper mode"""
     return series.mode(), "mode"
 
-def _default(series):
+def _single_default(series):
     """helper function for default"""
     if is_numeric_dtype(series):
         return _mean(series)

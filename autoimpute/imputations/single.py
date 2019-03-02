@@ -4,10 +4,11 @@ import warnings
 import numpy as np
 from sklearn.base import BaseEstimator, TransformerMixin
 from sklearn.utils.validation import check_is_fitted
-from autoimpute.utils.checks import check_missingness, _check_strategy
+from autoimpute.utils.checks import check_missingness
+from autoimpute.utils.checks import _check_strategy, _check_fit_strat
 from autoimpute.utils.helpers import _nan_col_dropper, _mode_output
 from autoimpute.imputations.methods import _mean, _median, _mode
-from autoimpute.imputations.methods import _default, _random
+from autoimpute.imputations.methods import _single_default, _random
 # pylint:disable=attribute-defined-outside-init
 # pylint:disable=arguments-differ
 
@@ -18,7 +19,7 @@ class SingleImputer(BaseEstimator, TransformerMixin):
         "mean": _mean,
         "median": _median,
         "mode":  _mode,
-        "default": _default,
+        "default": _single_default,
         "random": _random
     }
 
@@ -43,54 +44,16 @@ class SingleImputer(BaseEstimator, TransformerMixin):
     def _fit_strategy_validator(self, X):
         """helper method to ensure right number of strategies"""
         # remove nan columns and store colnames
-        o_cols = X.columns.tolist()
+        ocols = X.columns.tolist()
         X, self._nc = _nan_col_dropper(X)
-        cols = X.columns.tolist()
-
-        # if strategy is string, extend strategy to all cols
-        if isinstance(self.strategy, str):
-            self._strats = {c:self.strategy for c in cols}
-
-        # if list or tuple, ensure same number of cols in X as strategies
-        if isinstance(self.strategy, (list, tuple)):
-            s_l = len(self.strategy)
-            o_l = len(o_cols)
-            if s_l != o_l:
-                err = f"Original columns ({o_l}) must equal strategies ({s_l})"
-                raise ValueError(err)
-            else:
-                if self._nc:
-                    i = 0
-                    for ind, name in enumerate(o_cols):
-                        if name in self._nc:
-                            del self.strategy[ind-i]
-                            i += 1
-                self._strats = {c[0]:c[1] for c in zip(cols, self.strategy)}
-
-        # if strategy is dict, ensure keys in strategy match cols in X
-        if isinstance(self.strategy, dict):
-            if self._nc:
-                for k in self._nc:
-                    self.strategy.pop(k, None)
-            keys = set(self.strategy.keys())
-            cols = set(cols)
-            kdiff = keys.difference(cols)
-            cdiff = cols.difference(keys)
-            if kdiff or cdiff:
-                err = f"Keys for strategies don't match columns of X.\n"
-                err_k = f"Keys missing: {kdiff}\n"
-                err_c = f"Columns missing: {cdiff}"
-                raise ValueError(f"{err}{err_k}{err_c}")
-            else:
-                self._strats = self.strategy
-
+        ncols = X.columns.tolist()
+        self._strats = _check_fit_strat(self.strategy, self._nc, ocols, ncols)
         # print strategies if verbose
         if self.verbose:
             st = "Strategies used to fit each column:"
             print(f"{st}\n{'-'*len(st)}")
             for k, v in self._strats.items():
                 print(f"Column: {k}, Strategy: {v}")
-
         return X
 
     @check_missingness

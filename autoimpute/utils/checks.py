@@ -228,3 +228,62 @@ def _check_strategy(strat_names, strategy):
             raise ValueError(f"{err} {err_op}")
     else:
         raise TypeError("Strategy must be string, tuple, list, or dict.")
+
+def _check_fit_strat(strategy, nc, o_cols, cols):
+    """Check whether strategies of an imputer make sense given the data passed.
+
+    An Imputer class takes strategies to use for imputation. Those strategies
+    are validated when a class instance is created. When fitting actual data,
+    the strategies must be validated again to make sure they make sense given
+    the columns in the dataset passed. For example, "mean" is a fine strategy
+    when the instance is created, but "mean" will not work for a categorical
+    column. This check validates the strategy used for the given column each
+    strategy is assigned to.
+
+    Args:
+        strategy(str, iterator, dict): strategies passed for columns.
+            String = 1 strategy, broadcast to all columns.
+            Iterator = multiple strategies, must match col index and length.
+            Dict = multiple strategies, must match col name and length.
+        nc(set): any columns removed because they are fully missing.
+        o_cols: original columns before nc determined.
+        cols: columns remaining after nc determined.
+    """
+    o_l = len(o_cols)
+
+    # if strategy is string, extend strategy to all cols
+    if isinstance(strategy, str):
+        return {c:strategy for c in cols}
+
+    # if list or tuple, ensure same number of cols in X as strategies
+    if isinstance(strategy, (list, tuple)):
+        s_l = len(strategy)
+        if s_l != o_l:
+            err = f"Original columns ({o_l}) must equal strategies ({s_l})"
+            raise ValueError(err)
+        else:
+            if nc:
+                i = 0
+                for ind, name in enumerate(o_cols):
+                    if name in nc:
+                        del strategy[ind-i]
+                        i += 1
+            return {c[0]:c[1] for c in zip(cols, strategy)}
+
+    # if strategy is dict, ensure keys in strategy match cols in X
+    if isinstance(strategy, dict):
+        k_l = len(strategy.keys())
+        if nc:
+            for k in nc:
+                strategy.pop(k, None)
+        k_l = len(strategy.keys())
+        if k_l != o_l:
+            err = f"Original columns ({o_l}) must equal strategies ({s_l})"
+            raise ValueError(err)
+        diff_s = set(strategy.keys()).difference(cols)
+        diff_c = set(cols).difference(strategy.keys())
+        if diff_s or diff_c:
+            err = f"Keys of strategies and column names must match"
+            raise ValueError(err)
+        else:
+            return strategy
