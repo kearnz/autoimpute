@@ -67,7 +67,7 @@ class TimeSeriesImputer(BaseEstimator, TransformerMixin):
         if not isinstance(ts_ix, pd.DatetimeIndex):
             fts = ts.columns[0]
             if ts_c == 1:
-                self._strats.pop(fts)
+                self._strats.pop(fts, None)
                 X = X.set_index(fts, drop=True)
             else:
                 ic = self.index_column
@@ -76,7 +76,7 @@ class TimeSeriesImputer(BaseEstimator, TransformerMixin):
                     X = X.set_index(fts, drop=True)
                 else:
                     if ic in ts:
-                        self._strats.pop(ic)
+                        self._strats.pop(ic, None)
                         X = X.set_index(ic, drop=True)
                     else:
                         err = f"{ic} can't be set as DatetimeIndex."
