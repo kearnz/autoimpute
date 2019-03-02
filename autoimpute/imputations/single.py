@@ -7,8 +7,8 @@ from sklearn.utils.validation import check_is_fitted
 from autoimpute.utils.checks import check_missingness
 from autoimpute.utils.checks import _check_strategy, _check_fit_strat
 from autoimpute.utils.helpers import _nan_col_dropper, _mode_output
-from autoimpute.imputations.methods import _mean, _median, _mode
-from autoimpute.imputations.methods import _single_default, _random
+from autoimpute.imputations.methods import _mean, _median, _mode, _linear
+from autoimpute.imputations.methods import _single_default, _random, _none
 # pylint:disable=attribute-defined-outside-init
 # pylint:disable=arguments-differ
 
@@ -20,7 +20,9 @@ class SingleImputer(BaseEstimator, TransformerMixin):
         "median": _median,
         "mode":  _mode,
         "default": _single_default,
-        "random": _random
+        "random": _random,
+        "linear": _linear,
+        "none": _none
     }
 
     def __init__(self, strategy="default", fill_value=None,
@@ -68,12 +70,7 @@ class SingleImputer(BaseEstimator, TransformerMixin):
         # perform fit on each column, depending on that column's strategy
         for col_name, func_name in self._strats.items():
             f = self.strategies[func_name]
-            try:
-                fit_param, fit_name = f(X[col_name])
-            except TypeError as te:
-                typ = X[col_name].dtype
-                err = f"{func_name} not appropriate for column with type {typ}"
-                raise TypeError(err) from te
+            fit_param, fit_name = f(X[col_name])
             self.statistics_[col_name] = {"param":fit_param,
                                           "strategy": fit_name}
             if self.verbose:
