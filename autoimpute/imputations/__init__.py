@@ -7,6 +7,7 @@ specifies the methods and classes that are currently available on import.
 Imported:
     MissingnessClassifier
     SingleImputer
+    TimeSeriesImputer
     listwise_delete
 
 This module handles `from autoimpute.imputations import *` with the __all__
@@ -16,6 +17,8 @@ from autoimpute.imputations.
 
 from autoimpute.imputations.mis_classifier import MissingnessClassifier
 from autoimpute.imputations.single import SingleImputer
+from autoimpute.imputations.ts import TimeSeriesImputer
 from autoimpute.imputations.deletion import listwise_delete
 
-__all__ = ["MissingnessClassifier", "SingleImputer", "listwise_delete"]
+__all__ = ["MissingnessClassifier", "SingleImputer",
+           "TimeSeriesImputer", "listwise_delete"]

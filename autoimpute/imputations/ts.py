@@ -143,7 +143,7 @@ class TimeSeriesImputer(BaseEstimator, TransformerMixin):
                 _interp(X[col_name], strat)
             elif strat == "none":
                 pass
-            # interp mean, median, constant
+            # mean, median, constant
             else:
                 X[col_name].fillna(fill_val, inplace=True)
         return X
