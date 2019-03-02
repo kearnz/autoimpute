@@ -7,7 +7,8 @@ from sklearn.utils.validation import check_is_fitted
 from autoimpute.utils.checks import check_missingness
 from autoimpute.utils.checks import _check_strategy, _check_fit_strat
 from autoimpute.utils.helpers import _nan_col_dropper, _mode_output
-from autoimpute.imputations.methods import _mean, _median, _mode, _linear
+from autoimpute.imputations.methods import _mean, _median, _mode
+from autoimpute.imputations.methods import _interp, _linear
 from autoimpute.imputations.methods import _single_default, _random, _none
 # pylint:disable=attribute-defined-outside-init
 # pylint:disable=arguments-differ
@@ -50,12 +51,6 @@ class SingleImputer(BaseEstimator, TransformerMixin):
         X, self._nc = _nan_col_dropper(X)
         ncols = X.columns.tolist()
         self._strats = _check_fit_strat(self.strategy, self._nc, ocols, ncols)
-        # print strategies if verbose
-        if self.verbose:
-            st = "Strategies used to fit each column:"
-            print(f"{st}\n{'-'*len(st)}")
-            for k, v in self._strats.items():
-                print(f"Column: {k}, Strategy: {v}")
         return X
 
     @check_missingness
@@ -73,8 +68,11 @@ class SingleImputer(BaseEstimator, TransformerMixin):
             fit_param, fit_name = f(X[col_name])
             self.statistics_[col_name] = {"param":fit_param,
                                           "strategy": fit_name}
+            # print strategies if verbose
             if self.verbose:
-                print(f"{col_name} has {func_name} equal to {fit_param}")
+                st = "Strategies used to fit each column:"
+                print(f"{st}\n{'-'*len(st)}")
+                print(f"Column: {col_name}, Strategy: {fit_name}")
         return self
 
     @check_missingness
@@ -112,13 +110,10 @@ class SingleImputer(BaseEstimator, TransformerMixin):
                 fills = np.random.choice(fill_val, len(ind))
                 X.loc[ind, col_name] = fills
             elif strat == "linear":
-                X[col_name].interpolate(method="linear",
-                                        limit=None,
-                                        limit_direction="both",
-                                        inplace=True)
+                _interp(X[col_name], strat)
             elif strat == "none":
-                # don't do anything to columns with no strategy
                 pass
+            # fill in mean, median, constant, default
             else:
                 X[col_name].fillna(fill_val, inplace=True)
         return X
