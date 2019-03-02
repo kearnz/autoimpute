@@ -2,53 +2,14 @@
 
 import warnings
 import numpy as np
-from pandas.api.types import is_string_dtype
-from pandas.api.types import is_numeric_dtype
 from sklearn.base import BaseEstimator, TransformerMixin
 from sklearn.utils.validation import check_is_fitted
-from autoimpute.utils.checks import check_missingness
-from autoimpute.utils.helpers import _nan_col_dropper
+from autoimpute.utils.checks import check_missingness, _check_strategy
+from autoimpute.utils.helpers import _nan_col_dropper, _mode_output
+from autoimpute.imputations.methods import _mean, _median, _mode
+from autoimpute.imputations.methods import _default, _random
 # pylint:disable=attribute-defined-outside-init
 # pylint:disable=arguments-differ
-
-def _mean(series):
-    """helper mean"""
-    return series.mean(), "mean"
-
-def _median(series):
-    """helper median"""
-    return series.median(), "median"
-
-def _mode(series):
-    """helper mode"""
-    return series.mode(), "mode"
-
-def _default(series):
-    """helper function for default"""
-    if is_numeric_dtype(series):
-        return _mean(series)
-    if is_string_dtype(series):
-        return _mode(series)
-
-def _random(series):
-    """return random values to select from"""
-    return series[~series.isnull()].unique(), "random"
-
-def _mode_helper(series, mode, strategy):
-    """helper function for mode"""
-    num_modes = len(mode)
-    if num_modes == 1:
-        return series.fillna(mode[0], inplace=True)
-    else:
-        if strategy is None:
-            return series.fillna(mode[0], inplace=True)
-        elif strategy == "random":
-            ind = series[series.isnull()].index
-            fills = np.random.choice(mode, len(ind))
-            series.loc[ind] = fills
-        else:
-            err = f"{strategy} not accepted for mode imputation"
-            raise ValueError(err)
 
 class SingleImputer(BaseEstimator, TransformerMixin):
     """Techniques to Impute missing values once"""
@@ -77,26 +38,7 @@ class SingleImputer(BaseEstimator, TransformerMixin):
     def strategy(self, s):
         """validate the strategy property"""
         strat_names = self.strategies.keys()
-        err_op = f"Strategies must be one of {list(strat_names)}."
-        if isinstance(s, str):
-            if s in strat_names:
-                self._strategy = s
-            else:
-                err = f"Strategy {s} not a valid imputation method.\n"
-                raise ValueError(f"{err} {err_op}")
-        elif isinstance(s, (list, tuple, dict)):
-            if isinstance(s, dict):
-                ss = set(s.values())
-            else:
-                ss = set(s)
-            sdiff = ss.difference(strat_names)
-            if not sdiff:
-                self._strategy = s
-            else:
-                err = f"Strategies {sdiff} in {s} not valid for imputation.\n"
-                raise ValueError(f"{err} {err_op}")
-        else:
-            raise ValueError("Strategy must be string, tuple, list, or dict.")
+        self._strategy = _check_strategy(strat_names, s)
 
     def _fit_strategy_validator(self, X):
         """helper method to ensure right number of strategies"""
@@ -205,7 +147,7 @@ class SingleImputer(BaseEstimator, TransformerMixin):
             strat = fit_data["strategy"]
             fill_val = fit_data["param"]
             if strat == "mode":
-                _mode_helper(X[col_name], fill_val, self.fill_value)
+                _mode_output(X[col_name], fill_val, self.fill_value)
             elif strat == "random":
                 ind = X[col_name][X[col_name].isnull()].index
                 fills = np.random.choice(fill_val, len(ind))

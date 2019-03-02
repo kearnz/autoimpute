@@ -1,13 +1,17 @@
-"""Check and validate data to make sure it plays nicely with imputation.
+"""Check and validate data & methods to ensure they play well w/ imputation.
 
-This module is a series of decorators used throughout autoimpute.
-The decorators perform checks or transformations on data to ensure it
-is well formatted prior to running a given method.
+This module is a series of decorators and functions used throughout autoimpute.
+The decorators perform checks or transformations on functions that accept data.
+They ensure the data is well formatted prior to running a given method.
+Additional functions perform data validation and error handling. They are used
+in different classes or methods where the same behavior is reused.
 
-Decorator Methods:
+Methods:
     check_data_structure(func)
     check_missingness(func)
     remove_nan_columns(func)
+    _check_mode(series, mode, strategy)
+    _check_strategy(strat_names, strategy)
 
 Todo:
     * Support data structures other than pandas DataFrame. Consider:
@@ -184,3 +188,43 @@ def remove_nan_columns(func):
             _nan_col_dropper(a)
         return func(d, *args, **kwargs)
     return wrapper
+
+def _check_strategy(strat_names, strategy):
+    """Logic to determine if the strategy passed for imputation is valid.
+
+    Imputer Classes in this library have a very flexible strategy argument.
+    The argument can be a string, an iterator, or a dictionary. In each case,
+    the method(s) passed is (are) checked against allowed methods, which are
+    generally stored in a class variable of the given Imputer.
+
+    Args:
+        strat_names (iterator): strategies allowed by the Imputer class
+        strategy (any): strategies passed as arguments
+
+    Returns:
+        strategy (any): if string, iterator, or dictionary
+
+    Raises:
+        ValueError: Strategies not valid (not in allowed strategies)
+        TypeError: Strategy must be a string, tuple, list, or dict.
+    """
+    err_op = f"Strategies must be one of {list(strat_names)}."
+    if isinstance(strategy, str):
+        if strategy in strat_names:
+            return strategy
+        else:
+            err = f"Strategy {strategy} not a valid imputation method.\n"
+            raise ValueError(f"{err} {err_op}")
+    elif isinstance(strategy, (list, tuple, dict)):
+        if isinstance(strategy, dict):
+            ss = set(strategy.values())
+        else:
+            ss = set(strategy)
+        sdiff = ss.difference(strat_names)
+        if not sdiff:
+            return strategy
+        else:
+            err = f"Strategies {sdiff} in {strategy} not valid imputation.\n"
+            raise ValueError(f"{err} {err_op}")
+    else:
+        raise TypeError("Strategy must be string, tuple, list, or dict.")
