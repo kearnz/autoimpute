@@ -72,7 +72,7 @@ class TimeSeriesImputer(BaseEstimator, TransformerMixin):
             else:
                 ic = self.index_column
                 if ic is None:
-                    self._strats.pop(fts)
+                    self._strats.pop(fts, None)
                     X = X.set_index(fts, drop=True)
                 else:
                     if ic in ts:
