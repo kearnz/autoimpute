@@ -62,7 +62,7 @@ class TimeSeriesImputer(BaseEstimator, TransformerMixin):
 
     def _transform_strategy_validator(self, X):
         """helper method to ensure series index"""
-        
+
         # check columns
         X_cols = X.columns.tolist()
         fit_cols = set(self._strats.keys())
@@ -70,12 +70,12 @@ class TimeSeriesImputer(BaseEstimator, TransformerMixin):
         if diff_fit:
             err = "Same columns that were fit must appear in transform."
             raise ValueError(err)
-        
+
         # identify if time series columns
         ts = X.select_dtypes(include=[np.datetime64])
         ts_c = len(ts.columns)
         ts_ix = X.index
-        
+
         # attempt to reindex the right time column
         if not isinstance(ts_ix, pd.DatetimeIndex):
             fts = ts.columns[0]
