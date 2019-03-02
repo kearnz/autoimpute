@@ -23,6 +23,7 @@ Todo:
 """
 
 import functools
+import numpy as np
 import pandas as pd
 from autoimpute.utils.helpers import _nan_col_dropper
 
@@ -107,7 +108,8 @@ def check_missingness(func):
 
         This wrapper within the decorator does the actual verification. It
         checks that a DataFrame has both missing and real values. If the
-        DataFrame is fully incomplete, an error is raised.
+        DataFrame is fully incomplete, an error is raised. If the DataFrame
+        has datetime columns that are not fully complete, an error is raised.
 
         Args:
             d (any): Again, anything can be passed, but DataFrame required
@@ -121,14 +123,29 @@ def check_missingness(func):
 
         Raises:
             ValueError: If all values in DataFrame are missing.
+            ValueError: If timeseries values in DataFrame are missing.
         """
         if isinstance(d, pd.DataFrame):
-            missing = pd.isnull(d.values)
+            n_ts = d.select_dtypes(include=[np.number, np.object])
+            ts = d.select_dtypes(include=[np.datetime64])
         else:
             a = args[0]
-            missing = pd.isnull(a.values)
-        if missing.all():
-            raise ValueError("All values missing, need some complete.")
+            n_ts = a.select_dtypes(include=[np.number, np.object])
+            ts = a.select_dtypes(include=[np.datetime64])
+
+        # check if non-time series columns are all missing, and if so, error
+        if n_ts.columns.any():
+            missing_nts = pd.isnull(n_ts.values)
+            if missing_nts.all():
+                raise ValueError("All values missing, need some complete.")
+
+        # check if any time series columns have missing data, and if so, error
+        if ts.columns.any():
+            missing_ts = pd.isnull(ts.values)
+            if missing_ts.any():
+                raise ValueError("Time series columns must be fully complete.")
+
+        # return func if no missingness violations detected, then return wrap
         return func(d, *args, **kwargs)
     return wrapper
 

@@ -5,12 +5,14 @@ Tests use the pytest library. The tests in this module ensure the following:
 - `check_data_structure` raises errors for any other type of data structure.
 - `check_missingness` enforces DataFrames have observed and missing values.
 - `check_missingness` raises errors for fully missing DataFrames.
-- `check_missingness` issues a warning for fully complete DataFrames.
+- `check_missingness` raises errors for time series missing in DataFrames.
+- `remove_nan_columns` removes columns if the entire column is missing.
 
 Tests:
     test_data_structures_not_allowed(ds)
     test_data_structures_allowed(ds)
     test_missingness_not_allowed(ds)
+    test_nan_column_removal()
 
 Todo:
     * Rewrite tests when additional data types accepted.
@@ -54,15 +56,27 @@ def data_structures_not_allowed():
 
 def data_stuctures_allowed():
     """Types that should not throw an error and should return a valid array."""
-    df_ = pd.DataFrame({"A": [1, 2, 3, 4],
-                        "B": ["a", "b", "c", "d"]})
+    df_ = pd.DataFrame({
+        "A": [1, 2, 3, 4],
+        "B": ["a", "b", "c", "d"]
+    })
     return [df_]
 
 def missingness_not_allowed():
     """Can't impute datasets that are fully complete or incomplete."""
-    df_none = pd.DataFrame({"A": [np.nan, np.nan, np.nan],
-                            "B": [None, None, None]})
-    return [df_none]
+    df_none = pd.DataFrame({
+        "A": [np.nan, np.nan, np.nan],
+        "B": [None, None, None]
+    })
+    df_ts = pd.DataFrame({
+        "date": ["2018-05-01", "2018-05-02", "2018-05-03",
+                 "2018-05-04", "2018-05-05", "2018-05-06",
+                 "2018-05-07", "2018-05-08", "2018-05-09"],
+        "stats": [3, 4, np.nan, 15, 7, np.nan, 26, 25, 62]
+    })
+    df_ts["date"] = pd.to_datetime(df_ts["date"], utc=True)
+    df_ts.loc[[1, 3], "date"] = np.nan
+    return [df_none, df_ts]
 
 @pytest.mark.parametrize("ds", data_structures_not_allowed())
 def test_data_structures_not_allowed(ds):
@@ -110,7 +124,8 @@ def test_missingness_not_allowed(ds):
 
     Also utilizes the pytest.mark.parametize method to run test. Tests run on
     items in iterator returned from `missingness_not_allowed()`, which right
-    now returns a fully missing DataFrame only.
+    now returns a fully missing DataFrame and a time series DataFrame with
+    missingness in the time series itself.
 
     Args:
         ds (any -> iterator): any data structure within an iterator. `ds` is
