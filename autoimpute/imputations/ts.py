@@ -1,6 +1,5 @@
 """Time Series Imputation Module"""
 
-import warnings
 import numpy as np
 import pandas as pd
 from sklearn.base import BaseEstimator, TransformerMixin
@@ -27,12 +26,11 @@ class TimeSeriesImputer(BaseEstimator, TransformerMixin):
     }
 
     def __init__(self, strategy="default", fill_value=None,
-                 index_column=None, verbose=False, copy=True):
+                 index_column=None, verbose=False):
         self.strategy = strategy
         self.fill_value = fill_value
         self.index_column = index_column
         self.verbose = verbose
-        self.copy = copy
 
     @property
     def strategy(self):
@@ -47,7 +45,6 @@ class TimeSeriesImputer(BaseEstimator, TransformerMixin):
 
     def _fit_strategy_validator(self, X):
         """helper method to ensure right number of strategies"""
-
         # first, make sure there is at least one datetime column
         ts = X.select_dtypes(include=[np.datetime64])
         ts_c = len(ts.columns)
@@ -63,7 +60,23 @@ class TimeSeriesImputer(BaseEstimator, TransformerMixin):
         ncols = X.columns.tolist()
         self._strats = _check_fit_strat(self.strategy, self._nc, ocols, ncols)
 
-        # finally, reindexing the time column
+    def _transform_strategy_validator(self, X):
+        """helper method to ensure series index"""
+        
+        # check columns
+        X_cols = X.columns.tolist()
+        fit_cols = set(self._strats.keys())
+        diff_fit = set(fit_cols).difference(X_cols)
+        if diff_fit:
+            err = "Same columns that were fit must appear in transform."
+            raise ValueError(err)
+        
+        # identify if time series columns
+        ts = X.select_dtypes(include=[np.datetime64])
+        ts_c = len(ts.columns)
+        ts_ix = X.index
+        
+        # attempt to reindex the right time column
         if not isinstance(ts_ix, pd.DatetimeIndex):
             fts = ts.columns[0]
             if ts_c == 1:
@@ -86,9 +99,6 @@ class TimeSeriesImputer(BaseEstimator, TransformerMixin):
     @check_missingness
     def fit(self, X):
         """Fit method for time series imputer"""
-        # copy, validate, and create statistics if validated
-        if self.copy:
-            X = X.copy()
         self._fit_strategy_validator(X)
         self.statistics_ = {}
 
@@ -110,25 +120,9 @@ class TimeSeriesImputer(BaseEstimator, TransformerMixin):
         """Transform method for a single imputer"""
         # initial checks before transformation
         check_is_fitted(self, 'statistics_')
-        if self.copy:
-            X = X.copy()
-            if self._nc:
-                wrn = f"Dropping {self._nc} since they were not fit."
-                warnings.warn(wrn)
-                try:
-                    X.drop(self._nc, axis=1, inplace=True)
-                except ValueError as ve:
-                    err = "Same columns must appear in fit and transform."
-                    raise ValueError(err) from ve
 
-        # check columns
-        X_cols = X.columns.tolist()
-        fit_cols = set(self._strats.keys())
-        diff_fit = set(fit_cols).difference(X_cols)
-        if diff_fit:
-            err = "Same columns that were fit must appear in transform."
-            raise ValueError(err)
-
+        # create dataframe index then proceed
+        X = self._transform_strategy_validator(X)
         # transformation logic
         for col_name, fit_data in self.statistics_.items():
             strat = fit_data["strategy"]
