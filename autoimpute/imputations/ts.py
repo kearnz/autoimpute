@@ -7,8 +7,9 @@ from sklearn.utils.validation import check_is_fitted
 from autoimpute.utils.helpers import _nan_col_dropper, _mode_output
 from autoimpute.utils.checks import check_missingness
 from autoimpute.utils.checks import _check_strategy, _check_fit_strat
-from autoimpute.imputations.methods import _mean, _median, _mode, _random
-from autoimpute.imputations.methods import _interp, _time, _linear, _none
+from autoimpute.imputations.methods import _mean, _median, _mode
+from autoimpute.imputations.methods import _interp, _time, _linear
+from autoimpute.imputations.methods import _ts_default, _random, _none
 # pylint:disable=attribute-defined-outside-init
 # pylint:disable=arguments-differ
 
@@ -19,6 +20,7 @@ class TimeSeriesImputer(BaseEstimator, TransformerMixin):
         "mean": _mean,
         "median": _median,
         "mode":  _mode,
+        "default": _ts_default,
         "random": _random,
         "linear": _linear,
         "time": _time,

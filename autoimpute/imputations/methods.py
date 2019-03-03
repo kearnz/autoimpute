@@ -32,15 +32,6 @@ def _mode(series):
     method = "mode"
     return series.mode(), method
 
-def _single_default(series):
-    """helper function for default"""
-    if is_numeric_dtype(series):
-        return _mean(series)
-    elif is_string_dtype(series):
-        return _mode(series)
-    else:
-        return _none(series)
-
 def _random(series):
     """return random values to select from"""
     method = "random"
@@ -65,3 +56,21 @@ def _time(series):
     method = "time"
     _err_method(method, series)
     return None, method
+
+def _single_default(series):
+    """helper function for default"""
+    if is_numeric_dtype(series):
+        return _mean(series)
+    elif is_string_dtype(series):
+        return _mode(series)
+    else:
+        return _none(series)
+
+def _ts_default(series):
+    """helper function for default"""
+    if is_numeric_dtype(series):
+        return _linear(series)
+    elif is_string_dtype(series):
+        return _mode(series)
+    else:
+        return _none(series)
