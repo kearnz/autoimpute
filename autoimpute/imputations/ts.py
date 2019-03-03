@@ -104,6 +104,9 @@ class TimeSeriesImputer(BaseEstimator, TransformerMixin):
         self._fit_strategy_validator(X)
         self.statistics_ = {}
 
+        if self.verbose:
+            st = "Strategies used to fit each column:"
+            print(f"{st}\n{'-'*len(st)}")
         # perform fit on each column, depending on that column's strategy
         for col_name, func_name in self._strats.items():
             f = self.strategies[func_name]
@@ -112,8 +115,6 @@ class TimeSeriesImputer(BaseEstimator, TransformerMixin):
                                           "strategy": fit_name}
             # print strategies if verbose
             if self.verbose:
-                st = "Strategies used to fit each column:"
-                print(f"{st}\n{'-'*len(st)}")
                 print(f"Column: {col_name}, Strategy: {fit_name}")
         return self
 

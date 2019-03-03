@@ -1,19 +1,11 @@
-"""Class to predict missingness in a dataset and generate test cases.
+"""Module to predict missingness in a dataset and generate test cases.
 
-The main class in this module is the MissingnessClassifier. It has numerous
-use cases. First, it fits the columns of a DataFrame and predicts whether
-or not a given observation is missing or not, based on all available
-information in other columns (todo: allow for flexible column specification).
-Second, it allows users to generate test cases for imputation analysis. Test
-cases are values that are truly observed but have a high probability of being
-missing. These cases make the imputation process supervised as opposed to
-unsupervised. A user never knows the true value of missing data, but a user
-can verify imputation methods on test cases for which the true value is known.
-More information regarding each feature is available in the docstrings of
-instance methods within the MissingnessClassifier.
+This module contains the MissingnessClassifier, which is used to predict
+missingness within a dataset using information derived from other features.
 
 Todo:
     * Allow for flexible column specification used in predictor.
+    * Alllow for basic imputation methods before classification.
     * Update docstrings for class initialization and instance methods.
     * Add examples of proper usage for the class and its instance methods.
 """
@@ -30,29 +22,58 @@ from autoimpute.utils.helpers import _nan_col_dropper
 # pylint:disable=arguments-differ
 
 class MissingnessClassifier(BaseEstimator, ClassifierMixin):
-    """
-    Predicts the likelihood of missingness for a given dataset
-    Default method uses xgboost, although other predictors are supported
+    """Classify values as missing or not, based on missingness patterns.
+
+    The class has has numerous use cases. First, it fits columns of a DataFrame
+    and predicts whether or not an observation is missing, based on all
+    available information in other columns. The class supports both class
+    prediction and class probabilities.
+
+    Second, the class can generate test cases for imputation analysis. Test
+    cases are values that are truly observed but have a high probability of
+    being missing. These cases make imputation process supervised as opposed
+    to unsupervised. A user never knows the true value of missing data but can
+    verify imputation methods on test cases for which the true value is known.
     """
     def __init__(self, classifier=None, scaler=None, verbose=False):
-        """Create an instance of the MissingnessPredictor"""
+        """Create an instance of the MissingnessClassifier.
+
+        Args:
+            classifier (classifier, optional): valid classifier from sklearn.
+                If None, default is xgboost. Note that classifier must
+                conform to sklearn style. This means it must implement the
+                `predict_proba` method and act as a porper classifier.
+            scaler (scaler, optional): valid scaler from sklearn.
+                If None, default is None. Note that scaler must conform to
+                sklearn style. This means it must implement the `transform`
+                method and act as a proper scaler.
+            verbose (bool, optional): print information to the console.
+                Default is False.
+        """
         self.classifier = classifier
         self.scaler = scaler
         self.verbose = verbose
 
     @property
     def classifier(self):
-        """return the classifier property"""
+        """Property getter to return the value of the classifier property"""
         return self._classifier
 
     @property
     def scaler(self):
-        """return the scaler property"""
+        """Property getter to return the value of the scaler property"""
         return self._scaler
 
     @classifier.setter
     def classifier(self, c):
-        """Validate the classifier property and set default param"""
+        """Validate the classifier property and set default parameters.
+
+        Args:
+            c (classifier): if None, implement the xgboost classifier
+
+        Raises:
+            ValueError: classifier does not implement `predict_proba`
+        """
         if c is None:
             self._classifier = XGBClassifier()
         else:
@@ -64,7 +85,14 @@ class MissingnessClassifier(BaseEstimator, ClassifierMixin):
 
     @scaler.setter
     def scaler(self, s):
-        """Validate the scaler property and confirm default param"""
+        """Validate the scaler property and set default parameters.
+
+        Args:
+            s (scaler): if None, implement the xgboost classifier
+
+        Raises:
+            ValueError: classifier does not implement `fit_transform`
+        """
         if s is None:
             self._scaler = s
         else:
@@ -75,7 +103,7 @@ class MissingnessClassifier(BaseEstimator, ClassifierMixin):
                 self._scaler = s
 
     def _check_if_single_dummy(self, X):
-        """Detect if single category present for a one-hot enocded feature"""
+        """Private method to check if encoding results in single cat."""
         cats = X.columns.tolist()
         if len(cats) == 1:
             c = cats[0]
@@ -85,7 +113,7 @@ class MissingnessClassifier(BaseEstimator, ClassifierMixin):
             warnings.warn(f"{msg} {cons}")
 
     def _scaler_fit(self):
-        """Method to scale data based on scaler provided"""
+        """Private method to scale data based on scaler provided."""
         # if scaler used, must be from sklearn library
         if self._len_num > 0:
             sc = clone(self.scaler)
@@ -95,7 +123,7 @@ class MissingnessClassifier(BaseEstimator, ClassifierMixin):
             self._scaled_dum = sc.fit(self._data_dum.values)
 
     def _scaler_transform(self):
-        """Method to transform data using scaled fit"""
+        """Private method to transform data using scaled fit."""
         if not self._scaled_num is None:
             cn = self._data_num.columns.tolist()
             sn = self._scaled_num.transform(self._data_num.values)
@@ -106,7 +134,7 @@ class MissingnessClassifier(BaseEstimator, ClassifierMixin):
             self._data_dum = pd.DataFrame(sd, columns=cd)
 
     def _prep_dataframes(self, X):
-        """Prepare numeric and categorical data for fit method"""
+        """Private method to process numeric & categorical data for fit."""
         X, self._nc = _nan_col_dropper(X)
         self.data_mi = pd.isnull(X)*1
         self._data_num = X.select_dtypes(include=(np.number,))
@@ -133,7 +161,7 @@ class MissingnessClassifier(BaseEstimator, ClassifierMixin):
             print(f"Number of categorical columns: {self._len_dum}")
 
     def _prep_classifier_cols(self, X, i, c):
-        """perpare the data for each classifier"""
+        """Private method to perpare the data for each classifier."""
         # dealing with a numeric column...
         if X[c].dtype == np.number:
             if self._len_num > 1:
@@ -190,7 +218,7 @@ class MissingnessClassifier(BaseEstimator, ClassifierMixin):
         return x, y
 
     def _prep_predictor(self, X, new_data):
-        """Make necessary checks and adjustments before prediction"""
+        """Private method to prep for prediction."""
         # initial checks before transformation
         check_is_fitted(self, 'statistics_')
 
@@ -216,7 +244,21 @@ class MissingnessClassifier(BaseEstimator, ClassifierMixin):
 
     @check_missingness
     def fit(self, X, **kwargs):
-        """Get everything that the transform step needs to make predictions"""
+        """Fit an individual classifier for each column in the DataFrame.
+
+        For each feature in the DataFrame, a classifier (default: xgboost) is
+        fit with the feature as the response (y) and all other features as
+        covariates (X). The resulting classifiers are stored in the class
+        instance statistics. One `fit` for each column in the dataset. Column
+        specification will be supported as well.
+
+        Args:
+            X (pd.DataFrame): DataFrame on which to fit classifiers
+            **kwargs: keyword arguments used by classifiers
+
+        Returns:
+            self: instance of MissingnessClassifier
+        """
         self._prep_dataframes(X)
         self.statistics_ = {}
         if not self.scaler is None:
@@ -233,7 +275,23 @@ class MissingnessClassifier(BaseEstimator, ClassifierMixin):
 
     @check_missingness
     def predict(self, X, new_data=True, **kwargs):
-        """Make class predictions: 1 for missing 0 for not missing"""
+        """Predict class of each feature. 1 for missing; 0 for not missing.
+
+        First checks to ensure data has been fit. If fit, `predict` method
+        uses the respective classifier of each feature (stored in statistics)
+        and predicts class membership for each observation of each feature.
+        1 = missing; 0 = not missing. Prediction is binary, as class membership
+        is hard. If probability deesired, use `predict_proba` method.
+
+        Args:
+            X (pd.DataFrame): DataFrame used to create predictions.
+            new_data (bool, optional): whether or not new data is used.
+                Default is False.
+            kwargs: kewword arguments. Used by the classifer.
+
+        Returns:
+            pd.DataFrame: DataFrame with class prediction for each observation.
+        """
         # predictions for each column using respective fit classifier
         self._prep_predictor(X, new_data)
         if self.verbose:
@@ -253,7 +311,24 @@ class MissingnessClassifier(BaseEstimator, ClassifierMixin):
 
     @check_missingness
     def predict_proba(self, X, new_data=True, **kwargs):
-        """Determine class prediction probabilities for missingness"""
+        """Predict probability of missing class membership of each feature.
+
+        First checks to ensure data has been fit. If fit, `predict_proba`
+        method uses the respsective classifier of each feature (in statistics)
+        and predicts probability of missing class membership for each
+        observation of each feature. Prediction is probability of missing.
+        Therefore, probability of not missing is 1-P(missing). For hard class
+        membership prediction, use `predict`.
+
+        Args:
+            X (pd.DataFrame): DataFrame used to create probabilities.
+            new_data (bool, Optional): whether or not new data is used.
+                Default is False.
+
+        Returns:
+            pd.DataFrame: DataFrame with probability of missing class for
+                each observation.
+        """
         self._prep_predictor(X, new_data)
         if self.verbose:
             print("PREDICTING CLASS PROBABILITY...")
@@ -271,16 +346,55 @@ class MissingnessClassifier(BaseEstimator, ClassifierMixin):
         return self.data_mi_proba
 
     def fit_predict(self, X, new_data=False):
-        """Convenience method for fit and class prediction"""
+        """Convenience method for fit and class prediction.
+
+        Args:
+            X (pd.DataFrame): DataFrame to fit classifier and predict class.
+            new_data (bool, optional): Whether or not new data used.
+                Default is False.
+
+        Returns:
+            pd.DataFrame: DataFrame of class predictions.
+        """
         return self.fit(X).predict(X, new_data)
 
     def fit_predict_proba(self, X, new_data=False):
-        """Convenience method for fit and class probability prediction"""
+        """Convenience method for fit and class probability prediction.
+
+        Args:
+            X (pd.DataFrame): DataFrame to fit classifier and prredict prob.
+            new_data (bool, optional): Whether or not new data used.
+                Default is False.
+
+        Returns:
+            pd.DataFrame: DataFrame of class probability predictions.
+        """
         return self.fit(X).predict_proba(X, new_data)
 
     @check_missingness
     def gen_test_indices(self, X, thresh=0.5, new_data=False, use_exist=False):
-        """Method to indices of false positives for each fitted column"""
+        """Generate indices of false positives for each fitted column.
+
+        Method generates the locations (indices) of false positives returned
+        from classifiers. These are instances that have a high probability of
+        being missing even though true value is observed. Use this method to
+        get indices without mutating the actual DataFrame. To set the values
+        to missing for the actual DataFrame, use `gen_test_df`.
+
+        Args:
+            X (pd.DataFrame): DataFrame from which test indices generated.
+                Data first goes through `fit_predict_proba`.
+            thresh (float, optional): Threshhold for generating false positive.
+                If raw value is observed and P(missing) >= thresh, then the
+                observation is considered a false positive and index is stored.
+            new_data (bool, optional): Whether or not new data is used.
+                Default is False.
+            use_exist (bool, optional): Whether or not to use existing fit and
+                classifiers. Default is False.
+
+        Returns:
+            self: test_indice available from `self.test_indices`
+        """
         # ALWAYS fit_transform with dataset, as test vals can change
         self.test_indices = {}
         if not use_exist:
@@ -297,9 +411,30 @@ class MissingnessClassifier(BaseEstimator, ClassifierMixin):
                 print(f"Test indices for {c}:\n{pred_wrong.values.tolist()}")
         return self
 
-    def gen_test_df(self, X, thresh=.5, m=.05, inplace=False,
+    def gen_test_df(self, X, thresh=0.5, m=0.05, inplace=False,
                     new_data=False, use_exist=False):
-        """Convenience method to return test set as actual dataframe"""
+        """Generate new DatFrame with value of false positives set to missing.
+
+        Method generates new DataFrame with the locations (indices) of false
+        positives set to missing. Utilizes `gen_test_indices` to detect index
+        of false positives.
+
+        Args:
+            X (pd.DataFrame): DataFrame from which test indices generated.
+                Data first goes through `fit_predict_proba`.
+            thresh (float, optional): Threshhold for generating false positive.
+                If raw value is observed and P(missing) >= thresh, then the
+                observation is considered a false positive and index is stored.
+            m (float, optional): % false positive threshhold for warning.
+                If % <= m, issue warning with % of test cases.
+            new_data (bool, optional): Whether or not new data is used.
+                Default is False.
+            use_exist (bool, optional): Whether or not to use existing fit and
+                classifiers. Default is False.
+
+        Returns:
+            pd.DataFrame: DataFrame with false positives set to missing.
+        """
         if not inplace:
             X = X.copy()
 

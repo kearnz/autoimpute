@@ -5,40 +5,41 @@ from pandas.api.types import is_numeric_dtype
 # pylint:disable=unused-argument
 
 def _err_method(m, s):
+    """error hanlding for all the private methods in this module."""
     if not is_numeric_dtype(s):
         typ = s.dtype
         err = f"{m} not appropriate for Series with type {typ}"
         raise TypeError(err)
 
 def _none(series):
-    """don't impute a series. leave as is"""
+    """Private method for no imputation (leave series as is)."""
     method = "none"
     return None, method
 
 def _mean(series):
-    """helper mean"""
+    """Private method for mean imputation."""
     method = "mean"
     _err_method(method, series)
     return series.mean(), method
 
 def _median(series):
-    """helper median"""
+    """Private method for median imputation."""
     method = "median"
     _err_method(method, series)
     return series.median(), method
 
 def _mode(series):
-    """helper mode"""
+    """Private method for mode imputation."""
     method = "mode"
     return series.mode(), method
 
 def _random(series):
-    """return random values to select from"""
+    """Private method for random imputation."""
     method = "random"
     return series[~series.isnull()].unique(), method
 
 def _interp(series, method):
-    """Interpolation wrapper"""
+    """Private method to wrap interpolation methods."""
     series.interpolate(method=method,
                        limit=None,
                        limit_direction="both",
@@ -46,19 +47,19 @@ def _interp(series, method):
 
 
 def _linear(series):
-    """helper method for linear interpolation"""
+    """Private method for linear interpolation."""
     method = "linear"
     _err_method(method, series)
     return None, method
 
 def _time(series):
-    """helper method for time interpolation"""
+    """Private method for time-weighted interpolation."""
     method = "time"
     _err_method(method, series)
     return None, method
 
 def _single_default(series):
-    """helper function for default"""
+    """Private method for single, cs default imputation."""
     if is_numeric_dtype(series):
         return _mean(series)
     elif is_string_dtype(series):
@@ -67,7 +68,7 @@ def _single_default(series):
         return _none(series)
 
 def _ts_default(series):
-    """helper function for default"""
+    """Private method for single, ts default imputation."""
     if is_numeric_dtype(series):
         return _linear(series)
     elif is_string_dtype(series):

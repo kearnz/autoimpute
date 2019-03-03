@@ -1,4 +1,14 @@
-"""Single imputation lib"""
+"""SingleImputer performs one imputation for each Series within DataFrame.
+
+This module contains one class - the SingleImputer. Use this class to perform
+one imputation for each Series within a DataFrame. The methods available are
+all univariate - they do not use any other features to perform a given Series'
+imputation. Rather, they rely on the Series itself.
+
+Todo:
+    * Support additional single imputation methods.
+    * Add examples of imputations and how the class works in pipeline.
+"""
 
 import warnings
 import numpy as np
@@ -14,7 +24,33 @@ from autoimpute.imputations.methods import _single_default, _random, _none
 # pylint:disable=arguments-differ
 
 class SingleImputer(BaseEstimator, TransformerMixin):
-    """Techniques to Impute missing values once"""
+    """Techniques to impute Series with missing values one time.
+
+    The SingleImputer class takes a DataFrame and performs single imputations
+    on each Series within the DataFrame. The SingleImputer does one pass for
+    each column, and it supports univariate methods only.
+
+    The class is a valid transformer that can be used in an sklearn pipeline
+    because it inherits from the TransformerMixin and implements both fit and
+    transform methods.
+
+    Some of the imputers are inductive (i.e. fit and transform for new data).
+    Others are transductive (i.e. fit_transform only). Transductive methods
+    return None during the "fitting" stage. This behavior is a bit odd, but
+    it allows inductive and transductive methods within the same Imputer.
+
+    Attributes:
+        strategies (dict): dictionary of supported imputation methods.
+            Key = imputation name; Value = function to perform imputation.
+            `mean` imputes missing values with the average of the series.
+            `median` imputes missing values with the median of the series.
+            `mode` imputes missing values with the mode of the series.
+                Method handles more than one mode (see _mode_helper method).
+            `default` imputes mean for numerical, mode for categorical.
+            `random` immputes w/ random choice from set of Series unique vals.
+            `linear` imputes series using linear interpolation.
+            `none` does not impute the series. Mainly used for time series.
+    """
 
     strategies = {
         "mean": _mean,
@@ -28,6 +64,32 @@ class SingleImputer(BaseEstimator, TransformerMixin):
 
     def __init__(self, strategy="default", fill_value=None,
                  verbose=False, copy=True):
+        """Create an instance of the SingleImputer class.
+
+        As with sklearn classes, all arguments take default values. Therefore,
+        SingleImputer() creates a valid class instance. The instance is used to
+        set up an imputer and perform checks on arguments.
+
+        Args:
+            strategy (str, iter, dict; optional): strategies for imputation.
+                Default value is str -> "default". I.e. default imputation.
+                If str, single strategy broadcast to all series in DataFrame.
+                If iter, must provide 1 strategy per column. Each method within
+                iterator applies to column with same index value in DataFrame.
+                If dict, must provide key = column name, value = imputer.
+                Dict the most flexible and PREFERRED way to create custom
+                imputation strategies if not using the default. Dict does not
+                require method for every column; just those specified as keys.
+            fill_value (str, optional): fill val when strategy needs more info.
+                Right now, fill_value ignored for everything except mode.
+                If strategy = mode, fill_value = None or `random`. If None,
+                first mode is used (default strategy of SciPy). If `random`,
+                imputer will select 1 of n modes at random.
+            verbose (bool, optional): print more information to console.
+                Default value is False.
+            copy (bool, optional): create copy of DataFrame or operate inplace.
+                Default value is True. Copy created.
+        """
         self.strategy = strategy
         self.fill_value = fill_value
         self.verbose = verbose
@@ -35,17 +97,34 @@ class SingleImputer(BaseEstimator, TransformerMixin):
 
     @property
     def strategy(self):
-        """return the strategy property"""
+        """Property getter to return the value of the strategy property"""
         return self._strategy
 
     @strategy.setter
     def strategy(self, s):
-        """validate the strategy property"""
+        """Validate the strategy property to ensure it's Type and Value.
+
+        Class instance only possible if strategy is proper type, as outlined
+        in the init method. Passes supported strategies and user arg to
+        helper method, which performs strategy checks.
+
+        Args:
+            s (str, iter, dict): Strategy passed as arg to class instance.
+
+        Raises:
+            ValueError: Strategies not valid (not in allowed strategies).
+            TypeError: Strategy must be a string, tuple, list, or dict.
+            Both errors raised through helper method `_check_strategy`
+        """
         strat_names = self.strategies.keys()
         self._strategy = _check_strategy(strat_names, s)
 
     def _fit_strategy_validator(self, X):
-        """helper method to ensure right number of strategies"""
+        """Internal helper method to validate strategies appropriate for fit.
+
+        Checks whether strategies match with type of column they are applied
+        to. If not, error is raised through `_check_fit_strat` method.
+        """
         # remove nan columns and store colnames
         ocols = X.columns.tolist()
         X, self._nc = _nan_col_dropper(X)
@@ -55,12 +134,31 @@ class SingleImputer(BaseEstimator, TransformerMixin):
 
     @check_missingness
     def fit(self, X):
-        """Fit method for single imputer"""
+        """Fit imputation methods to each column within a DataFrame.
+
+        The fit method calclulates the `statistics` necessary to later
+        transform a dataset (i.e. perform actual imputatations). Inductive
+        methods (mean, mode, median, etc.) calculate statistic on the fit
+        data, then impute new missing data with that value. Transductive
+        methods (linear) don't calculate anything during fit, as they
+        apply imputation during transformation phase only.
+
+        Args:
+            X (pd.DataFrame): pandas DataFrame on which imputer is fit.
+
+        Returns:
+            self: instance of the SingleImputer class.
+        """
         # copy, validate, and create statistics if validated
         if self.copy:
             X = X.copy()
         self._fit_strategy_validator(X)
         self.statistics_ = {}
+
+        # header print statement if verbose = true
+        if self.verbose:
+            st = "Strategies used to fit each column:"
+            print(f"{st}\n{'-'*len(st)}")
 
         # perform fit on each column, depending on that column's strategy
         for col_name, func_name in self._strats.items():
@@ -70,14 +168,27 @@ class SingleImputer(BaseEstimator, TransformerMixin):
                                           "strategy": fit_name}
             # print strategies if verbose
             if self.verbose:
-                st = "Strategies used to fit each column:"
-                print(f"{st}\n{'-'*len(st)}")
                 print(f"Column: {col_name}, Strategy: {fit_name}")
         return self
 
     @check_missingness
     def transform(self, X):
-        """Transform method for a single imputer"""
+        """Impute each column within a DataFrame using fit imputation methods.
+
+        The transform step performs the actual imputations. Given a dataset
+        previously fit, `transform` imputes each column with it's respective
+        imputed values from fit (in the case of inductive) or performs new fit
+        and transform in one sweep (in the case of transductive).
+
+        Args:
+            X (pd.DataFrame): fit DataFrame to impute.
+
+        Returns:
+            X (pd.DataFrame): imputed in place or copy of original.
+
+        Raises:
+            ValueError: same columns must appear in fit and transform.
+        """
         # initial checks before transformation
         check_is_fitted(self, 'statistics_')
         if self.copy:

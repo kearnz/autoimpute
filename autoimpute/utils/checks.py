@@ -205,7 +205,7 @@ def _check_strategy(strat_names, strategy):
         strategy (any): if string, iterator, or dictionary
 
     Raises:
-        ValueError: Strategies not valid (not in allowed strategies)
+        ValueError: Strategies not valid (not in allowed strategies).
         TypeError: Strategy must be a string, tuple, list, or dict.
     """
     err_op = f"Strategies must be one of {list(strat_names)}."
@@ -244,8 +244,8 @@ def _check_fit_strat(strategy, nc, o_cols, cols):
         strategy(str, iterator, dict): strategies passed for columns.
             String = 1 strategy, broadcast to all columns.
             Iterator = multiple strategies, must match col index and length.
-            Dict = multiple strategies, must match col name, but NOT all
-                   columns are mandatory. Will simply impute based on name.
+            Dict = multiple strategies, must match col name, but not all
+            columns are mandatory. Will simply impute based on name.
         nc(set): any columns removed because they are fully missing.
         o_cols: original columns before nc determined.
         cols: columns remaining after nc determined.
