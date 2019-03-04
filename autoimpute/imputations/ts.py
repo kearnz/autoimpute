@@ -2,12 +2,13 @@
 
 import numpy as np
 import pandas as pd
+from scipy.stats import norm
 from sklearn.base import BaseEstimator, TransformerMixin
 from sklearn.utils.validation import check_is_fitted
 from autoimpute.utils.helpers import _nan_col_dropper, _mode_output
 from autoimpute.utils.checks import check_missingness
 from autoimpute.utils.checks import _check_strategy, _check_fit_strat
-from autoimpute.imputations.methods import _mean, _median, _mode
+from autoimpute.imputations.methods import _mean, _median, _mode, _norm
 from autoimpute.imputations.methods import _interp, _time, _linear
 from autoimpute.imputations.methods import _ts_default, _random, _none
 # pylint:disable=attribute-defined-outside-init
@@ -17,11 +18,12 @@ class TimeSeriesImputer(BaseEstimator, TransformerMixin):
     """Techniques to impute time series data"""
 
     strategies = {
+        "default": _ts_default,
         "mean": _mean,
         "median": _median,
         "mode":  _mode,
-        "default": _ts_default,
         "random": _random,
+        "norm": _norm,
         "linear": _linear,
         "time": _time,
         "none": _none
@@ -53,7 +55,7 @@ class TimeSeriesImputer(BaseEstimator, TransformerMixin):
         ts_ix = X.index
         if not isinstance(ts_ix, pd.DatetimeIndex):
             if ts_c == 0:
-                err = "DataFrame must have time series index or column"
+                err = "Must have DatetimeIndex or column with type datetime."
                 raise ValueError(err)
 
         # next, strategy check with existing columns passed
@@ -96,6 +98,8 @@ class TimeSeriesImputer(BaseEstimator, TransformerMixin):
                     else:
                         err = f"{ic} can't be set as DatetimeIndex."
                         raise KeyError(err)
+        # sort and return X
+        X.sort_index(ascending=True, inplace=True)
         return X
 
     @check_missingness
@@ -130,17 +134,32 @@ class TimeSeriesImputer(BaseEstimator, TransformerMixin):
         for col_name, fit_data in self.statistics_.items():
             strat = fit_data["strategy"]
             fill_val = fit_data["param"]
+            imp_ind = X[col_name][X[col_name].isnull()].index
+            if self.verbose:
+                print("Transforming {col_name} with strategy '{strat}'")
+                print(f"Numer of imputations to perform: {len(imp_ind)}")
+            # fill missing values based on the method selected
+            # note that default picks a method below depending on col
+            # -------------------------------------------------------
+            # mean and median imputation
+            if strat in ("mean", "median"):
+                X[col_name].fillna(fill_val, inplace=True)
+            # mode imputation
             if strat == "mode":
                 _mode_output(X[col_name], fill_val, self.fill_value)
-            elif strat == "random":
-                ind = X[col_name][X[col_name].isnull()].index
-                fills = np.random.choice(fill_val, len(ind))
-                X.loc[ind, col_name] = fills
-            elif strat in ("linear", "time"):
+            # imputatation w/ random value from observed data
+            if strat == "random":
+                fills = np.random.choice(fill_val, len(imp_ind))
+                X.loc[imp_ind, col_name] = fills
+            # linear and time interpolation imputation
+            if strat in ("linear", "time"):
                 _interp(X[col_name], strat)
-            elif strat == "none":
+            # normal distribution imputatinon
+            if strat == "norm":
+                mu, std = fill_val
+                fills = norm.rvs(loc=mu, scale=std, size=len(imp_ind))
+                X.loc[imp_ind, col_name] = fills
+            # no imputation if strategy is none
+            if strat == "none":
                 pass
-            # mean, median, constant
-            else:
-                X[col_name].fillna(fill_val, inplace=True)
         return X

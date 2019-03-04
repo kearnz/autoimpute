@@ -217,6 +217,9 @@ class SingleImputer(BaseEstimator, TransformerMixin):
             strat = fit_data["strategy"]
             fill_val = fit_data["param"]
             imp_ind = X[col_name][X[col_name].isnull()].index
+            if self.verbose:
+                print("Transforming {col_name} with strategy '{strat}'")
+                print(f"Numer of imputations to perform: {len(imp_ind)}")
             # fill missing values based on the method selected
             # note that default picks a method below depending on col
             # -------------------------------------------------------
