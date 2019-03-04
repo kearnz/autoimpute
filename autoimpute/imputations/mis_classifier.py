@@ -11,6 +11,7 @@ Todo:
 """
 
 import warnings
+import itertools
 import numpy as np
 import pandas as pd
 from xgboost import XGBClassifier
@@ -102,14 +103,13 @@ class MissingnessClassifier(BaseEstimator, ClassifierMixin):
             else:
                 self._scaler = s
 
-    def _check_if_single_dummy(self, X):
+    def _check_if_single_dummy(self, col, X):
         """Private method to check if encoding results in single cat."""
         cats = X.columns.tolist()
         if len(cats) == 1:
             c = cats[0]
-            cf = c.split('_')[0]
-            msg = f"{c} only category for feature {cf}."
-            cons = f"Consider removing {cf} from dataset."
+            msg = f"{c} only category for feature {col}."
+            cons = f"Consider removing {col} from dataset."
             warnings.warn(f"{msg} {cons}")
 
     def _scaler_fit(self):
@@ -141,19 +141,24 @@ class MissingnessClassifier(BaseEstimator, ClassifierMixin):
         self._len_num = len(self._data_num.columns)
 
         # right now, only support for one-hot encoding
-        dummies = [pd.get_dummies(X[col], prefix=col)
-                   for col in X.select_dtypes(include=(np.object,))]
-        ld = len(dummies)
-        if ld == 0:
+        orig_dum = X.select_dtypes(include=(np.object,))
+        if not orig_dum.columns.tolist():
             self._data_dum = pd.DataFrame()
-        elif ld == 1:
-            self._data_dum = dummies[0]
-            self._check_if_single_dummy(self._data_dum)
         else:
-            self._data_dum = pd.concat(dummies, axis=1)
-            for each_dum in dummies:
-                self._check_if_single_dummy(each_dum)
-        self._len_dum = len(self._data_dum.columns)
+            dummies = []
+            self._dum_dict = {}
+            self._data_dum = pd.DataFrame()
+            for col in orig_dum:
+                col_dum = pd.get_dummies(orig_dum[col], prefix=col)
+                self._dum_dict[col] = col_dum.columns.tolist()
+                self._check_if_single_dummy(col, col_dum)
+                dummies.append(col_dum)
+            ld = len(dummies)
+            if ld == 1:
+                self._data_dum = dummies[0]
+            else:
+                self._data_dum = pd.concat(dummies, axis=1)
+            self._len_dum = len(self._data_dum.columns)
 
         # print categorical and numeric columns if verbose true
         if self.verbose:
@@ -188,8 +193,9 @@ class MissingnessClassifier(BaseEstimator, ClassifierMixin):
 
         # dealing with categorical columns...
         else:
-            d = [k for k in self._data_dum.columns
-                 if not k.startswith(f"{c}_")]
+            d_c = [v for k, v in self._dum_dict.items() if k != c]
+            d_fc = list(itertools.chain.from_iterable(d_c))
+            d = [k for k in self._data_dum.columns if k in d_fc]
             len_d = len(d)
             if len_d > 0:
                 dummy_cols = self._data_dum[d].values
