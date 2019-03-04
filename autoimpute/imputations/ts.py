@@ -1,4 +1,14 @@
-"""Time Series Imputation Module"""
+"""This module performs imputations for Series with a time-based index.
+
+This module contains one class - TimeSeriesImputer. Use this class to perform
+imputations for each Series within a DataFrame that has a time-based index.
+The data within each Series should have logical ordering, even though not all
+the imputation methods supported in this module require a time series.
+
+Todo:
+    * Support additional time series imputation methods.
+    * Add examples of imputations and how the class works in pipeline.
+"""
 
 import numpy as np
 import pandas as pd
@@ -15,7 +25,38 @@ from autoimpute.imputations.methods import _ts_default, _random, _none
 # pylint:disable=arguments-differ
 
 class TimeSeriesImputer(BaseEstimator, TransformerMixin):
-    """Techniques to impute time series data"""
+    """Techniques to impute Series with a logical ordering and time component.
+
+    The TimeSeriesImputer class takes a DataFrame and performs imputations
+    on each Series within the DataFrame. The TimeSeriesImputer requires the
+    DataFrame contain a DateTimeindex OR at least one datetime column. The
+    selected datetime column is sorted and becomes the ordering for which
+    time series imputation obeys.
+
+    The class is a valid transformer that can be used in an sklearn pipeline
+    because it inherits from the TransformerMixin and implements both fit and
+    transform methods.
+
+    Some of the imputers are inductive (i.e. fit and transform for new data).
+    Others are transductive (i.e. fit_transform only). Transductive methods
+    return None during the "fitting" stage. This behavior is a bit odd, but
+    it allows inductive and transductive methods within the same Imputer.
+
+    Attributes:
+        strategies (dict): dictionary of supported imputation methods.
+            Key = imputation name; Value = function to perform imputation.
+            `default` imputes linear for numerical, mode for categorical.
+            `mean` imputes missing values with the average of the series.
+            `median` imputes missing values with the median of the series.
+            `mode` imputes missing values with the mode of the series.
+                Method handles more than one mode (see _mode_helper method).
+            `random` immputes w/ random choice from set of Series unique vals.
+            `norm` imputes series using random draws from normal distribution.
+                Mean and std calculated from observed values of the Series.
+            `linear` imputes series using linear interpolation.
+            `time` imputes series using time-weighted interpolation.
+            `none` does not impute the series. Mainly used for time series.
+    """
 
     strategies = {
         "default": _ts_default,
@@ -31,6 +72,33 @@ class TimeSeriesImputer(BaseEstimator, TransformerMixin):
 
     def __init__(self, strategy="default", fill_value=None,
                  index_column=None, verbose=False):
+        """Create an instance of the TimeSeriesImputer class.
+
+        As with sklearn classes, all arguments take default values. Therefore,
+        TimeSeriesImputer() creates a valid class instance. The instance is
+        used to set up an imputer and perform checks on arguments.
+
+        Args:
+            strategy (str, iter, dict; optional): strategies for imputation.
+                Default value is str -> "default". I.e. default imputation.
+                If str, single strategy broadcast to all series in DataFrame.
+                If iter, must provide 1 strategy per column. Each method within
+                iterator applies to column with same index value in DataFrame.
+                If dict, must provide key = column name, value = imputer.
+                Dict the most flexible and PREFERRED way to create custom
+                imputation strategies if not using the default. Dict does not
+                require method for every column; just those specified as keys.
+            fill_value (str, optional): fill val when strategy needs more info.
+                Right now, fill_value ignored for everything except mode.
+                If strategy = mode, fill_value = None or `random`. If None,
+                first mode is used (default strategy of SciPy). If `random`,
+                imputer will select 1 of n modes at random.
+            index_column (str, optional): the name of the column to index.
+                Defaults to None. If None, first column with datetime dtype
+                selected as the index.
+            verbose (bool, optional): print more information to console.
+                Default value is False.
+        """
         self.strategy = strategy
         self.fill_value = fill_value
         self.index_column = index_column
@@ -38,17 +106,34 @@ class TimeSeriesImputer(BaseEstimator, TransformerMixin):
 
     @property
     def strategy(self):
-        """return the strategy property"""
+        """Property getter to return the value of the strategy property"""
         return self._strategy
 
     @strategy.setter
     def strategy(self, s):
-        """validate the strategy property"""
+        """Validate the strategy property to ensure it's Type and Value.
+
+        Class instance only possible if strategy is proper type, as outlined
+        in the init method. Passes supported strategies and user arg to
+        helper method, which performs strategy checks.
+
+        Args:
+            s (str, iter, dict): Strategy passed as arg to class instance.
+
+        Raises:
+            ValueError: Strategies not valid (not in allowed strategies).
+            TypeError: Strategy must be a string, tuple, list, or dict.
+            Both errors raised through helper method `_check_strategy`
+        """
         strat_names = self.strategies.keys()
         self._strategy = _check_strategy(strat_names, s)
 
     def _fit_strategy_validator(self, X):
-        """helper method to ensure right number of strategies"""
+        """Internal helper method to validate strategies appropriate for fit.
+
+        Checks whether strategies match with type of column they are applied
+        to. If not, error is raised through `_check_fit_strat` method.
+        """
         # first, make sure there is at least one datetime column
         ts = X.select_dtypes(include=[np.datetime64])
         ts_c = len(ts.columns)
@@ -65,7 +150,11 @@ class TimeSeriesImputer(BaseEstimator, TransformerMixin):
         self._strats = _check_fit_strat(self.strategy, self._nc, ocols, ncols)
 
     def _transform_strategy_validator(self, X):
-        """helper method to ensure series index"""
+        """Internal helper to validate strategy before transformation.
+
+        Checks whether differences in columns, and ensures that datetime
+        column exists to set as index before imputation methods take place.
+        """
 
         # check columns
         X_cols = X.columns.tolist()
@@ -104,7 +193,21 @@ class TimeSeriesImputer(BaseEstimator, TransformerMixin):
 
     @check_missingness
     def fit(self, X):
-        """Fit method for time series imputer"""
+        """Fit imputation methods to each column within a DataFrame.
+
+        The fit method calclulates the `statistics` necessary to later
+        transform a dataset (i.e. perform actual imputatations). Inductive
+        methods (mean, mode, median, etc.) calculate statistic on the fit
+        data, then impute new missing data with that value. Transductive
+        methods (linear) don't calculate anything during fit, as they
+        apply imputation during transformation phase only.
+
+        Args:
+            X (pd.DataFrame): pandas DataFrame on which imputer is fit.
+
+        Returns:
+            self: instance of the TimeSeriesImputer class.
+        """
         self._fit_strategy_validator(X)
         self.statistics_ = {}
 
@@ -124,7 +227,22 @@ class TimeSeriesImputer(BaseEstimator, TransformerMixin):
 
     @check_missingness
     def transform(self, X):
-        """Transform method for a single imputer"""
+        """Impute each column within a DataFrame using fit imputation methods.
+
+        The transform step performs the actual imputations. Given a dataset
+        previously fit, `transform` imputes each column with it's respective
+        imputed values from fit (in the case of inductive) or performs new fit
+        and transform in one sweep (in the case of transductive).
+
+        Args:
+            X (pd.DataFrame): fit DataFrame to impute.
+
+        Returns:
+            X (pd.DataFrame): new DataFrame with time-series index.
+
+        Raises:
+            ValueError: same columns must appear in fit and transform.
+        """
         # initial checks before transformation
         check_is_fitted(self, 'statistics_')
 
@@ -136,7 +254,7 @@ class TimeSeriesImputer(BaseEstimator, TransformerMixin):
             fill_val = fit_data["param"]
             imp_ind = X[col_name][X[col_name].isnull()].index
             if self.verbose:
-                print("Transforming {col_name} with strategy '{strat}'")
+                print(f"Transforming {col_name} with strategy '{strat}'")
                 print(f"Numer of imputations to perform: {len(imp_ind)}")
             # fill missing values based on the method selected
             # note that default picks a method below depending on col

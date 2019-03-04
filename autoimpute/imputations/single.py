@@ -1,4 +1,4 @@
-"""SingleImputer performs one imputation for each Series within DataFrame.
+"""This module performs single imputations for cross-sectional Series.
 
 This module contains one class - the SingleImputer. Use this class to perform
 one imputation for each Series within a DataFrame. The methods available are
@@ -43,12 +43,14 @@ class SingleImputer(BaseEstimator, TransformerMixin):
     Attributes:
         strategies (dict): dictionary of supported imputation methods.
             Key = imputation name; Value = function to perform imputation.
+            `default` imputes mean for numerical, mode for categorical.
             `mean` imputes missing values with the average of the series.
             `median` imputes missing values with the median of the series.
             `mode` imputes missing values with the mode of the series.
                 Method handles more than one mode (see _mode_helper method).
-            `default` imputes mean for numerical, mode for categorical.
             `random` immputes w/ random choice from set of Series unique vals.
+            `norm` imputes series using random draws from normal distribution.
+                Mean and std calculated from observed values of the Series.
             `linear` imputes series using linear interpolation.
             `none` does not impute the series. Mainly used for time series.
     """
@@ -59,8 +61,8 @@ class SingleImputer(BaseEstimator, TransformerMixin):
         "median": _median,
         "mode":  _mode,
         "random": _random,
-        "linear": _linear,
         "norm": _norm,
+        "linear": _linear,
         "none": _none
     }
 
@@ -218,7 +220,7 @@ class SingleImputer(BaseEstimator, TransformerMixin):
             fill_val = fit_data["param"]
             imp_ind = X[col_name][X[col_name].isnull()].index
             if self.verbose:
-                print("Transforming {col_name} with strategy '{strat}'")
+                print(f"Transforming {col_name} with strategy '{strat}'")
                 print(f"Numer of imputations to perform: {len(imp_ind)}")
             # fill missing values based on the method selected
             # note that default picks a method below depending on col
