@@ -4,7 +4,7 @@ from pandas.api.types import is_string_dtype
 from pandas.api.types import is_numeric_dtype
 # pylint:disable=unused-argument
 
-def _err_method(m, s):
+def _not_num_err(m, s):
     """error hanlding for all the private methods in this module."""
     if not is_numeric_dtype(s):
         typ = s.dtype
@@ -19,13 +19,13 @@ def _none(series):
 def _mean(series):
     """Private method for mean imputation."""
     method = "mean"
-    _err_method(method, series)
+    _not_num_err(method, series)
     return series.mean(), method
 
 def _median(series):
     """Private method for median imputation."""
     method = "median"
-    _err_method(method, series)
+    _not_num_err(method, series)
     return series.median(), method
 
 def _mode(series):
@@ -49,14 +49,22 @@ def _interp(series, method):
 def _linear(series):
     """Private method for linear interpolation."""
     method = "linear"
-    _err_method(method, series)
+    _not_num_err(method, series)
     return None, method
 
 def _time(series):
     """Private method for time-weighted interpolation."""
     method = "time"
-    _err_method(method, series)
+    _not_num_err(method, series)
     return None, method
+
+def _norm(series):
+    """Private method for normal distribution imputation."""
+    method = "norm"
+    _not_num_err(method, series)
+    mu = series.mean()
+    sd = series.std()
+    return (mu, sd), method
 
 def _single_default(series):
     """Private method for single, cs default imputation."""

@@ -12,14 +12,15 @@ Todo:
 
 import warnings
 import numpy as np
+from scipy.stats import norm
 from sklearn.base import BaseEstimator, TransformerMixin
 from sklearn.utils.validation import check_is_fitted
 from autoimpute.utils.checks import check_missingness
 from autoimpute.utils.checks import _check_strategy, _check_fit_strat
 from autoimpute.utils.helpers import _nan_col_dropper, _mode_output
 from autoimpute.imputations.methods import _mean, _median, _mode
-from autoimpute.imputations.methods import _interp, _linear
-from autoimpute.imputations.methods import _single_default, _random, _none
+from autoimpute.imputations.methods import _interp, _linear, _random, _none
+from autoimpute.imputations.methods import _single_default, _norm
 # pylint:disable=attribute-defined-outside-init
 # pylint:disable=arguments-differ
 
@@ -53,12 +54,13 @@ class SingleImputer(BaseEstimator, TransformerMixin):
     """
 
     strategies = {
+        "default": _single_default,
         "mean": _mean,
         "median": _median,
         "mode":  _mode,
-        "default": _single_default,
         "random": _random,
         "linear": _linear,
+        "norm": _norm,
         "none": _none
     }
 
@@ -214,17 +216,29 @@ class SingleImputer(BaseEstimator, TransformerMixin):
         for col_name, fit_data in self.statistics_.items():
             strat = fit_data["strategy"]
             fill_val = fit_data["param"]
+            imp_ind = X[col_name][X[col_name].isnull()].index
+            # fill missing values based on the method selected
+            # note that default picks a method below depending on col
+            # -------------------------------------------------------
+            # mean and median imputation
+            if strat in ("mean", "median"):
+                X[col_name].fillna(fill_val, inplace=True)
+            # mode imputation
             if strat == "mode":
                 _mode_output(X[col_name], fill_val, self.fill_value)
-            elif strat == "random":
-                ind = X[col_name][X[col_name].isnull()].index
-                fills = np.random.choice(fill_val, len(ind))
-                X.loc[ind, col_name] = fills
-            elif strat == "linear":
+            # imputatation w/ random value from observed data
+            if strat == "random":
+                fills = np.random.choice(fill_val, len(imp_ind))
+                X.loc[imp_ind, col_name] = fills
+            # linear interpolation imputation
+            if strat == "linear":
                 _interp(X[col_name], strat)
-            elif strat == "none":
+            # normal distribution imputatinon
+            if strat == "norm":
+                mu, std = fill_val
+                fills = norm.rvs(loc=mu, scale=std, size=len(imp_ind))
+                X.loc[imp_ind, col_name] = fills
+            # no imputation if strategy is none
+            if strat == "none":
                 pass
-            # fill in mean, median, constant, default
-            else:
-                X[col_name].fillna(fill_val, inplace=True)
         return X
