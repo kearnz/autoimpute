@@ -167,7 +167,7 @@ def _imp_locf(X, col_name, fill_val):
     """Private method for last obs carried forward imputation."""
     first = X.index[0]
     if pd.isnull(X.loc[first, col_name]):
-        X.loc[0, col_name] = fill_val
+        X.loc[first, col_name] = fill_val
     X[col_name].fillna(method="ffill", inplace=True)
 
 def _imp_nocb(X, col_name, fill_val):
