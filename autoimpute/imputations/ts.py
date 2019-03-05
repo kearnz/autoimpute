@@ -12,17 +12,16 @@ Todo:
 
 import numpy as np
 import pandas as pd
-from scipy.stats import norm
 from sklearn.base import BaseEstimator, TransformerMixin
 from sklearn.utils.validation import check_is_fitted
-from autoimpute.utils.helpers import _nan_col_dropper, _mode_output
+from autoimpute.utils.helpers import _nan_col_dropper
 from autoimpute.utils.checks import check_missingness
 from autoimpute.utils.checks import _check_strategy, _check_fit_strat
-from autoimpute.imputations.methods import _mean, _median, _mode, _norm
-from autoimpute.imputations.methods import _interp, _time, _linear
-from autoimpute.imputations.methods import _ts_default, _random, _none
+from autoimpute.imputations import single_methods
+sm = single_methods
 # pylint:disable=attribute-defined-outside-init
 # pylint:disable=arguments-differ
+# pylint:disable=protected-access
 
 class TimeSeriesImputer(BaseEstimator, TransformerMixin):
     """Techniques to impute Series with a logical ordering and time component.
@@ -53,21 +52,30 @@ class TimeSeriesImputer(BaseEstimator, TransformerMixin):
             `random` immputes w/ random choice from set of Series unique vals.
             `norm` imputes series using random draws from normal distribution.
                 Mean and std calculated from observed values of the Series.
+            `categorical` imputes series using random draws from pmf.
+                Proportions calculated from non-missing category instances.
             `linear` imputes series using linear interpolation.
             `time` imputes series using time-weighted interpolation.
+            `locf` imputes series using last observation carried forward.
+                Uses series mean if the first value is missing.
+            `nocb` imputes series using next observation carried backward.
+                Uses series mean if the last value is missing.
             `none` does not impute the series. Mainly used for time series.
     """
 
     strategies = {
-        "default": _ts_default,
-        "mean": _mean,
-        "median": _median,
-        "mode":  _mode,
-        "random": _random,
-        "norm": _norm,
-        "linear": _linear,
-        "time": _time,
-        "none": _none
+        "default": sm._fit_ts_default,
+        "mean": sm._fit_mean,
+        "median": sm._fit_median,
+        "mode":  sm._fit_mode,
+        "random": sm._fit_random,
+        "norm": sm._fit_norm,
+        "categorical": sm._fit_categorical,
+        "linear": sm._fit_linear,
+        "time": sm._fit_time,
+        "locf": sm._fit_locf,
+        "nocb": sm._fit_nocb,
+        "none": sm._fit_none,
     }
 
     def __init__(self, strategy="default", fill_value=None,
@@ -249,10 +257,12 @@ class TimeSeriesImputer(BaseEstimator, TransformerMixin):
         # create dataframe index then proceed
         X = self._transform_strategy_validator(X)
         # transformation logic
+        self.imputed_ = {}
         for col_name, fit_data in self.statistics_.items():
             strat = fit_data["strategy"]
             fill_val = fit_data["param"]
             imp_ind = X[col_name][X[col_name].isnull()].index
+            self.imputed_[col_name] = imp_ind.tolist()
             if self.verbose:
                 print(f"Transforming {col_name} with strategy '{strat}'")
                 print(f"Numer of imputations to perform: {len(imp_ind)}")
@@ -261,22 +271,28 @@ class TimeSeriesImputer(BaseEstimator, TransformerMixin):
             # -------------------------------------------------------
             # mean and median imputation
             if strat in ("mean", "median"):
-                X[col_name].fillna(fill_val, inplace=True)
+                sm._imp_central(X, col_name, fill_val)
             # mode imputation
             if strat == "mode":
-                _mode_output(X[col_name], fill_val, self.fill_value)
+                sm._imp_mode(X, col_name, fill_val, self.fill_value)
             # imputatation w/ random value from observed data
             if strat == "random":
-                fills = np.random.choice(fill_val, len(imp_ind))
-                X.loc[imp_ind, col_name] = fills
-            # linear and time interpolation imputation
+                sm._imp_random(X, col_name, fill_val, imp_ind)
+            # linear interpolation imputation
             if strat in ("linear", "time"):
-                _interp(X[col_name], strat)
+                sm._imp_interp(X, col_name, strat)
             # normal distribution imputatinon
             if strat == "norm":
-                mu, std = fill_val
-                fills = norm.rvs(loc=mu, scale=std, size=len(imp_ind))
-                X.loc[imp_ind, col_name] = fills
+                sm._imp_norm(X, col_name, fill_val, imp_ind)
+            # categorical distribution imputation
+            if strat == "categorical":
+                sm._imp_categorical(X, col_name, fill_val, imp_ind)
+            # last observation carried forward
+            if strat == "locf":
+                sm._imp_locf(X, col_name, fill_val)
+            # next observation carried backward
+            if strat == "nocb":
+                sm._imp_nocb(X, col_name, fill_val)
             # no imputation if strategy is none
             if strat == "none":
                 pass
