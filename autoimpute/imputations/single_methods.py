@@ -165,13 +165,14 @@ def _imp_interp(X, col_name, method):
 
 def _imp_locf(X, col_name, fill_val):
     """Private method for last obs carried forward imputation."""
-    if pd.isnull(X.loc[0, col_name]):
+    first = X.index[0]
+    if pd.isnull(X.loc[first, col_name]):
         X.loc[0, col_name] = fill_val
     X[col_name].fillna(method="ffill", inplace=True)
 
 def _imp_nocb(X, col_name, fill_val):
     """Private method for next obs carried backward imputation."""
-    lst = len(X)-1
-    if pd.isnull(X.loc[lst, col_name]):
-        X.loc[lst, col_name] = fill_val
+    last = X.index[-1]
+    if pd.isnull(X.loc[last, col_name]):
+        X.loc[last, col_name] = fill_val
     X[col_name].fillna(method="bfill", inplace=True)
