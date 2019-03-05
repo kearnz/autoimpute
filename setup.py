@@ -3,6 +3,7 @@
 import io
 import os
 from setuptools import find_packages, setup
+# pylint:disable=exec-used
 
 # Package meta-data
 NAME = "autoimpute"

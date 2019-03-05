@@ -16,8 +16,8 @@ from sklearn.utils.validation import check_is_fitted
 from autoimpute.utils.checks import check_missingness
 from autoimpute.utils.checks import _check_strategy, _check_fit_strat
 from autoimpute.utils.helpers import _nan_col_dropper
-from autoimpute.imputations import single_methods
-sm = single_methods
+from autoimpute.imputations import simple_methods
+sm = simple_methods
 # pylint:disable=attribute-defined-outside-init
 # pylint:disable=arguments-differ
 # pylint:disable=protected-access
