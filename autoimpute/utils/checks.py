@@ -189,7 +189,7 @@ def remove_nan_columns(func):
         return func(d, *args, **kwargs)
     return wrapper
 
-def _check_strategy(strat_names, strategy):
+def check_strategy_allowed(strat_names, strategy):
     """Logic to determine if the strategy passed for imputation is valid.
 
     Imputer Classes in this library have a very flexible strategy argument.
@@ -229,7 +229,7 @@ def _check_strategy(strat_names, strategy):
     else:
         raise TypeError("Strategy must be string, tuple, list, or dict.")
 
-def _check_fit_strat(strategy, nc, o_cols, cols):
+def check_strategy_fit(strategy, nc, o_cols, cols):
     """Check whether strategies of an imputer make sense given the data passed.
 
     An Imputer class takes strategies to use for imputation. Those strategies

@@ -5,6 +5,7 @@ accessible whenever someone imports autoimpute.imputations. The list below
 specifies the methods and classes that are currently available on import.
 
 Imported:
+    BaseImputer
     MissingnessClassifier
     SingleImputer
     TimeSeriesImputer
@@ -15,6 +16,7 @@ variable below. This command imports the main public classes and methods
 from autoimpute.imputations.
 """
 
+from autoimpute.imputations.base import BaseImputer
 from autoimpute.imputations.mis_classifier import MissingnessClassifier
 from autoimpute.imputations.single import SingleImputer
 from autoimpute.imputations.ts import TimeSeriesImputer

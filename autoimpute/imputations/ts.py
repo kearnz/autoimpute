@@ -16,7 +16,7 @@ from sklearn.base import BaseEstimator, TransformerMixin
 from sklearn.utils.validation import check_is_fitted
 from autoimpute.utils.helpers import _nan_col_dropper
 from autoimpute.utils.checks import check_missingness
-from autoimpute.utils.checks import _check_strategy, _check_fit_strat
+from autoimpute.utils.checks import check_strategy_allowed, check_strategy_fit
 from autoimpute.imputations import simple_methods
 sm = simple_methods
 # pylint:disable=attribute-defined-outside-init
@@ -134,7 +134,7 @@ class TimeSeriesImputer(BaseEstimator, TransformerMixin):
             Both errors raised through helper method `_check_strategy`
         """
         strat_names = self.strategies.keys()
-        self._strategy = _check_strategy(strat_names, s)
+        self._strategy = check_strategy_allowed(strat_names, s)
 
     def _fit_strategy_validator(self, X):
         """Internal helper method to validate strategies appropriate for fit.
@@ -152,10 +152,10 @@ class TimeSeriesImputer(BaseEstimator, TransformerMixin):
                 raise ValueError(err)
 
         # next, strategy check with existing columns passed
-        ocols = X.columns.tolist()
+        ocol = X.columns.tolist()
         X, self._nc = _nan_col_dropper(X)
-        ncols = X.columns.tolist()
-        self._strats = _check_fit_strat(self.strategy, self._nc, ocols, ncols)
+        ncol = X.columns.tolist()
+        self._strats = check_strategy_fit(self.strategy, self._nc, ocol, ncol)
 
     def _transform_strategy_validator(self, X):
         """Internal helper to validate strategy before transformation.

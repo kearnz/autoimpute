@@ -18,11 +18,11 @@ from xgboost import XGBClassifier
 from sklearn.base import clone, BaseEstimator, ClassifierMixin
 from sklearn.utils.validation import check_is_fitted
 from autoimpute.utils.checks import check_missingness
-from autoimpute.utils.helpers import _nan_col_dropper
+from autoimpute.imputations.base import BaseImputer
 # pylint:disable=attribute-defined-outside-init
 # pylint:disable=arguments-differ
 
-class MissingnessClassifier(BaseEstimator, ClassifierMixin):
+class MissingnessClassifier(BaseImputer, BaseEstimator, ClassifierMixin):
     """Classify values as missing or not, based on missingness patterns.
 
     The class has has numerous use cases. First, it fits columns of a DataFrame
@@ -39,6 +39,15 @@ class MissingnessClassifier(BaseEstimator, ClassifierMixin):
     def __init__(self, classifier=None, scaler=None, verbose=False):
         """Create an instance of the MissingnessClassifier.
 
+        The MissingnessClassifier inherits from sklearn BaseEstimator and
+        ClassifierMixin. This inheritence and this class' implementation
+        ensure that the MissingnessClassifier is a valid classifier that will
+        work in an sklearn pipeline.
+
+        The MissingnessClassifier also inherits from this packages'
+        `BaseImputer`, a class that contains the basic structure and building
+        blocks for a predictive imputer or missing data classifier.
+
         Args:
             classifier (classifier, optional): valid classifier from sklearn.
                 If None, default is xgboost. Note that classifier must
@@ -51,19 +60,13 @@ class MissingnessClassifier(BaseEstimator, ClassifierMixin):
             verbose (bool, optional): print information to the console.
                 Default is False.
         """
+        BaseImputer.__init__(self, scaler=scaler, verbose=verbose)
         self.classifier = classifier
-        self.scaler = scaler
-        self.verbose = verbose
 
     @property
     def classifier(self):
         """Property getter to return the value of the classifier property"""
         return self._classifier
-
-    @property
-    def scaler(self):
-        """Property getter to return the value of the scaler property"""
-        return self._scaler
 
     @classifier.setter
     def classifier(self, c):
@@ -83,87 +86,6 @@ class MissingnessClassifier(BaseEstimator, ClassifierMixin):
                 raise ValueError(f"Classifier must implement {m} method.")
             else:
                 self._classifier = c
-
-    @scaler.setter
-    def scaler(self, s):
-        """Validate the scaler property and set default parameters.
-
-        Args:
-            s (scaler): if None, implement the xgboost classifier
-
-        Raises:
-            ValueError: classifier does not implement `fit_transform`
-        """
-        if s is None:
-            self._scaler = s
-        else:
-            m = "fit_transform"
-            if not hasattr(s, m):
-                raise ValueError(f"Scaler must implement {m} method.")
-            else:
-                self._scaler = s
-
-    def _check_if_single_dummy(self, col, X):
-        """Private method to check if encoding results in single cat."""
-        cats = X.columns.tolist()
-        if len(cats) == 1:
-            c = cats[0]
-            msg = f"{c} only category for feature {col}."
-            cons = f"Consider removing {col} from dataset."
-            warnings.warn(f"{msg} {cons}")
-
-    def _scaler_fit(self):
-        """Private method to scale data based on scaler provided."""
-        # if scaler used, must be from sklearn library
-        if self._len_num > 0:
-            sc = clone(self.scaler)
-            self._scaled_num = sc.fit(self._data_num.values)
-        if self._len_dum > 0:
-            sc = clone(self.scaler)
-            self._scaled_dum = sc.fit(self._data_dum.values)
-
-    def _scaler_transform(self):
-        """Private method to transform data using scaled fit."""
-        if not self._scaled_num is None:
-            cn = self._data_num.columns.tolist()
-            sn = self._scaled_num.transform(self._data_num.values)
-            self._data_num = pd.DataFrame(sn, columns=cn)
-        if not self._scaled_dum is None:
-            cd = self._data_dum.columns.tolist()
-            sd = self._scaled_dum.transform(self._data_dum.values)
-            self._data_dum = pd.DataFrame(sd, columns=cd)
-
-    def _prep_dataframes(self, X):
-        """Private method to process numeric & categorical data for fit."""
-        X, self._nc = _nan_col_dropper(X)
-        self.data_mi = pd.isnull(X)*1
-        self._data_num = X.select_dtypes(include=(np.number,))
-        self._len_num = len(self._data_num.columns)
-
-        # right now, only support for one-hot encoding
-        orig_dum = X.select_dtypes(include=(np.object,))
-        if not orig_dum.columns.tolist():
-            self._data_dum = pd.DataFrame()
-        else:
-            dummies = []
-            self._dum_dict = {}
-            self._data_dum = pd.DataFrame()
-            for col in orig_dum:
-                col_dum = pd.get_dummies(orig_dum[col], prefix=col)
-                self._dum_dict[col] = col_dum.columns.tolist()
-                self._check_if_single_dummy(col, col_dum)
-                dummies.append(col_dum)
-            ld = len(dummies)
-            if ld == 1:
-                self._data_dum = dummies[0]
-            else:
-                self._data_dum = pd.concat(dummies, axis=1)
-            self._len_dum = len(self._data_dum.columns)
-
-        # print categorical and numeric columns if verbose true
-        if self.verbose:
-            print(f"Number of numeric columns: {self._len_num}")
-            print(f"Number of categorical columns: {self._len_dum}")
 
     def _prep_classifier_cols(self, X, i, c):
         """Private method to perpare the data for each classifier."""
