@@ -284,3 +284,7 @@ def check_strategy_fit(strategy, nc, o_cols, cols):
             raise ValueError(err)
         else:
             return strategy
+
+def check_predictors_with_fit(predictors):
+    """Placeholder function for checking predictors used for fitting"""
+    return predictors

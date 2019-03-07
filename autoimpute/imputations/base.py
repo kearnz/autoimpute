@@ -14,7 +14,7 @@ from sklearn.base import clone
 from autoimpute.utils.helpers import _nan_col_dropper
 # pylint:disable=attribute-defined-outside-init
 
-class BaseImputer(object):
+class BaseImputer:
     """Building blocks for more advanced imputers and missingness classifiers.
 
     The `BaseImputer` is not a stand-alone class and thus serves no purpose
@@ -54,8 +54,7 @@ class BaseImputer(object):
             m = "fit_transform"
             if not hasattr(s, m):
                 raise ValueError(f"Scaler must implement {m} method.")
-            else:
-                self._scaler = s
+            self._scaler = s
 
     def _check_if_single_dummy(self, col, X):
         """Private method to check if encoding results in single cat."""
@@ -87,7 +86,7 @@ class BaseImputer(object):
             sd = self._scaled_dum.transform(self._data_dum.values)
             self._data_dum = pd.DataFrame(sd, columns=cd)
 
-    def _prep_dataframes(self, X):
+    def _prep_fit_dataframe(self, X):
         """Private method to process numeric & categorical data for fit."""
         X, self._nc = _nan_col_dropper(X)
         self.data_mi = pd.isnull(X)*1

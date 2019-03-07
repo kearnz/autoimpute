@@ -166,7 +166,7 @@ class MissingnessClassifier(BaseImputer, BaseEstimator, ClassifierMixin):
 
         # if not error, check if new data
         if new_data:
-            self._prep_dataframes(X)
+            self._prep_fit_dataframe(X)
         if not self.scaler is None:
             self._scaler_transform()
 
@@ -187,7 +187,7 @@ class MissingnessClassifier(BaseImputer, BaseEstimator, ClassifierMixin):
         Returns:
             self: instance of MissingnessClassifier
         """
-        self._prep_dataframes(X)
+        self._prep_fit_dataframe(X)
         self.statistics_ = {}
         if not self.scaler is None:
             self._scaler_fit()
