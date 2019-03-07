@@ -35,15 +35,12 @@ class PredictiveImputer(BaseImputer, BaseEstimator, TransformerMixin):
     }
 
     def __init__(self, strategy="default", predictors="all",
-                 fill_predictors=False, fill_strategy=None, fill_value=None,
-                 scaler=None, verbose=None):
+                 fill_predictors=False, scaler=None, verbose=None):
         """Create an instance of the PredictiveImputer class."""
         BaseImputer.__init__(self, scaler=scaler, verbose=verbose)
         self.strategy = strategy
         self.predictors = predictors
         self.fill_predictors = fill_predictors
-        self.fill_strategy = fill_strategy
-        self.fill_value = fill_value
 
     @property
     def strategy(self):
@@ -64,7 +61,7 @@ class PredictiveImputer(BaseImputer, BaseEstimator, TransformerMixin):
         Raises:
             ValueError: Strategies not valid (not in allowed strategies).
             TypeError: Strategy must be a string, tuple, list, or dict.
-            Both errors raised through helper method `_check_strategy`
+            Both errors raised through helper method `check_strategy_allowed`.
         """
         strat_names = self.strategies.keys()
         self._strategy = check_strategy_allowed(strat_names, s)

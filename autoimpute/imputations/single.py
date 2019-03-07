@@ -119,7 +119,7 @@ class SingleImputer(BaseEstimator, TransformerMixin):
         Raises:
             ValueError: Strategies not valid (not in allowed strategies).
             TypeError: Strategy must be a string, tuple, list, or dict.
-            Both errors raised through helper method `_check_strategy`
+            Both errors raised through helper method `check_strategy_allowed`.
         """
         strat_names = self.strategies.keys()
         self._strategy = check_strategy_allowed(strat_names, s)
@@ -128,7 +128,7 @@ class SingleImputer(BaseEstimator, TransformerMixin):
         """Internal helper method to validate strategies appropriate for fit.
 
         Checks whether strategies match with type of column they are applied
-        to. If not, error is raised through `_check_fit_strat` method.
+        to. If not, error is raised through `check_strategy_fit` method.
         """
         # remove nan columns and store colnames
         ocol = X.columns.tolist()

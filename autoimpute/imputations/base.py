@@ -8,6 +8,7 @@ Todo:
 """
 
 import warnings
+import itertools
 import numpy as np
 import pandas as pd
 from sklearn.base import clone
@@ -117,3 +118,61 @@ class BaseImputer:
         if self.verbose:
             print(f"Number of numeric columns: {self._len_num}")
             print(f"Number of categorical columns: {self._len_dum}")
+
+    def _use_all_cols(self, X, i, c):
+        """Private method to perpare the data for each classifier."""
+        # dealing with a numeric column...
+        if X[c].dtype == np.number:
+            if self._len_num > 1:
+                num_cols = self._data_num.drop(c, axis=1)
+                num_str = num_cols.columns.tolist()
+                if self._len_dum > 0:
+                    dummy_str = self._data_dum.columns.tolist()
+                    cl = [num_cols.values, self._data_dum.values]
+                    x = np.concatenate(cl, axis=1)
+                else:
+                    dummy_str = None
+                    x = num_cols.values
+            else:
+                num_str = None
+                if self._len_dum > 0:
+                    dummy_str = self._data_dum.columns.tolist()
+                    x = self._data_dum.values
+                else:
+                    raise ValueError("Need at least one predictor column.")
+            if self.verbose:
+                print(f"Columns used for {i} - {c}:")
+                print(f"Numeric: {num_str}")
+                print(f"Categorical: {dummy_str}")
+
+        # dealing with categorical columns...
+        else:
+            d_c = [v for k, v in self._dum_dict.items() if k != c]
+            d_fc = list(itertools.chain.from_iterable(d_c))
+            d = [k for k in self._data_dum.columns if k in d_fc]
+            len_d = len(d)
+            if len_d > 0:
+                dummy_cols = self._data_dum[d].values
+                dummy_str = self._data_dum[d].columns.tolist()
+                if self._len_num > 0:
+                    num_str = self._data_num.columns.tolist()
+                    cl = [self._data_num.values, dummy_cols]
+                    x = np.concatenate(cl, axis=1)
+                else:
+                    num_str = None
+                    x = dummy_cols
+            else:
+                dummy_str = None
+                if self._len_num > 0:
+                    num_str = self._data_num.columns.tolist()
+                    x = self._data_num.values
+                else:
+                    raise ValueError("Need at least one predictor column.")
+            if self.verbose:
+                print(f"Columns used for {i} - {c}:")
+                print(f"Numeric: {num_str}")
+                print(f"Categorical: {dummy_str}")
+
+        # return all predictors and target for predictor
+        y = self.data_mi[c].values
+        return x, y

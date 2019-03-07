@@ -285,6 +285,6 @@ def check_strategy_fit(strategy, nc, o_cols, cols):
         else:
             return strategy
 
-def check_predictors_with_fit(predictors):
-    """Placeholder function for checking predictors used for fitting"""
+def check_predictors_fit(predictors):
+    """Checked predictors used for fitting"""
     return predictors
