@@ -9,6 +9,7 @@ Imported:
     MissingnessClassifier
     SingleImputer
     TimeSeriesImputer
+    PredictiveImputer
     listwise_delete
 
 This module handles `from autoimpute.imputations import *` with the __all__
@@ -20,7 +21,8 @@ from autoimpute.imputations.base import BaseImputer
 from autoimpute.imputations.mis_classifier import MissingnessClassifier
 from autoimpute.imputations.single import SingleImputer
 from autoimpute.imputations.ts import TimeSeriesImputer
+from autoimpute.imputations.predictive import PredictiveImputer
 from autoimpute.imputations.deletion import listwise_delete
 
-__all__ = ["MissingnessClassifier", "SingleImputer",
-           "TimeSeriesImputer", "listwise_delete"]
+__all__ = ["MissingnessClassifier", "SingleImputer", "TimeSeriesImputer",
+           "PredictiveImputer", "listwise_delete"]
