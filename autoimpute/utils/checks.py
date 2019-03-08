@@ -10,8 +10,7 @@ Methods:
     check_data_structure(func)
     check_missingness(func)
     remove_nan_columns(func)
-    _check_mode(series, mode, strategy)
-    _check_strategy(strat_names, strategy)
+    check_strategy_allowed(strat_names, strategy)
 
 Todo:
     * Support data structures other than pandas DataFrame. Consider:
@@ -241,7 +240,7 @@ def check_strategy_fit(strategy, nc, o_cols, cols):
     strategy is assigned to.
 
     Args:
-        strategy(str, iterator, dict): strategies passed for columns.
+        strategy (str, iterator, dict): strategies passed for columns.
             String = 1 strategy, broadcast to all columns.
             Iterator = multiple strategies, must match col index and length.
             Dict = multiple strategies, must match col name, but not all
@@ -249,6 +248,10 @@ def check_strategy_fit(strategy, nc, o_cols, cols):
         nc(set): any columns removed because they are fully missing.
         o_cols: original columns before nc determined.
         cols: columns remaining after nc determined.
+
+    Raises:
+        ValueError (iter): length of columns and strategies must be equal.
+        ValueError (dict): keys of strategies and columns must match.
     """
     o_l = len(o_cols)
 
@@ -280,11 +283,80 @@ def check_strategy_fit(strategy, nc, o_cols, cols):
                 strategy.pop(k, None)
         diff_s = set(strategy.keys()).difference(cols)
         if diff_s:
-            err = f"Keys of strategies and column names must match"
+            err = f"Keys of strategies and column names must match."
             raise ValueError(err)
         else:
             return strategy
 
-def check_predictors_fit(predictors):
-    """Checked predictors used for fitting"""
+def check_predictors_fit(predictors, nc, o_cols, cols):
+    """Checked predictors used for fitting each column.
+
+    Args:
+        predictors (str, iterator, dict): predictors passed for columns.
+            String = "all" or raises error
+            Iterator = multiple strategies, must match col index and length.
+            Dict = multiple strategies, must match col name, but not all
+            columns are mandatory. Will simply impute based on name.
+        nc(set): any columns removed because they are fully missing.
+        o_cols: original columns before nc determined.
+        cols: columns remaining after nc determined.
+
+    Returns:
+        predictors
+
+    Raises:
+        ValueError (str): string not equal to all.
+        ValueError (iter): items in `predictors` not in columns of X.
+        ValueError (dict, keys): keys of response must be columns in X.
+        ValueError (dict, vals): preds for each response must be columns in X.
+    """
+    # if string, value must be `all`, or else raise an error
+    if isinstance(predictors, str):
+        if predictors != "all":
+            err = f"Must pass list or dict unless using all columns."
+            raise ValueError(err)
+
+    # if list or tuple, remove nan cols and check col names
+    if isinstance(predictors, (list, tuple)):
+        for i, pred in enumerate(predictors):
+            if pred not in o_cols:
+                err = f"{pred} in predictors not a valid column in X."
+                raise ValueError(err)
+            if pred in nc:
+                predictors.pop(i)
+
+    # if dictionary, remove nan cols and check col names
+    if isinstance(predictors, dict):
+        # check the keys first...
+        if nc:
+            for k in nc:
+                predictors.pop(k, None)
+        diff_s = set(predictors.keys()).difference(cols)
+        if diff_s:
+            err = "Keys of predictors and column names must match."
+            raise ValueError(err)
+        # then check the values of each key
+        for k, preds in predictors.items():
+            if isinstance(preds, str):
+                if preds in nc or preds not in cols:
+                    err = f"Invalid column as only predictor for {k}."
+                    raise ValueError(err)
+            elif isinstance(preds, (tuple, list)):
+                predictor_vals = []
+                for i, p in enumerate(preds):
+                    if p not in cols:
+                        err = f"Invalid column as predictor for {k}."
+                        raise ValueError(err)
+                    elif p in nc:
+                        preds.pop(i)
+                    else:
+                        predictor_vals.append(p)
+                p_len = len(predictor_vals)
+                if not p_len:
+                    err = f"All predictor columns for {k} are invalid."
+                    raise ValueError(err)
+            else:
+                err = "Values in predictor dict must be str, list, or tuple."
+                raise ValueError(err)
+
     return predictors

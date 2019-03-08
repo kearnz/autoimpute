@@ -119,7 +119,7 @@ class BaseImputer:
             print(f"Number of numeric columns: {self._len_num}")
             print(f"Number of categorical columns: {self._len_dum}")
 
-    def _use_all_cols(self, X, i, c):
+    def _prep_cols(self, X, i, c):
         """Private method to perpare the data for each classifier."""
         # dealing with a numeric column...
         if X[c].dtype == np.number:
