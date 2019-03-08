@@ -87,12 +87,7 @@ class PredictiveImputer(BaseImputer, BaseEstimator, TransformerMixin):
     @check_missingness
     def fit(self, X):
         """Fit placeholder."""
-
-        # first, prepare the columns we plan to use
-        ocol = X.columns.tolist()
-        X, self._nc = _nan_col_dropper(X)
-        ncol = X.columns.tolist()
-        self._strats = check_strategy_fit(self.strategy, self._nc, ocol, ncol)
-
+        # first, prep columns we plan to use and make sure they are valid
+        self._fit_strategy_validator(X)
         # next, prep the categorical / numerical split
         self._prep_fit_dataframe(X)
