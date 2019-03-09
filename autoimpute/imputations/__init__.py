@@ -1,6 +1,6 @@
-"""Manage the imputations lib from the autoimpute package.
+"""Manage the imputations folder from the autoimpute package.
 
-This module handles imports from the imputations library that should be
+This module handles imports from the imputations folder that should be
 accessible whenever someone imports autoimpute.imputations. The list below
 specifies the methods and classes that are currently available on import.
 
@@ -24,5 +24,5 @@ from autoimpute.imputations.ts_imputer import TimeSeriesImputer
 from autoimpute.imputations.predictive_imputer import PredictiveImputer
 from autoimpute.imputations.deletion import listwise_delete
 
-__all__ = ["MissingnessClassifier", "SingleImputer", "TimeSeriesImputer",
-           "PredictiveImputer", "listwise_delete"]
+__all__ = ["BaseImputer", "MissingnessClassifier", "SingleImputer",
+           "TimeSeriesImputer", "PredictiveImputer", "listwise_delete"]

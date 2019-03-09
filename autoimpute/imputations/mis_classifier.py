@@ -141,10 +141,12 @@ class MissingnessClassifier(BaseImputer, BaseEstimator, ClassifierMixin):
             print("FITTING...")
         # iterate missingness fit using classifier and all remaining columns
         for i, c in enumerate(self.data_mi):
-            x, y = self._prep_cols(X, i, c, self.predictors)
-            clf = clone(self.classifier)
-            cls_fit = clf.fit(x, y, **kwargs)
-            self.statistics_[c] = cls_fit
+            # only fit non time-based columns...
+            if c not in self._cols_time:
+                x, y = self._prep_cols(i, c, self.predictors)
+                clf = clone(self.classifier)
+                cls_fit = clf.fit(x, y, **kwargs)
+                self.statistics_[c] = cls_fit
         return self
 
     @check_missingness
@@ -172,10 +174,14 @@ class MissingnessClassifier(BaseImputer, BaseEstimator, ClassifierMixin):
             print("PREDICTING CLASS MEMBERSHIP...")
         preds_mat = []
         for i, c in enumerate(self.data_mi):
-            x, _ = self._prep_cols(X, i, c, self.predictors)
-            cls_fit = self.statistics_[c]
-            y_pred = cls_fit.predict(x, **kwargs)
-            preds_mat.append(y_pred)
+            if c not in self._cols_time:
+                x, _ = self._prep_cols(i, c, self.predictors)
+                cls_fit = self.statistics_[c]
+                y_pred = cls_fit.predict(x, **kwargs)
+                preds_mat.append(y_pred)
+            else:
+                y_pred = np.zeros(len(self.data_mi.index))
+                preds_mat.append(y_pred)
 
         # store the predictor matrix class membership as a dataframe
         preds_mat = np.array(preds_mat).T
@@ -208,10 +214,14 @@ class MissingnessClassifier(BaseImputer, BaseEstimator, ClassifierMixin):
             print("PREDICTING CLASS PROBABILITY...")
         preds_mat = []
         for i, c in enumerate(self.data_mi):
-            x, _ = self._prep_cols(X, i, c, self.predictors)
-            cls_fit = self.statistics_[c]
-            y_pred = cls_fit.predict_proba(x, **kwargs)[:, 1]
-            preds_mat.append(y_pred)
+            if c not in self._cols_time:
+                x, _ = self._prep_cols(i, c, self.predictors)
+                cls_fit = self.statistics_[c]
+                y_pred = cls_fit.predict_proba(x, **kwargs)[:, 1]
+                preds_mat.append(y_pred)
+            else:
+                y_pred = np.zeros(len(self.data_mi.index))
+                preds_mat.append(y_pred)
 
         # store the predictor matrix probabilities as a dataframe
         preds_mat = np.array(preds_mat).T

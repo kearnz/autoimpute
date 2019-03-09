@@ -1,10 +1,11 @@
-"""Module for BaseImputer - a base class for classifier/predictive imputers.
+"""Module for BaseImputer - a base class for classifiers/predictive imputers.
+
 This module contains the `BaseImputer`, which is used to abstract away
 functionality in both missingness classifiers and predictive imputers.
 
 Todo:
-    * Determine how column specification fits in.
-    * Determine how column "using" for specification fits in.
+    * Finish logic for predictors
+    * Rename and reorder methods for style / conventions
 """
 
 import warnings
@@ -20,14 +21,14 @@ class BaseImputer:
     """Building blocks for more advanced imputers and missingness classifiers.
 
     The `BaseImputer` is not a stand-alone class and thus serves no purpose
-    other than as a Parent to Imputers and MissingnessClassifiers.
+    other than as a Parent to Imputers and MissingnessClassifiers. Therefore,
+    the BaseImputer should not be used directly unless creating a
     """
 
     def __init__(self, scaler, verbose):
         """Initialize the BaseImputer.
 
         Args:
-            strategy (str, iter, dict): strategies for imputation.
             scaler (sklearn scaler, optional): A scaler supported by sklearn.
                 Defaults to None, so no scaling of fit/transform data.
             verbose (bool, optional): Print information to the console.
@@ -266,8 +267,15 @@ class BaseImputer:
         """Private method to process numeric & categorical data for fit."""
         X, self._nc = _nan_col_dropper(X)
         self.data_mi = pd.isnull(X)*1
+        # numerical columns first
         self._data_num = X.select_dtypes(include=(np.number,))
-        self._len_num = len(self._data_num.columns)
+        self._cols_num = self._data_num.columns.tolist()
+        self._len_num = len(self._cols_num)
+
+        # datetime columns next
+        self._data_time = X.select_dtypes(include=(np.datetime64,))
+        self._cols_time = self._data_time.columns.tolist()
+        self._len_time = len(self._cols_time)
 
         # right now, only support for one-hot encoding
         orig_dum = X.select_dtypes(include=(np.object,))
@@ -287,17 +295,18 @@ class BaseImputer:
                 self._data_dum = dummies[0]
             else:
                 self._data_dum = pd.concat(dummies, axis=1)
-        self._len_dum = len(self._data_dum.columns)
+        self._cols_dum = self._data_dum.columns.tolist()
+        self._len_dum = len(self._cols_dum)
 
         # print categorical and numeric columns if verbose true
         if self.verbose:
             print(f"Number of numeric columns: {self._len_num}")
             print(f"Number of categorical columns: {self._len_dum}")
 
-    def _use_all_cols(self, X, i, c):
+    def _use_all_cols(self, i, c):
         """Private method to pedict using all columns."""
         # dealing with a numeric column...
-        if X[c].dtype == np.number:
+        if c in self._cols_num:
             if self._len_num > 1:
                 num_cols = self._data_num.drop(c, axis=1)
                 num_str = num_cols.columns.tolist()
@@ -321,7 +330,7 @@ class BaseImputer:
                 print(f"Categorical: {dummy_str}")
 
         # dealing with categorical columns...
-        else:
+        if c in self._cols_dum:
             d_c = [v for k, v in self._dum_dict.items() if k != c]
             d_fc = list(itertools.chain.from_iterable(d_c))
             d = [k for k in self._data_dum.columns if k in d_fc]
@@ -352,9 +361,9 @@ class BaseImputer:
         y = self.data_mi[c].values
         return x, y
 
-    def _prep_cols(self, X, i, c, preds):
+    def _prep_cols(self, i, c, preds):
         """Private method to prep cols for prediction."""
         if preds == "all":
             if self.verbose:
                 print("No predictors specified, using all available.")
-            return self._use_all_cols(X, i, c)
+            return self._use_all_cols(i, c)
