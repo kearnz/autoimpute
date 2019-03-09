@@ -357,6 +357,9 @@ class BaseImputer:
                 print(f"Numeric: {num_str}")
                 print(f"Categorical: {dummy_str}")
 
+        # integrate time series columns as predictors
+        if self._len_time > 0:
+            x = np.concatenate([x, self._data_time.values], axis=1)
         # return all predictors and target for predictor
         y = self.data_mi[c].values
         return x, y
