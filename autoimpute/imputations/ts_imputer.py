@@ -107,7 +107,12 @@ class TimeSeriesImputer(BaseImputer, BaseEstimator, TransformerMixin):
             verbose (bool, optional): print more information to console.
                 Default value is False.
         """
-        BaseImputer.__init__(self, strategy, scaler, verbose)
+        BaseImputer.__init__(
+            self,
+            scaler=scaler,
+            verbose=verbose
+        )
+        self.strategy = strategy
         self.fill_value = fill_value
         self.index_column = index_column
 
@@ -117,7 +122,7 @@ class TimeSeriesImputer(BaseImputer, BaseEstimator, TransformerMixin):
         return self._strategy
 
     @strategy.setter
-    def strategy(self):
+    def strategy(self, s):
         """Validate the strategy property to ensure it's Type and Value.
 
         Class instance only possible if strategy is proper type, as outlined
@@ -133,7 +138,7 @@ class TimeSeriesImputer(BaseImputer, BaseEstimator, TransformerMixin):
             Both errors raised through helper method `check_strategy_allowed`.
         """
         strat_names = self.strategies.keys()
-        self._strategy = self.check_strategy_allowed(strat_names)
+        self._strategy = self.check_strategy_allowed(strat_names, s)
 
     def _fit_strategy_validator(self, X):
         """Internal helper method to validate strategies appropriate for fit.
@@ -151,10 +156,11 @@ class TimeSeriesImputer(BaseImputer, BaseEstimator, TransformerMixin):
                 raise ValueError(err)
 
         # next, strategy check with existing columns passed
+        s = self.strategy
         ocol = X.columns.tolist()
         X, self._nc = _nan_col_dropper(X)
         ncol = X.columns.tolist()
-        self._strats = self.check_strategy_fit(self._nc, ocol, ncol)
+        self._strats = self.check_strategy_fit(s, self._nc, ocol, ncol)
 
     def _transform_strategy_validator(self, X):
         """Internal helper to validate strategy before transformation.

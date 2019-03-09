@@ -23,7 +23,7 @@ class BaseImputer:
     other than as a Parent to Imputers and MissingnessClassifiers.
     """
 
-    def __init__(self, strategy=None, scaler=None, verbose=False):
+    def __init__(self, scaler, verbose):
         """Initialize the BaseImputer.
 
         Args:
@@ -33,7 +33,6 @@ class BaseImputer:
             verbose (bool, optional): Print information to the console.
                 Defaults to False.
         """
-        self.strategy = strategy
         self.scaler = scaler
         self.verbose = verbose
 
@@ -81,7 +80,7 @@ class BaseImputer:
             sd = self._scaled_dum.transform(self._data_dum.values)
             self._data_dum = pd.DataFrame(sd, columns=cd)
 
-    def check_strategy_allowed(self, strat_names):
+    def check_strategy_allowed(self, strat_names, s):
         """Logic to determine if the strategy passed for imputation is valid.
 
         Imputer Classes in this library have a very flexible strategy argument.
@@ -100,10 +99,9 @@ class BaseImputer:
             ValueError: Strategies not valid (not in allowed strategies).
             TypeError: Strategy must be a string, tuple, list, or dict.
         """
-        s = self.strategy
         err_op = f"Strategies must be one of {list(strat_names)}."
         if isinstance(s, str):
-            if self.strategy not in strat_names:
+            if s not in strat_names:
                 err = f"Strategy {s} not a valid imputation method.\n"
                 raise ValueError(f"{err} {err_op}")
         elif isinstance(s, (list, tuple, dict)):
@@ -119,7 +117,7 @@ class BaseImputer:
             raise TypeError("Strategy must be string, tuple, list, or dict.")
         return s
 
-    def check_strategy_fit(self, nc, o_cols, cols):
+    def check_strategy_fit(self, s, nc, o_cols, cols):
         """Check whether strategies of imputer make sense given data passed.
 
         An Imputer takes strategies to use for imputation. Those strategies
@@ -145,7 +143,6 @@ class BaseImputer:
             ValueError (dict): keys of strategies and columns must match.
         """
         o_l = len(o_cols)
-        s = self.strategy
         # if strategy is string, extend strategy to all cols
         if isinstance(s, str):
             return {c:s for c in cols}

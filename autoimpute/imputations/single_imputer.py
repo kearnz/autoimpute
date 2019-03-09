@@ -95,7 +95,12 @@ class SingleImputer(BaseImputer, BaseEstimator, TransformerMixin):
             copy (bool, optional): create copy of DataFrame or operate inplace.
                 Default value is True. Copy created.
         """
-        BaseImputer.__init__(self, strategy, scaler, verbose)
+        BaseImputer.__init__(
+            self,
+            scaler=scaler,
+            verbose=verbose
+        )
+        self.strategy = strategy
         self.fill_value = fill_value
         self.copy = copy
 
@@ -105,7 +110,7 @@ class SingleImputer(BaseImputer, BaseEstimator, TransformerMixin):
         return self._strategy
 
     @strategy.setter
-    def strategy(self):
+    def strategy(self, s):
         """Validate the strategy property to ensure it's Type and Value.
 
         Class instance only possible if strategy is proper type, as outlined
@@ -121,7 +126,7 @@ class SingleImputer(BaseImputer, BaseEstimator, TransformerMixin):
             Both errors raised through helper method `check_strategy_allowed`.
         """
         strat_names = self.strategies.keys()
-        self._strategy = self.check_strategy_allowed(strat_names)
+        self._strategy = self.check_strategy_allowed(strat_names, s)
 
     def _fit_strategy_validator(self, X):
         """Internal helper method to validate strategies appropriate for fit.
@@ -130,10 +135,11 @@ class SingleImputer(BaseImputer, BaseEstimator, TransformerMixin):
         to. If not, error is raised through `check_strategy_fit` method.
         """
         # remove nan columns and store colnames
+        s = self.strategy
         ocol = X.columns.tolist()
         X, self._nc = _nan_col_dropper(X)
         ncol = X.columns.tolist()
-        self._strats = self.check_strategy_fit(self._nc, ocol, ncol)
+        self._strats = self.check_strategy_fit(s, self._nc, ocol, ncol)
         return X
 
     @check_missingness

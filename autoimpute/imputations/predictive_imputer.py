@@ -36,7 +36,11 @@ class PredictiveImputer(BaseImputer, BaseEstimator, TransformerMixin):
     def __init__(self, strategy="default", predictors="all",
                  fill_predictors=False, scaler=None, verbose=None):
         """Create an instance of the PredictiveImputer class."""
-        BaseImputer.__init__(self, scaler=scaler, verbose=verbose)
+        BaseImputer.__init__(
+            self,
+            scaler=scaler,
+            verbose=verbose
+        )
         self.strategy = strategy
         self.predictors = predictors
         self.fill_predictors = fill_predictors
@@ -47,7 +51,7 @@ class PredictiveImputer(BaseImputer, BaseEstimator, TransformerMixin):
         return self._strategy
 
     @strategy.setter
-    def strategy(self):
+    def strategy(self, s):
         """Validate the strategy property to ensure it's Type and Value.
 
         Class instance only possible if strategy is proper type, as outlined
@@ -63,7 +67,7 @@ class PredictiveImputer(BaseImputer, BaseEstimator, TransformerMixin):
             Both errors raised through helper method `check_strategy_allowed`.
         """
         strat_names = self.strategies.keys()
-        self._strategy = self.check_strategy_allowed(strat_names)
+        self._strategy = self.check_strategy_allowed(strat_names, s)
 
     def _fit_strategy_validator(self, X):
         """Internal helper method to validate strategies appropriate for fit.
@@ -76,7 +80,7 @@ class PredictiveImputer(BaseImputer, BaseEstimator, TransformerMixin):
         X, self._nc = _nan_col_dropper(X)
         ncol = X.columns.tolist()
         self._strats = self.check_strategy_fit(
-            self._nc, ocol, ncol
+            self.strategy, self._nc, ocol, ncol
         )
         self._preds = self.check_predictors_fit(
             self.predictors, self._nc, ocol, ncol

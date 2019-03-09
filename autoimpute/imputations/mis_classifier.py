@@ -59,7 +59,11 @@ class MissingnessClassifier(BaseImputer, BaseEstimator, ClassifierMixin):
             verbose (bool, optional): print information to the console.
                 Default is False.
         """
-        BaseImputer.__init__(self, scaler=scaler, verbose=verbose)
+        BaseImputer.__init__(
+            self,
+            scaler=scaler,
+            verbose=verbose
+        )
         self.classifier = classifier
         self.predictors = "all"
 
@@ -137,7 +141,7 @@ class MissingnessClassifier(BaseImputer, BaseEstimator, ClassifierMixin):
             print("FITTING...")
         # iterate missingness fit using classifier and all remaining columns
         for i, c in enumerate(self.data_mi):
-            x, y = self._prep_cols(X, i, c, self.verbose, self.predictors)
+            x, y = self._prep_cols(X, i, c, self.predictors)
             clf = clone(self.classifier)
             cls_fit = clf.fit(x, y, **kwargs)
             self.statistics_[c] = cls_fit
@@ -168,7 +172,7 @@ class MissingnessClassifier(BaseImputer, BaseEstimator, ClassifierMixin):
             print("PREDICTING CLASS MEMBERSHIP...")
         preds_mat = []
         for i, c in enumerate(self.data_mi):
-            x, _ = self._prep_cols(X, i, c, self.verbose, self.predictors)
+            x, _ = self._prep_cols(X, i, c, self.predictors)
             cls_fit = self.statistics_[c]
             y_pred = cls_fit.predict(x, **kwargs)
             preds_mat.append(y_pred)
@@ -204,7 +208,7 @@ class MissingnessClassifier(BaseImputer, BaseEstimator, ClassifierMixin):
             print("PREDICTING CLASS PROBABILITY...")
         preds_mat = []
         for i, c in enumerate(self.data_mi):
-            x, _ = self._prep_cols(X, i, c, self.verbose, self.predictors)
+            x, _ = self._prep_cols(X, i, c, self.predictors)
             cls_fit = self.statistics_[c]
             y_pred = cls_fit.predict_proba(x, **kwargs)[:, 1]
             preds_mat.append(y_pred)
