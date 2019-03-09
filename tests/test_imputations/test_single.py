@@ -1,7 +1,7 @@
 """Tests for the SingleImputer Class."""
 
 import pytest
-from autoimpute.imputations.single import SingleImputer
+from autoimpute.imputations.single_imputer import SingleImputer
 from autoimpute.utils import dataframes
 dfs = dataframes
 # pylint:disable=len-as-condition

@@ -1,6 +1,6 @@
 """Tests for the TimeSeriesImputer Class."""
 
-from autoimpute.imputations.ts import TimeSeriesImputer
+from autoimpute.imputations.ts_imputer import TimeSeriesImputer
 from autoimpute.utils import dataframes
 dfs = dataframes
 

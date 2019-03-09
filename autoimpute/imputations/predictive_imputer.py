@@ -14,8 +14,7 @@ Todo:
 """
 
 from sklearn.base import BaseEstimator, TransformerMixin
-from autoimpute.utils.checks import check_missingness, check_predictors_fit
-from autoimpute.utils.checks import check_strategy_allowed, check_strategy_fit
+from autoimpute.utils.checks import check_missingness
 from autoimpute.utils.helpers import _nan_col_dropper
 from autoimpute.imputations.base_imputer import BaseImputer
 from autoimpute.imputations import predictive_methods
@@ -48,7 +47,7 @@ class PredictiveImputer(BaseImputer, BaseEstimator, TransformerMixin):
         return self._strategy
 
     @strategy.setter
-    def strategy(self, s):
+    def strategy(self):
         """Validate the strategy property to ensure it's Type and Value.
 
         Class instance only possible if strategy is proper type, as outlined
@@ -64,7 +63,7 @@ class PredictiveImputer(BaseImputer, BaseEstimator, TransformerMixin):
             Both errors raised through helper method `check_strategy_allowed`.
         """
         strat_names = self.strategies.keys()
-        self._strategy = check_strategy_allowed(strat_names, s)
+        self._strategy = self.check_strategy_allowed(strat_names)
 
     def _fit_strategy_validator(self, X):
         """Internal helper method to validate strategies appropriate for fit.
@@ -76,10 +75,10 @@ class PredictiveImputer(BaseImputer, BaseEstimator, TransformerMixin):
         ocol = X.columns.tolist()
         X, self._nc = _nan_col_dropper(X)
         ncol = X.columns.tolist()
-        self._strats = check_strategy_fit(
-            self.strategy, self._nc, ocol, ncol
+        self._strats = self.check_strategy_fit(
+            self._nc, ocol, ncol
         )
-        self.predictors = check_predictors_fit(
+        self._preds = self.check_predictors_fit(
             self.predictors, self._nc, ocol, ncol
         )
         return X
