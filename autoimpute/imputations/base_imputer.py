@@ -317,6 +317,7 @@ class BaseImputer:
                 self._data_dum.values,
                 self._data_time.values
             ]
+            predictors = [p for p in predictors if p.size > 0]
             x = np.concatenate(predictors, axis=1)
             if self.verbose:
                 print(f"Columns used for {i} - {c}:")
@@ -338,6 +339,7 @@ class BaseImputer:
                 self._data_num.values,
                 self._data_time.values
             ]
+            predictors = [p for p in predictors if p.size > 0]
             x = np.concatenate(predictors, axis=1)
             if self.verbose:
                 print(f"Columns used for {i} - {c}:")
