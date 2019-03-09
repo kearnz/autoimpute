@@ -17,7 +17,7 @@ from sklearn.base import BaseEstimator, TransformerMixin
 from autoimpute.utils.checks import check_missingness, check_predictors_fit
 from autoimpute.utils.checks import check_strategy_allowed, check_strategy_fit
 from autoimpute.utils.helpers import _nan_col_dropper
-from autoimpute.imputations.base import BaseImputer
+from autoimpute.imputations.base_imputer import BaseImputer
 from autoimpute.imputations import predictive_methods
 pm = predictive_methods
 # pylint:disable=attribute-defined-outside-init

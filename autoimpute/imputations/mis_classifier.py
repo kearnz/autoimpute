@@ -17,7 +17,7 @@ from xgboost import XGBClassifier
 from sklearn.base import clone, BaseEstimator, ClassifierMixin
 from sklearn.utils.validation import check_is_fitted
 from autoimpute.utils.checks import check_missingness
-from autoimpute.imputations.base import BaseImputer
+from autoimpute.imputations.base_imputer import BaseImputer
 # pylint:disable=attribute-defined-outside-init
 # pylint:disable=arguments-differ
 
@@ -61,6 +61,7 @@ class MissingnessClassifier(BaseImputer, BaseEstimator, ClassifierMixin):
         """
         BaseImputer.__init__(self, scaler=scaler, verbose=verbose)
         self.classifier = classifier
+        self.predictors = "all"
 
     @property
     def classifier(self):
@@ -136,7 +137,7 @@ class MissingnessClassifier(BaseImputer, BaseEstimator, ClassifierMixin):
             print("FITTING...")
         # iterate missingness fit using classifier and all remaining columns
         for i, c in enumerate(self.data_mi):
-            x, y = self._use_all_cols(X, i, c)
+            x, y = self._prep_cols(X, i, c, self.verbose, self.predictors)
             clf = clone(self.classifier)
             cls_fit = clf.fit(x, y, **kwargs)
             self.statistics_[c] = cls_fit
@@ -167,7 +168,7 @@ class MissingnessClassifier(BaseImputer, BaseEstimator, ClassifierMixin):
             print("PREDICTING CLASS MEMBERSHIP...")
         preds_mat = []
         for i, c in enumerate(self.data_mi):
-            x, _ = self._use_all_cols(X, i, c)
+            x, _ = self._prep_cols(X, i, c, self.verbose, self.predictors)
             cls_fit = self.statistics_[c]
             y_pred = cls_fit.predict(x, **kwargs)
             preds_mat.append(y_pred)
@@ -203,7 +204,7 @@ class MissingnessClassifier(BaseImputer, BaseEstimator, ClassifierMixin):
             print("PREDICTING CLASS PROBABILITY...")
         preds_mat = []
         for i, c in enumerate(self.data_mi):
-            x, _ = self._use_all_cols(X, i, c)
+            x, _ = self._prep_cols(X, i, c, self.verbose, self.predictors)
             cls_fit = self.statistics_[c]
             y_pred = cls_fit.predict_proba(x, **kwargs)[:, 1]
             preds_mat.append(y_pred)

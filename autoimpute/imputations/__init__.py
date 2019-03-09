@@ -17,11 +17,11 @@ variable below. This command imports the main public classes and methods
 from autoimpute.imputations.
 """
 
-from autoimpute.imputations.base import BaseImputer
+from autoimpute.imputations.base_imputer import BaseImputer
 from autoimpute.imputations.mis_classifier import MissingnessClassifier
-from autoimpute.imputations.single import SingleImputer
-from autoimpute.imputations.ts import TimeSeriesImputer
-from autoimpute.imputations.predictive import PredictiveImputer
+from autoimpute.imputations.single_imputer import SingleImputer
+from autoimpute.imputations.ts_imputer import TimeSeriesImputer
+from autoimpute.imputations.predictive_imputer import PredictiveImputer
 from autoimpute.imputations.deletion import listwise_delete
 
 __all__ = ["MissingnessClassifier", "SingleImputer", "TimeSeriesImputer",
