@@ -306,60 +306,45 @@ class BaseImputer:
     def _use_all_cols(self, i, c):
         """Private method to pedict using all columns."""
         # dealing with a numeric column...
+        err = f"Need at least one predictor column to fit {c}."
         if c in self._cols_num:
-            if self._len_num > 1:
-                num_cols = self._data_num.drop(c, axis=1)
-                num_str = num_cols.columns.tolist()
-                if self._len_dum > 0:
-                    dummy_str = self._data_dum.columns.tolist()
-                    cl = [num_cols.values, self._data_dum.values]
-                    x = np.concatenate(cl, axis=1)
-                else:
-                    dummy_str = None
-                    x = num_cols.values
-            else:
-                num_str = None
-                if self._len_dum > 0:
-                    dummy_str = self._data_dum.columns.tolist()
-                    x = self._data_dum.values
-                else:
-                    raise ValueError("Need at least one predictor column.")
+            num_cols = self._data_num.drop(c, axis=1)
+            num_str = num_cols.columns.tolist()
+            if not any([len(num_str), self._len_dum, self._len_time]):
+                raise ValueError(err)
+            predictors = [
+                num_cols.values,
+                self._data_dum.values,
+                self._data_time.values
+            ]
+            x = np.concatenate(predictors, axis=1)
             if self.verbose:
                 print(f"Columns used for {i} - {c}:")
                 print(f"Numeric: {num_str}")
-                print(f"Categorical: {dummy_str}")
+                print(f"Categorical: {self._cols_dum}")
+                print(f"Datetime: {self._cols_time}")
 
         # dealing with categorical columns...
         if c in self._cols_dum:
             d_c = [v for k, v in self._dum_dict.items() if k != c]
             d_fc = list(itertools.chain.from_iterable(d_c))
             d = [k for k in self._data_dum.columns if k in d_fc]
-            len_d = len(d)
-            if len_d > 0:
-                dummy_cols = self._data_dum[d].values
-                dummy_str = self._data_dum[d].columns.tolist()
-                if self._len_num > 0:
-                    num_str = self._data_num.columns.tolist()
-                    cl = [self._data_num.values, dummy_cols]
-                    x = np.concatenate(cl, axis=1)
-                else:
-                    num_str = None
-                    x = dummy_cols
-            else:
-                dummy_str = None
-                if self._len_num > 0:
-                    num_str = self._data_num.columns.tolist()
-                    x = self._data_num.values
-                else:
-                    raise ValueError("Need at least one predictor column.")
+            dummy_cols = self._data_dum[d].values
+            dummy_str = self._data_dum[d].columns.tolist()
+            if not any([len(dummy_str), self._len_num, self._len_time]):
+                raise ValueError(err)
+            predictors = [
+                dummy_cols.values,
+                self._data_num.values,
+                self._data_time.values
+            ]
+            x = np.concatenate(predictors, axis=1)
             if self.verbose:
                 print(f"Columns used for {i} - {c}:")
-                print(f"Numeric: {num_str}")
+                print(f"Numeric: {self._cols_num}")
                 print(f"Categorical: {dummy_str}")
+                print(f"Datetime: {self._cols_time}")
 
-        # integrate time series columns as predictors
-        if self._len_time > 0:
-            x = np.concatenate([x, self._data_time.values], axis=1)
         # return all predictors and target for predictor
         y = self.data_mi[c].values
         return x, y
