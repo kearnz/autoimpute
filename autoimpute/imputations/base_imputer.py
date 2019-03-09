@@ -112,7 +112,7 @@ class BaseImputer:
                 self._data_dum = dummies[0]
             else:
                 self._data_dum = pd.concat(dummies, axis=1)
-            self._len_dum = len(self._data_dum.columns)
+        self._len_dum = len(self._data_dum.columns)
 
         # print categorical and numeric columns if verbose true
         if self.verbose:
