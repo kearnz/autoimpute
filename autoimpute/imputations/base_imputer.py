@@ -279,6 +279,7 @@ class BaseImputer:
 
         # right now, only support for one-hot encoding
         orig_dum = X.select_dtypes(include=(np.object,))
+        self._orig_dum = orig_dum.columns.tolist()
         if not orig_dum.columns.tolist():
             self._data_dum = pd.DataFrame()
         else:
@@ -326,7 +327,7 @@ class BaseImputer:
                 print(f"Datetime: {self._cols_time}")
 
         # dealing with categorical columns...
-        if c in self._cols_dum:
+        if c in self._orig_dum:
             d_c = [v for k, v in self._dum_dict.items() if k != c]
             d_fc = list(itertools.chain.from_iterable(d_c))
             d = [k for k in self._data_dum.columns if k in d_fc]
