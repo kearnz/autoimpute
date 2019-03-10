@@ -13,6 +13,7 @@ import itertools
 import numpy as np
 import pandas as pd
 from sklearn.base import clone
+from sklearn.utils.validation import check_is_fitted
 from autoimpute.utils.helpers import _nan_col_dropper
 # pylint:disable=attribute-defined-outside-init
 # pylint:disable=too-many-instance-attributes
@@ -331,7 +332,7 @@ class BaseImputer:
             d_c = [v for k, v in self._dum_dict.items() if k != c]
             d_fc = list(itertools.chain.from_iterable(d_c))
             d = [k for k in self._data_dum.columns if k in d_fc]
-            dummy_cols = self._data_dum[d].values
+            dummy_cols = self._data_dum[d]
             dummy_str = self._data_dum[d].columns.tolist()
             if not any([len(dummy_str), self._len_num, self._len_time]):
                 raise ValueError(err)
@@ -358,3 +359,28 @@ class BaseImputer:
             if self.verbose:
                 print("No predictors specified, using all available.")
             return self._use_all_cols(i, c)
+
+    def _prep_predictor(self, X, new_data):
+        """Private method to prep for prediction."""
+        # initial checks before transformation
+        check_is_fitted(self, 'statistics_')
+
+        # remove columns in transform if they were removed in fit
+        if self._nc and new_data:
+            wrn = f"{self._nc} dropped in transform since they were not fit."
+            warnings.warn(wrn)
+            X.drop(self._nc, axis=1, inplace=True)
+
+        # check dataset features are the same for both fit and transform
+        X_cols = X.columns.tolist()
+        mi_cols = self.data_mi.columns.tolist()
+        diff_X = set(X_cols).difference(mi_cols)
+        diff_mi = set(mi_cols).difference(X_cols)
+        if diff_X or diff_mi:
+            raise ValueError("Same columns must appear in fit and predict.")
+
+        # if not error, check if new data
+        if new_data:
+            self._prep_fit_dataframe(X)
+        if not self.scaler is None:
+            self._scaler_transform()

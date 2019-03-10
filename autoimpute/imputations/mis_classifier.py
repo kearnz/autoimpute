@@ -15,7 +15,6 @@ import numpy as np
 import pandas as pd
 from xgboost import XGBClassifier
 from sklearn.base import clone, BaseEstimator, ClassifierMixin
-from sklearn.utils.validation import check_is_fitted
 from autoimpute.utils.checks import check_missingness
 from autoimpute.imputations.base_imputer import BaseImputer
 # pylint:disable=attribute-defined-outside-init
@@ -90,31 +89,6 @@ class MissingnessClassifier(BaseImputer, BaseEstimator, ClassifierMixin):
                 raise ValueError(f"Classifier must implement {m} method.")
             else:
                 self._classifier = c
-
-    def _prep_predictor(self, X, new_data):
-        """Private method to prep for prediction."""
-        # initial checks before transformation
-        check_is_fitted(self, 'statistics_')
-
-        # remove columns in transform if they were removed in fit
-        if self._nc:
-            wrn = f"{self._nc} dropped in transform since they were not fit."
-            warnings.warn(wrn)
-            X.drop(self._nc, axis=1, inplace=True)
-
-        # check dataset features are the same for both fit and transform
-        X_cols = X.columns.tolist()
-        mi_cols = self.data_mi.columns.tolist()
-        diff_X = set(X_cols).difference(mi_cols)
-        diff_mi = set(mi_cols).difference(X_cols)
-        if diff_X or diff_mi:
-            raise ValueError("Same columns must appear in fit and predict.")
-
-        # if not error, check if new data
-        if new_data:
-            self._prep_fit_dataframe(X)
-        if not self.scaler is None:
-            self._scaler_transform()
 
     @check_missingness
     def fit(self, X, **kwargs):
