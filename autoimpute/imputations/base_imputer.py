@@ -355,11 +355,11 @@ class BaseImputer:
         """Private method to prep cols for prediction."""
         if preds == "all":
             if self.verbose:
-                print("No predictors specified, using all available.")
+                print("No predictors specified for {c}, using all available.")
             num, dum, time = self._use_all_cols(c)
         if isinstance(preds, (list, tuple)):
             if self.verbose:
-                print(f"Using {preds} as covariates for all models.")
+                print(f"Using {preds} as covariates for {c}.")
             num, dum, time = self._use_iter_cols(c, preds)
 
         # error handling and printing to console

@@ -17,6 +17,7 @@ from xgboost import XGBClassifier
 from sklearn.base import clone, BaseEstimator, ClassifierMixin
 from sklearn.utils.validation import check_is_fitted
 from autoimpute.utils.checks import check_missingness
+from autoimpute.utils.helpers import _nan_col_dropper
 from autoimpute.imputations.base_imputer import BaseImputer
 # pylint:disable=attribute-defined-outside-init
 # pylint:disable=arguments-differ
@@ -37,7 +38,8 @@ class MissingnessClassifier(BaseImputer, BaseEstimator, ClassifierMixin):
     to unsupervised. A user never knows the true value of missing data but can
     verify imputation methods on test cases for which the true value is known.
     """
-    def __init__(self, classifier=None, scaler=None, verbose=False):
+    def __init__(self, classifier=None, predictors="all",
+                 scaler=None, verbose=False):
         """Create an instance of the MissingnessClassifier.
 
         The MissingnessClassifier inherits from sklearn BaseEstimator and
@@ -67,7 +69,7 @@ class MissingnessClassifier(BaseImputer, BaseEstimator, ClassifierMixin):
             verbose=verbose
         )
         self.classifier = classifier
-        self.predictors = "all"
+        self.predictors = predictors
 
     @property
     def classifier(self):
@@ -134,6 +136,13 @@ class MissingnessClassifier(BaseImputer, BaseEstimator, ClassifierMixin):
         Returns:
             self: instance of MissingnessClassifier
         """
+        # remove nan columns and store colnames
+        ocol = X.columns.tolist()
+        X, self._nc = _nan_col_dropper(X)
+        ncol = X.columns.tolist()
+        self._preds = self.check_predictors_fit(
+            self.predictors, self._nc, ocol, ncol
+        )
         self._prep_fit_dataframe(X)
         self.statistics_ = {}
         if not self.scaler is None:
