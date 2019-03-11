@@ -22,6 +22,7 @@ pm = predictive_methods
 # pylint:disable=attribute-defined-outside-init
 # pylint:disable=arguments-differ
 # pylint:disable=protected-access
+# pylint:disable=too-many-arguments
 
 class PredictiveImputer(BaseImputer, BaseEstimator, TransformerMixin):
     """Techniques to impute Series with missing values through learning."""

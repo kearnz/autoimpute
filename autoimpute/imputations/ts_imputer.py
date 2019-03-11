@@ -22,6 +22,8 @@ sm = single_methods
 # pylint:disable=attribute-defined-outside-init
 # pylint:disable=arguments-differ
 # pylint:disable=protected-access
+# pylint:disable=too-many-arguments
+# pylint:disable=too-many-instance-attributes
 
 class TimeSeriesImputer(BaseImputer, BaseEstimator, TransformerMixin):
     """Techniques to impute Series with a logical ordering and time component.

@@ -21,6 +21,9 @@ sm = single_methods
 # pylint:disable=attribute-defined-outside-init
 # pylint:disable=arguments-differ
 # pylint:disable=protected-access
+# pylint:disable=too-many-arguments
+# pylint:disable=too-many-instance-attributes
+
 
 class SingleImputer(BaseImputer, BaseEstimator, TransformerMixin):
     """Techniques to impute Series with missing values one time.

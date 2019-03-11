@@ -15,10 +15,13 @@ import numpy as np
 import pandas as pd
 from xgboost import XGBClassifier
 from sklearn.base import clone, BaseEstimator, ClassifierMixin
+from sklearn.utils.validation import check_is_fitted
 from autoimpute.utils.checks import check_missingness
 from autoimpute.imputations.base_imputer import BaseImputer
 # pylint:disable=attribute-defined-outside-init
 # pylint:disable=arguments-differ
+# pylint:disable=too-many-arguments
+# pylint:disable=too-many-instance-attributes
 
 class MissingnessClassifier(BaseImputer, BaseEstimator, ClassifierMixin):
     """Classify values as missing or not, based on missingness patterns.
@@ -90,6 +93,30 @@ class MissingnessClassifier(BaseImputer, BaseEstimator, ClassifierMixin):
             else:
                 self._classifier = c
 
+    def _predictor_strategy_validator(self, X, new_data):
+        """Private method to prep for prediction."""
+        # initial checks before transformation
+        check_is_fitted(self, 'statistics_')
+        # remove columns in transform if they were removed in fit
+        if self._nc and new_data:
+            wrn = f"{self._nc} dropped in transform since they were not fit."
+            warnings.warn(wrn)
+            X.drop(self._nc, axis=1, inplace=True)
+
+        # check dataset features are the same for both fit and transform
+        X_cols = X.columns.tolist()
+        mi_cols = self.data_mi.columns.tolist()
+        diff_X = set(X_cols).difference(mi_cols)
+        diff_mi = set(mi_cols).difference(X_cols)
+        if diff_X or diff_mi:
+            raise ValueError("Same columns must appear in fit and predict.")
+
+        # if not error, check if new data
+        if new_data:
+            self._prep_fit_dataframe(X)
+        if not self.scaler is None:
+            self._scaler_transform()
+
     @check_missingness
     def fit(self, X, **kwargs):
         """Fit an individual classifier for each column in the DataFrame.
@@ -114,10 +141,10 @@ class MissingnessClassifier(BaseImputer, BaseEstimator, ClassifierMixin):
         if self.verbose:
             print("FITTING...")
         # iterate missingness fit using classifier and all remaining columns
-        for i, c in enumerate(self.data_mi):
+        for c in self.data_mi:
             # only fit non time-based columns...
             if c not in self._cols_time:
-                x, y = self._prep_cols(i, c, self.predictors)
+                x, y = self._prep_pred_cols(c, self.predictors)
                 clf = clone(self.classifier)
                 cls_fit = clf.fit(x, y, **kwargs)
                 self.statistics_[c] = cls_fit
@@ -143,13 +170,13 @@ class MissingnessClassifier(BaseImputer, BaseEstimator, ClassifierMixin):
             pd.DataFrame: DataFrame with class prediction for each observation.
         """
         # predictions for each column using respective fit classifier
-        self._prep_predictor(X, new_data)
+        self._predictor_strategy_validator(X, new_data)
         if self.verbose:
             print("PREDICTING CLASS MEMBERSHIP...")
         preds_mat = []
-        for i, c in enumerate(self.data_mi):
+        for c in self.data_mi:
             if c not in self._cols_time:
-                x, _ = self._prep_cols(i, c, self.predictors)
+                x, _ = self._prep_pred_cols(c, self.predictors)
                 cls_fit = self.statistics_[c]
                 y_pred = cls_fit.predict(x, **kwargs)
                 preds_mat.append(y_pred)
@@ -183,13 +210,13 @@ class MissingnessClassifier(BaseImputer, BaseEstimator, ClassifierMixin):
             pd.DataFrame: DataFrame with probability of missing class for
                 each observation.
         """
-        self._prep_predictor(X, new_data)
+        self._predictor_strategy_validator(X, new_data)
         if self.verbose:
             print("PREDICTING CLASS PROBABILITY...")
         preds_mat = []
-        for i, c in enumerate(self.data_mi):
+        for c in self.data_mi:
             if c not in self._cols_time:
-                x, _ = self._prep_cols(i, c, self.predictors)
+                x, _ = self._prep_pred_cols(c, self.predictors)
                 cls_fit = self.statistics_[c]
                 y_pred = cls_fit.predict_proba(x, **kwargs)[:, 1]
                 preds_mat.append(y_pred)

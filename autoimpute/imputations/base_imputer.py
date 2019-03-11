@@ -13,9 +13,9 @@ import itertools
 import numpy as np
 import pandas as pd
 from sklearn.base import clone
-from sklearn.utils.validation import check_is_fitted
 from autoimpute.utils.helpers import _nan_col_dropper
 # pylint:disable=attribute-defined-outside-init
+# pylint:disable=too-many-arguments
 # pylint:disable=too-many-instance-attributes
 
 class BaseImputer:
@@ -305,82 +305,79 @@ class BaseImputer:
             print(f"Number of numeric columns: {self._len_num}")
             print(f"Number of categorical columns: {self._len_dum}")
 
-    def _use_all_cols(self, i, c):
+    def _use_all_cols(self, c):
         """Private method to pedict using all columns."""
-        # dealing with a numeric column...
-        err = f"Need at least one predictor column to fit {c}."
+        # set numerical columns first
         if c in self._cols_num:
             num_cols = self._data_num.drop(c, axis=1)
-            num_str = num_cols.columns.tolist()
-            if not any([len(num_str), self._len_dum, self._len_time]):
-                raise ValueError(err)
-            predictors = [
-                num_cols.values,
-                self._data_dum.values,
-                self._data_time.values
-            ]
-            predictors = [p for p in predictors if p.size > 0]
-            x = np.concatenate(predictors, axis=1)
-            if self.verbose:
-                print(f"Columns used for {i} - {c}:")
-                print(f"Numeric: {num_str}")
-                print(f"Categorical: {self._cols_dum}")
-                print(f"Datetime: {self._cols_time}")
+        else:
+            num_cols = self._data_num
 
-        # dealing with categorical columns...
+        # set categorical columns second
         if c in self._orig_dum:
             d_c = [v for k, v in self._dum_dict.items() if k != c]
             d_fc = list(itertools.chain.from_iterable(d_c))
             d = [k for k in self._data_dum.columns if k in d_fc]
-            dummy_cols = self._data_dum[d]
-            dummy_str = self._data_dum[d].columns.tolist()
-            if not any([len(dummy_str), self._len_num, self._len_time]):
-                raise ValueError(err)
-            predictors = [
-                dummy_cols.values,
-                self._data_num.values,
-                self._data_time.values
-            ]
-            predictors = [p for p in predictors if p.size > 0]
-            x = np.concatenate(predictors, axis=1)
-            if self.verbose:
-                print(f"Columns used for {i} - {c}:")
-                print(f"Numeric: {self._cols_num}")
-                print(f"Categorical: {dummy_str}")
-                print(f"Datetime: {self._cols_time}")
+            dum_cols = self._data_dum[d]
+        else:
+            dum_cols = self._data_dum
 
         # return all predictors and target for predictor
-        y = self.data_mi[c].values
-        return x, y
+        return num_cols, dum_cols, self._data_time
 
-    def _prep_cols(self, i, c, preds):
+    def _use_iter_cols(self, c, preds):
+        """Private method to predict using some columns."""
+        # set numerical columns first
+        if c in self._cols_num:
+            cn = self._data_num.drop(c, axis=1)
+        else:
+            cn = self._data_num
+        cols = list(set(preds).union(cn.columns.tolist()))
+        num_cols = cn[cols]
+
+        # set categorical columns second
+        if c in self._orig_dum:
+            d_c = [v for k, v in self._dum_dict.items()
+                   if k != c and k in preds]
+        else:
+            d_c = [v for k, v in self._dum_dict.items() if k in preds]
+        d_fc = list(itertools.chain.from_iterable(d_c))
+        d = [k for k in self._data_dum.columns if k in d_fc]
+        dum_cols = self._data_dum[d]
+
+        # set the time columns last
+        ct = list(set(preds).union(self._data_time.columns.tolist()))
+        time_cols = self._data_time[ct]
+
+        return num_cols, dum_cols, time_cols
+
+    def _prep_pred_cols(self, c, preds):
         """Private method to prep cols for prediction."""
         if preds == "all":
             if self.verbose:
                 print("No predictors specified, using all available.")
-            return self._use_all_cols(i, c)
+            num, dum, time = self._use_all_cols(c)
+        if isinstance(preds, (list, tuple)):
+            if self.verbose:
+                print(f"Using {preds} as covariates for all models.")
+            num, dum, time = self._use_iter_cols(c, preds)
 
-    def _prep_predictor(self, X, new_data):
-        """Private method to prep for prediction."""
-        # initial checks before transformation
-        check_is_fitted(self, 'statistics_')
+        # error handling and printing to console
+        num_str = num.columns.tolist()
+        dum_str = dum.columns.tolist()
+        time_str = time.columns.tolist()
+        if not any([len(num_str), len(dum_str), len(time_str)]):
+            err = f"Need at least one predictor column to fit {c}."
+            raise ValueError(err)
+        if self.verbose:
+            print(f"Columns used for {c}:")
+            print(f"Numeric: {num_str}")
+            print(f"Categorical: {dum_str}")
+            print(f"Datetime: {time_str}")
 
-        # remove columns in transform if they were removed in fit
-        if self._nc and new_data:
-            wrn = f"{self._nc} dropped in transform since they were not fit."
-            warnings.warn(wrn)
-            X.drop(self._nc, axis=1, inplace=True)
-
-        # check dataset features are the same for both fit and transform
-        X_cols = X.columns.tolist()
-        mi_cols = self.data_mi.columns.tolist()
-        diff_X = set(X_cols).difference(mi_cols)
-        diff_mi = set(mi_cols).difference(X_cols)
-        if diff_X or diff_mi:
-            raise ValueError("Same columns must appear in fit and predict.")
-
-        # if not error, check if new data
-        if new_data:
-            self._prep_fit_dataframe(X)
-        if not self.scaler is None:
-            self._scaler_transform()
+        # pick final columns to return for x and y
+        predictors = [num.values, dum.values, time.values]
+        predictors = [p for p in predictors if p.size > 0]
+        x = np.concatenate(predictors, axis=1)
+        y = self.data_mi[c].values
+        return x, y
