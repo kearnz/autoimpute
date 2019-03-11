@@ -332,7 +332,7 @@ class BaseImputer:
             cn = self._data_num.drop(c, axis=1)
         else:
             cn = self._data_num
-        cols = list(set(preds).union(cn.columns.tolist()))
+        cols = list(set(preds).intersection(cn.columns.tolist()))
         num_cols = cn[cols]
 
         # set categorical columns second
@@ -346,7 +346,7 @@ class BaseImputer:
         dum_cols = self._data_dum[d]
 
         # set the time columns last
-        ct = list(set(preds).union(self._data_time.columns.tolist()))
+        ct = list(set(preds).intersection(self._data_time.columns.tolist()))
         time_cols = self._data_time[ct]
 
         return num_cols, dum_cols, time_cols
@@ -355,7 +355,7 @@ class BaseImputer:
         """Private method to prep cols for prediction."""
         if preds == "all":
             if self.verbose:
-                print("No predictors specified for {c}, using all available.")
+                print(f"No predictors specified for {c}, using all available.")
             num, dum, time = self._use_all_cols(c)
         if isinstance(preds, (list, tuple)):
             if self.verbose:
