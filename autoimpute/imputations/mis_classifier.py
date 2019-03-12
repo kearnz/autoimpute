@@ -178,7 +178,7 @@ class MissingnessClassifier(BaseImputer, BaseEstimator, ClassifierMixin):
         preds_mat = []
         for c in self.data_mi:
             if c not in self._cols_time:
-                x, _ = self._prep_pred_cols(c, self.predictors)
+                x, _ = self._prep_pred_cols(c, self._preds)
                 cls_fit = self.statistics_[c]
                 y_pred = cls_fit.predict(x, **kwargs)
                 preds_mat.append(y_pred)
@@ -218,7 +218,7 @@ class MissingnessClassifier(BaseImputer, BaseEstimator, ClassifierMixin):
         preds_mat = []
         for c in self.data_mi:
             if c not in self._cols_time:
-                x, _ = self._prep_pred_cols(c, self.predictors)
+                x, _ = self._prep_pred_cols(c, self._preds)
                 cls_fit = self.statistics_[c]
                 y_pred = cls_fit.predict_proba(x, **kwargs)[:, 1]
                 preds_mat.append(y_pred)
