@@ -26,7 +26,7 @@ Todo:
 
 import numpy as np
 import pandas as pd
-from autoimpute.utils.checks import check_data_structure, check_missingness
+from autoimpute.utils import check_data_structure, check_missingness
 from autoimpute.utils.helpers import _sq_output, _index_output
 
 @check_data_structure

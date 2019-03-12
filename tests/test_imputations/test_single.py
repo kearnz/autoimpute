@@ -1,7 +1,7 @@
 """Tests for the SingleImputer Class."""
 
 import pytest
-from autoimpute.imputations.single_imputer import SingleImputer
+from autoimpute.imputations import SingleImputer
 from autoimpute.utils import dataframes
 dfs = dataframes
 # pylint:disable=len-as-condition
@@ -44,11 +44,11 @@ def test_categorical_single_imputers():
         for stat in imp_str.statistics_.values():
             assert stat["strategy"] == strat
 
-def test_column_reducer():
+def test_single_missing_column():
     """Test that the imputer removes columns that are fully missing."""
-    imp_dict = SingleImputer(strategy={"values": "mean", "cats": "mode"})
-    imp_dict.fit_transform(dfs.df_ts_mixed)
-    assert len(imp_dict.statistics_) == 2
+    with pytest.raises(ValueError):
+        imp = SingleImputer()
+        imp.fit_transform(dfs.df_col_miss)
 
 def test_bad_strategy():
     """Test that strategies not supported throw a ValueError."""

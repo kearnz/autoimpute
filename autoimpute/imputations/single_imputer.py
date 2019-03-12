@@ -10,13 +10,10 @@ Todo:
     * Add examples of imputations and how the class works in pipeline.
 """
 
-import warnings
 from sklearn.base import BaseEstimator, TransformerMixin
 from sklearn.utils.validation import check_is_fitted
-from autoimpute.utils.checks import check_missingness
-from autoimpute.utils.helpers import _nan_col_dropper
-from autoimpute.imputations import BaseImputer
-from autoimpute.imputations import single_methods
+from autoimpute.utils import check_nan_columns
+from autoimpute.imputations import BaseImputer, single_methods
 sm = single_methods
 # pylint:disable=attribute-defined-outside-init
 # pylint:disable=arguments-differ
@@ -139,13 +136,11 @@ class SingleImputer(BaseImputer, BaseEstimator, TransformerMixin):
         """
         # remove nan columns and store colnames
         s = self.strategy
-        ocol = X.columns.tolist()
-        X, self._nc = _nan_col_dropper(X)
-        ncol = X.columns.tolist()
-        self._strats = self.check_strategy_fit(s, self._nc, ocol, ncol)
+        cols = X.columns.tolist()
+        self._strats = self.check_strategy_fit(s, cols)
         return X
 
-    @check_missingness
+    @check_nan_columns
     def fit(self, X):
         """Fit imputation methods to each column within a DataFrame.
 
@@ -184,7 +179,7 @@ class SingleImputer(BaseImputer, BaseEstimator, TransformerMixin):
                 print(f"Column: {col_name}, Strategy: {fit_name}")
         return self
 
-    @check_missingness
+    @check_nan_columns
     def transform(self, X):
         """Impute each column within a DataFrame using fit imputation methods.
 
@@ -206,14 +201,6 @@ class SingleImputer(BaseImputer, BaseEstimator, TransformerMixin):
         check_is_fitted(self, 'statistics_')
         if self.copy:
             X = X.copy()
-            if self._nc:
-                wrn = f"Dropping {self._nc} since they were not fit."
-                warnings.warn(wrn)
-                try:
-                    X.drop(self._nc, axis=1, inplace=True)
-                except ValueError as ve:
-                    err = "Same columns must appear in fit and transform."
-                    raise ValueError(err) from ve
 
         # check columns
         X_cols = X.columns.tolist()

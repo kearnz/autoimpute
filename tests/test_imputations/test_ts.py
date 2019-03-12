@@ -1,6 +1,7 @@
 """Tests for the TimeSeriesImputer Class."""
 
-from autoimpute.imputations.ts_imputer import TimeSeriesImputer
+import pytest
+from autoimpute.imputations import TimeSeriesImputer
 from autoimpute.utils import dataframes
 dfs = dataframes
 
@@ -26,6 +27,12 @@ def test_time_index_set():
     imp_explicit = TimeSeriesImputer(index_column="date_tm1")
     ts_df_2 = imp_explicit.fit_transform(dfs.df_ts_num)
     assert ts_df_2.index.name == "date_tm1"
+
+def test_time_missing_column():
+    """Test that the imputer removes columns that are fully missing."""
+    with pytest.raises(ValueError):
+        timp = TimeSeriesImputer()
+        timp.fit_transform(dfs.df_col_miss)
 
 def test_time_imputers():
     """Test time-based methods when not using the _default."""

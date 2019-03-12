@@ -9,7 +9,7 @@ in different classes or methods where the same behavior is reused.
 Methods:
     check_data_structure(func)
     check_missingness(func)
-    remove_nan_columns(func)
+    check_nan_columns(func)
 
 Todo:
     * Support data structures other than pandas DataFrame. Consider:
@@ -27,7 +27,6 @@ Todo:
 import functools
 import numpy as np
 import pandas as pd
-from autoimpute.utils.helpers import _nan_col_dropper
 
 def check_data_structure(func):
     """Check if the data input to a function is a pandas DataFrame.
@@ -128,12 +127,12 @@ def check_missingness(func):
             ValueError: If timeseries values in DataFrame are missing.
         """
         if isinstance(d, pd.DataFrame):
-            n_ts = d.select_dtypes(include=[np.number, np.object])
-            ts = d.select_dtypes(include=[np.datetime64])
+            n_ts = d.select_dtypes(include=(np.number, np.object))
+            ts = d.select_dtypes(include=(np.datetime64,))
         else:
             a = args[0]
-            n_ts = a.select_dtypes(include=[np.number, np.object])
-            ts = a.select_dtypes(include=[np.datetime64])
+            n_ts = a.select_dtypes(include=(np.number, np.object))
+            ts = a.select_dtypes(include=(np.datetime64,))
 
         # check if non-time series columns are all missing, and if so, error
         if n_ts.columns.any():
@@ -151,7 +150,7 @@ def check_missingness(func):
         return func(d, *args, **kwargs)
     return wrapper
 
-def remove_nan_columns(func):
+def check_nan_columns(func):
     """Removes columns inplace in DataFrame if column all missing values.
 
     This method acts as a decorator. It first leverages the decorator
@@ -180,9 +179,14 @@ def remove_nan_columns(func):
             **kwargs: Keyword arguments from original function.
         """
         if isinstance(d, pd.DataFrame):
-            _nan_col_dropper(d)
+            null_df = pd.isnull(d)
         else:
-            a = args[0]
-            _nan_col_dropper(a)
+            null_df = pd.isnull(args[0])
+        null_cols = []
+        for col in null_df:
+            if null_df[col].all():
+                null_cols.append(col)
+        if null_cols:
+            raise ValueError(f"Columns {null_cols} have all values missing.")
         return func(d, *args, **kwargs)
     return wrapper

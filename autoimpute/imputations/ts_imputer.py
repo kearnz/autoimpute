@@ -14,10 +14,8 @@ import numpy as np
 import pandas as pd
 from sklearn.base import BaseEstimator, TransformerMixin
 from sklearn.utils.validation import check_is_fitted
-from autoimpute.utils.helpers import _nan_col_dropper
-from autoimpute.utils.checks import check_missingness
-from autoimpute.imputations import BaseImputer
-from autoimpute.imputations import single_methods
+from autoimpute.utils import check_nan_columns
+from autoimpute.imputations import BaseImputer, single_methods
 sm = single_methods
 # pylint:disable=attribute-defined-outside-init
 # pylint:disable=arguments-differ
@@ -159,10 +157,8 @@ class TimeSeriesImputer(BaseImputer, BaseEstimator, TransformerMixin):
 
         # next, strategy check with existing columns passed
         s = self.strategy
-        ocol = X.columns.tolist()
-        X, self._nc = _nan_col_dropper(X)
-        ncol = X.columns.tolist()
-        self._strats = self.check_strategy_fit(s, self._nc, ocol, ncol)
+        cols = X.columns.tolist()
+        self._strats = self.check_strategy_fit(s, cols)
 
     def _transform_strategy_validator(self, X):
         """Internal helper to validate strategy before transformation.
@@ -206,7 +202,7 @@ class TimeSeriesImputer(BaseImputer, BaseEstimator, TransformerMixin):
         X.sort_index(ascending=True, inplace=True)
         return X
 
-    @check_missingness
+    @check_nan_columns
     def fit(self, X):
         """Fit imputation methods to each column within a DataFrame.
 
@@ -240,7 +236,7 @@ class TimeSeriesImputer(BaseImputer, BaseEstimator, TransformerMixin):
                 print(f"Column: {col_name}, Strategy: {fit_name}")
         return self
 
-    @check_missingness
+    @check_nan_columns
     def transform(self, X):
         """Impute each column within a DataFrame using fit imputation methods.
 

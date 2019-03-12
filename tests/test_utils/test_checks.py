@@ -12,7 +12,7 @@ Tests:
     test_data_structures_not_allowed(ds)
     test_data_structures_allowed(ds)
     test_missingness_not_allowed(ds)
-    test_nan_column_removal()
+    test_nan_columns()
 
 Todo:
     * Rewrite tests when additional data types accepted.
@@ -23,7 +23,7 @@ import pytest
 import numpy as np
 import pandas as pd
 from autoimpute.utils.checks import check_data_structure, check_missingness
-from autoimpute.utils.checks import remove_nan_columns
+from autoimpute.utils.checks import check_nan_columns
 
 @check_data_structure
 def check_data(data):
@@ -35,8 +35,8 @@ def check_miss(data):
     """Helper function to test missingness decorator."""
     return data
 
-@remove_nan_columns
-def check_remove(data):
+@check_nan_columns
+def check_nan_cols(data):
     """Helper function to test removal of NaN columns."""
     return data
 
@@ -140,21 +140,20 @@ def test_missingness_not_allowed(ds):
     with pytest.raises(ValueError):
         check_miss(ds)
 
-def test_nan_column_removal():
-    """Check that missing columns removed when using removal decorator.
+def test_nan_columns():
+    """Check missing columns throw error with check_nan_columns decorator.
 
-    The `remove_nan_columns` decorator should remove columns in place
-    if the columns have all values missing. Therefore, this test simulates
-    data in a DataFrame where two of the columns have all missing values.
-    The DataFrame is below. After removal, it should contain 2 fewer columns.
-    In this case, `B` and `C` should be removed because they contain all
-    missing values.
+    The `check_nan_columns` decorator should throw an error if any columns
+    in the dataframe have all values missing. This test simulates data in a
+    DataFrame where two of the columns have all missing values. The DataFrame
+    is below. In this case, `B` and `C` should generate an error because they
+    contain all missing values. Error message should capture both columns.
 
     Args:
         None: DataFrame hard-coded internally.
 
     Returns:
-        None: asserts that fully missing columns are removed from DataFrame.
+        None: asserts that fully missing columns generate error.
     """
     df = pd.DataFrame({
         "A": [1, np.nan, 3, 4],
@@ -162,12 +161,7 @@ def test_nan_column_removal():
         "C": [np.nan, np.nan, np.nan, np.nan],
         "D": ["a", "b", None, "d"]
     })
-    assert "B" in df.columns
-    assert "C" in df.columns
-    df_cols_before = len(df.columns)
-    check_remove(df)
-    assert isinstance(df, pd.DataFrame)
-    df_cols_after = len(df.columns)
-    assert (df_cols_before - df_cols_after) == 2
-    assert "B" not in df.columns
-    assert "C" not in df.columns
+    assert pd.isnull(df["B"]).all()
+    assert pd.isnull(df["C"]).all()
+    with pytest.raises(ValueError):
+        check_nan_cols(df)

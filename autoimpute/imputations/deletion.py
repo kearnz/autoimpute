@@ -16,9 +16,9 @@ Todo:
     * Update docstrings in methods with examples.
 """
 
-from autoimpute.utils.checks import remove_nan_columns
+from autoimpute.utils import check_nan_columns
 
-@remove_nan_columns
+@check_nan_columns
 def listwise_delete(data, inplace=False, verbose=False):
     """Delete all rows from a DataFrame where any missing values exist.
 
@@ -37,8 +37,10 @@ def listwise_delete(data, inplace=False, verbose=False):
             Defaults to False.
 
     Returns:
-        pd.DataFrame: rows with missing values removed. Number of rows
-            remaining <= number of rows of the original DataFrame.
+        pd.DataFrame: rows with missing values removed.
+
+    Raises:
+        ValueError: columns with all data missing. Raised through decorator.
     """
     if not verbose:
         return data.dropna(inplace=inplace)

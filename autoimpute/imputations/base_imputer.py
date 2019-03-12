@@ -13,7 +13,6 @@ import itertools
 import numpy as np
 import pandas as pd
 from sklearn.base import clone
-from autoimpute.utils.helpers import _nan_col_dropper
 # pylint:disable=attribute-defined-outside-init
 # pylint:disable=too-many-arguments
 # pylint:disable=too-many-instance-attributes
@@ -119,7 +118,7 @@ class BaseImputer:
             raise TypeError("Strategy must be string, tuple, list, or dict.")
         return s
 
-    def check_strategy_fit(self, s, nc, o_cols, cols):
+    def check_strategy_fit(self, s, cols):
         """Check whether strategies of imputer make sense given data passed.
 
         An Imputer takes strategies to use for imputation. Those strategies
@@ -136,15 +135,13 @@ class BaseImputer:
                 Iter = multiple strategies, must match col index and length.
                 Dict = multiple strategies, must match col name, but not all
                 columns are mandatory. Will simply impute based on name.
-            nc(set): any columns removed because they are fully missing.
-            o_cols: original columns before nc determined.
-            cols: columns remaining after nc determined.
+            cols: columns in dataset for which strategies checked.
 
         Raises:
             ValueError (iter): length of columns and strategies must be equal.
             ValueError (dict): keys of strategies and columns must match.
         """
-        o_l = len(o_cols)
+        c_l = len(cols)
         # if strategy is string, extend strategy to all cols
         if isinstance(s, str):
             return {c:s for c in cols}
@@ -153,30 +150,24 @@ class BaseImputer:
         # note that list/tuple must have strategy specified for every column
         if isinstance(s, (list, tuple)):
             s_l = len(s)
-            if s_l != o_l:
-                err = f"Original columns ({o_l}) must equal strategies ({s_l})"
-                raise ValueError(err)
-            if nc:
-                i = 0
-                for ind, name in enumerate(o_cols):
-                    if name in nc:
-                        del s[ind-i]
-                        i += 1
+            if s_l != c_l:
+                err = "Length of columns not equal to number of strategies.\n"
+                err_c = f"Length of columns: {c_l}\n"
+                err_s = f"Length of strategies: {s_l}"
+                raise ValueError(f"{err}{err_c}{err_s}")
             return {c[0]:c[1] for c in zip(cols, s)}
 
         # if strategy is dict, ensure keys in strategy match cols in X
         # note that dict is preferred way to impute SOME columns and not all
         if isinstance(s, dict):
-            if nc:
-                for k in nc:
-                    s.pop(k, None)
             diff_s = set(s.keys()).difference(cols)
             if diff_s:
-                err = f"Keys of strategies and column names must match."
-                raise ValueError(err)
+                err = "Keys of strategies and column names must match.\n"
+                err_k = f"Ill-specified keys: {diff_s}"
+                raise ValueError(f"{err}{err_k}")
             return s
 
-    def check_predictors_fit(self, predictors, nc, o_cols, cols):
+    def check_predictors_fit(self, predictors, cols):
         """Checked predictors used for fitting each column.
 
         Args:
@@ -185,9 +176,7 @@ class BaseImputer:
                 Iter = multiple strategies, must match col index and length.
                 Dict = multiple strategies, must match col name, but not all
                 columns are mandatory. Will simply impute based on name.
-            nc(set): any columns removed because they are fully missing.
-            o_cols: original columns before nc determined.
-            cols: columns remaining after nc determined.
+            cols: columns in dataset for which predictors checked.
 
         Returns:
             predictors
@@ -200,51 +189,37 @@ class BaseImputer:
         """
         # if string, value must be `all`, or else raise an error
         if isinstance(predictors, str):
-            if predictors != "all":
-                err = f"Must pass list or dict unless using all columns."
-                raise ValueError(err)
+            if predictors != "all" or predictors not in cols:
+                err = f"String {predictors} must be valid column in X.\n"
+                err_all = "To use all columns, set predictors='all'."
+                raise ValueError(f"{err}{err_all}")
             return {c:predictors for c in cols}
 
         # if list or tuple, remove nan cols and check col names
         if isinstance(predictors, (list, tuple)):
-            for i, pred in enumerate(predictors):
-                if pred not in o_cols:
-                    err = f"{pred} in predictors not a valid column in X."
-                    raise ValueError(err)
-                if pred in nc:
-                    predictors.pop(i)
+            bad_preds = [p for p in predictors if p not in cols]
+            if bad_preds:
+                err = f"{bad_preds} in predictors not a valid column in X."
+                raise ValueError(err)
             return {c:predictors for c in cols}
 
         # if dictionary, remove nan cols and check col names
         if isinstance(predictors, dict):
-            # check the keys first...
-            if nc:
-                for k in nc:
-                    predictors.pop(k, None)
             diff_s = set(predictors.keys()).difference(cols)
             if diff_s:
-                err = "Keys of predictors and column names must match."
-                raise ValueError(err)
+                err = "Keys of strategies and column names must match.\n"
+                err_k = f"Ill-specified keys: {diff_s}"
+                raise ValueError(f"{err}{err_k}")
             # then check the values of each key
             for k, preds in predictors.items():
                 if isinstance(preds, str):
-                    if preds != "all":
-                        if preds in nc or preds not in cols:
-                            err = f"Invalid column as only predictor for {k}."
-                            raise ValueError(err)
+                    if preds != "all" or preds not in cols:
+                        err = f"Invalid column as only predictor for {k}."
+                        raise ValueError(err)
                 elif isinstance(preds, (tuple, list)):
-                    predictor_vals = []
-                    for i, p in enumerate(preds):
-                        if p not in cols:
-                            err = f"Invalid column as predictor for {k}."
-                            raise ValueError(err)
-                        if p in nc:
-                            preds.pop(i)
-                        else:
-                            predictor_vals.append(p)
-                    p_len = len(predictor_vals)
-                    if not p_len:
-                        err = f"All predictor columns for {k} are invalid."
+                    bad_preds = [p for p in preds if p not in cols]
+                    if bad_preds:
+                        err = f"{bad_preds} for {k} not a valid column in X."
                         raise ValueError(err)
                 else:
                     err = "Values in predictor must be str, list, or tuple."
@@ -266,7 +241,6 @@ class BaseImputer:
 
     def _prep_fit_dataframe(self, X):
         """Private method to process numeric & categorical data for fit."""
-        X, self._nc = _nan_col_dropper(X)
         self.data_mi = pd.isnull(X)*1
         # numerical columns first
         self._data_num = X.select_dtypes(include=(np.number,))
@@ -351,12 +325,18 @@ class BaseImputer:
 
         return num_cols, dum_cols, time_cols
 
-    def _prep_pred_cols(self, c, preds):
+    def _prep_pred_cols(self, c, predictors):
         """Private method to prep cols for prediction."""
-        if preds == "all":
-            if self.verbose:
-                print(f"No predictors specified for {c}, using all available.")
-            num, dum, time = self._use_all_cols(c)
+        preds = predictors[c]
+        if isinstance(preds, str):
+            if preds == "all":
+                if self.verbose:
+                    print(f"No predictors given for {c}, using all columns.")
+                num, dum, time = self._use_all_cols(c)
+            else:
+                if self.verbose:
+                    print(f"Using single column {preds} to predict {c}.")
+                num, dum, time = self._use_iter_cols(c, [preds])
         if isinstance(preds, (list, tuple)):
             if self.verbose:
                 print(f"Using {preds} as covariates for {c}.")

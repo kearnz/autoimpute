@@ -4,7 +4,6 @@ This module contains the MissingnessClassifier, which is used to predict
 missingness within a dataset using information derived from other features.
 
 Todo:
-    * Allow for flexible column specification used in predictor.
     * Alllow for basic imputation methods before classification.
     * Update docstrings for class initialization and instance methods.
     * Add examples of proper usage for the class and its instance methods.
@@ -16,9 +15,8 @@ import pandas as pd
 from xgboost import XGBClassifier
 from sklearn.base import clone, BaseEstimator, ClassifierMixin
 from sklearn.utils.validation import check_is_fitted
-from autoimpute.utils.checks import check_missingness
-from autoimpute.utils.helpers import _nan_col_dropper
-from autoimpute.imputations.base_imputer import BaseImputer
+from autoimpute.utils import check_nan_columns
+from autoimpute.imputations import BaseImputer
 # pylint:disable=attribute-defined-outside-init
 # pylint:disable=arguments-differ
 # pylint:disable=too-many-arguments
@@ -92,18 +90,20 @@ class MissingnessClassifier(BaseImputer, BaseEstimator, ClassifierMixin):
             m = "predict_proba"
             if not hasattr(c, m):
                 raise ValueError(f"Classifier must implement {m} method.")
-            else:
-                self._classifier = c
+            self._classifier = c
+
+    def _fit_strategy_validator(self, X):
+        """Internal helper method to validate behavior appropriate for fit."""
+        # remove nan columns and store colnames
+        cols = X.columns.tolist()
+        self._preds = self.check_predictors_fit(self.predictors, cols)
+        self._prep_fit_dataframe(X)
+        return X
 
     def _predictor_strategy_validator(self, X, new_data):
         """Private method to prep for prediction."""
         # initial checks before transformation
         check_is_fitted(self, 'statistics_')
-        # remove columns in transform if they were removed in fit
-        if self._nc and new_data:
-            wrn = f"{self._nc} dropped in transform since they were not fit."
-            warnings.warn(wrn)
-            X.drop(self._nc, axis=1, inplace=True)
 
         # check dataset features are the same for both fit and transform
         X_cols = X.columns.tolist()
@@ -119,7 +119,7 @@ class MissingnessClassifier(BaseImputer, BaseEstimator, ClassifierMixin):
         if not self.scaler is None:
             self._scaler_transform()
 
-    @check_missingness
+    @check_nan_columns
     def fit(self, X, **kwargs):
         """Fit an individual classifier for each column in the DataFrame.
 
@@ -136,14 +136,7 @@ class MissingnessClassifier(BaseImputer, BaseEstimator, ClassifierMixin):
         Returns:
             self: instance of MissingnessClassifier
         """
-        # remove nan columns and store colnames
-        ocol = X.columns.tolist()
-        X, self._nc = _nan_col_dropper(X)
-        ncol = X.columns.tolist()
-        self._preds = self.check_predictors_fit(
-            self.predictors, self._nc, ocol, ncol
-        )
-        self._prep_fit_dataframe(X)
+        self._fit_strategy_validator(X)
         self.statistics_ = {}
         if not self.scaler is None:
             self._scaler_fit()
@@ -153,13 +146,13 @@ class MissingnessClassifier(BaseImputer, BaseEstimator, ClassifierMixin):
         for c in self.data_mi:
             # only fit non time-based columns...
             if c not in self._cols_time:
-                x, y = self._prep_pred_cols(c, self.predictors)
+                x, y = self._prep_pred_cols(c, self._preds)
                 clf = clone(self.classifier)
                 cls_fit = clf.fit(x, y, **kwargs)
                 self.statistics_[c] = cls_fit
         return self
 
-    @check_missingness
+    @check_nan_columns
     def predict(self, X, new_data=True, **kwargs):
         """Predict class of each feature. 1 for missing; 0 for not missing.
 
@@ -199,7 +192,7 @@ class MissingnessClassifier(BaseImputer, BaseEstimator, ClassifierMixin):
         self.data_mi_preds = pd.DataFrame(preds_mat, columns=pred_cols)
         return self.data_mi_preds
 
-    @check_missingness
+    @check_nan_columns
     def predict_proba(self, X, new_data=True, **kwargs):
         """Predict probability of missing class membership of each feature.
 
@@ -265,7 +258,7 @@ class MissingnessClassifier(BaseImputer, BaseEstimator, ClassifierMixin):
         """
         return self.fit(X).predict_proba(X, new_data)
 
-    @check_missingness
+    @check_nan_columns
     def gen_test_indices(self, X, thresh=0.5, new_data=False, use_exist=False):
         """Generate indices of false positives for each fitted column.
 

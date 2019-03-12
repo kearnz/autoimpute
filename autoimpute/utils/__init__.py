@@ -26,12 +26,12 @@ below. This command imports the main public methods from autoimpute.utils.
 """
 
 from autoimpute.utils.checks import check_data_structure, check_missingness
-from autoimpute.utils.checks import remove_nan_columns
+from autoimpute.utils.checks import check_nan_columns
 from autoimpute.utils.patterns import md_pairs, md_pattern, md_locations
 from autoimpute.utils.patterns import inbound, outbound, influx, outflux, flux
 from autoimpute.utils.patterns import proportions, feature_cov, feature_corr
 
-__all__ = ["check_data_structure", "check_missingness", "remove_nan_columns",
+__all__ = ["check_data_structure", "check_missingness", "check_nan_columns",
            "md_pairs", "md_pattern", "md_locations",
            "inbound", "outbound", "influx", "outflux", "flux",
            "proportions", "feature_cov", "feature_corr"]
