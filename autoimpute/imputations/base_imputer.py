@@ -189,7 +189,7 @@ class BaseImputer:
         """
         # if string, value must be `all`, or else raise an error
         if isinstance(predictors, str):
-            if predictors != "all" or predictors not in cols:
+            if predictors != "all" and predictors not in cols:
                 err = f"String {predictors} must be valid column in X.\n"
                 err_all = "To use all columns, set predictors='all'."
                 raise ValueError(f"{err}{err_all}")
@@ -213,7 +213,7 @@ class BaseImputer:
             # then check the values of each key
             for k, preds in predictors.items():
                 if isinstance(preds, str):
-                    if preds != "all" or preds not in cols:
+                    if preds != "all" and preds not in cols:
                         err = f"Invalid column as only predictor for {k}."
                         raise ValueError(err)
                 elif isinstance(preds, (tuple, list)):
