@@ -141,7 +141,11 @@ class MissingnessClassifier(BaseImputer, BaseEstimator, ClassifierMixin):
         if not self.scaler is None:
             self._scaler_fit()
         if self.verbose:
-            print("FITTING...")
+            if hasattr(self.classifier, "__name__"):
+                self._c_name = self.classifier.__name__
+            else:
+                self._c_name = self.classifier.__class__.__name__
+            print(f"FITTING {self.cls_name} TO COLUMNS OF X...")
         # iterate missingness fit using classifier and all remaining columns
         for c in self.data_mi:
             # only fit non time-based columns...
@@ -174,7 +178,7 @@ class MissingnessClassifier(BaseImputer, BaseEstimator, ClassifierMixin):
         # predictions for each column using respective fit classifier
         self._predictor_strategy_validator(X, new_data)
         if self.verbose:
-            print("PREDICTING CLASS MEMBERSHIP...")
+            print(f"PREDICTING CLASS MEMBERSHIP USING FIT {self._c_name}...")
         preds_mat = []
         for c in self.data_mi:
             if c not in self._cols_time:
@@ -214,7 +218,7 @@ class MissingnessClassifier(BaseImputer, BaseEstimator, ClassifierMixin):
         """
         self._predictor_strategy_validator(X, new_data)
         if self.verbose:
-            print("PREDICTING CLASS PROBABILITY...")
+            print(f"PREDICTING CLASS PROBABILITY USING FIT {self._c_name}...")
         preds_mat = []
         for c in self.data_mi:
             if c not in self._cols_time:

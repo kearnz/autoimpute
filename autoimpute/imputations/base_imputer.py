@@ -276,8 +276,10 @@ class BaseImputer:
 
         # print categorical and numeric columns if verbose true
         if self.verbose:
-            print(f"Number of numeric columns: {self._len_num}")
-            print(f"Number of categorical columns: {self._len_dum}")
+            nm = "Number of numeric columns in X: "
+            cm = "Number of categorical columns after one-hot encoding: "
+            print(f"{nm}{self._len_num}")
+            print(f"{cm}{self._len_dum}")
 
     def _use_all_cols(self, c):
         """Private method to pedict using all columns."""
