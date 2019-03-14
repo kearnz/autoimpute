@@ -145,7 +145,7 @@ class MissingnessClassifier(BaseImputer, BaseEstimator, ClassifierMixin):
                 self._c_name = self.classifier.__name__
             else:
                 self._c_name = self.classifier.__class__.__name__
-            print(f"FITTING {self.cls_name} TO COLUMNS OF X...")
+            print(f"FITTING {self._c_name} TO COLUMNS OF X...")
         # iterate missingness fit using classifier and all remaining columns
         for c in self.data_mi:
             # only fit non time-based columns...
