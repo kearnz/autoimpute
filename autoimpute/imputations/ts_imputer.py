@@ -15,8 +15,9 @@ import pandas as pd
 from sklearn.base import BaseEstimator, TransformerMixin
 from sklearn.utils.validation import check_is_fitted
 from autoimpute.utils import check_nan_columns
-from autoimpute.imputations import BaseImputer, single_methods
+from autoimpute.imputations import BaseImputer, single_methods, ts_methods
 sm = single_methods
+tm = ts_methods
 # pylint:disable=attribute-defined-outside-init
 # pylint:disable=arguments-differ
 # pylint:disable=protected-access
@@ -64,17 +65,17 @@ class TimeSeriesImputer(BaseImputer, BaseEstimator, TransformerMixin):
     """
 
     strategies = {
-        "default": sm._fit_ts_default,
+        "default": tm._fit_ts_default,
         "mean": sm._fit_mean,
         "median": sm._fit_median,
         "mode":  sm._fit_mode,
         "random": sm._fit_random,
         "norm": sm._fit_norm,
         "categorical": sm._fit_categorical,
-        "linear": sm._fit_linear,
-        "time": sm._fit_time,
-        "locf": sm._fit_locf,
-        "nocb": sm._fit_nocb,
+        "linear": tm._fit_linear,
+        "time": tm._fit_time,
+        "locf": tm._fit_locf,
+        "nocb": tm._fit_nocb,
         "none": sm._fit_none,
     }
 
@@ -283,7 +284,7 @@ class TimeSeriesImputer(BaseImputer, BaseEstimator, TransformerMixin):
                 sm._imp_random(X, col_name, fill_val, imp_ind)
             # linear interpolation imputation
             if strat in ("linear", "time"):
-                sm._imp_interp(X, col_name, strat)
+                tm._imp_interp(X, col_name, strat)
             # normal distribution imputatinon
             if strat == "norm":
                 sm._imp_norm(X, col_name, fill_val, imp_ind)
@@ -292,10 +293,10 @@ class TimeSeriesImputer(BaseImputer, BaseEstimator, TransformerMixin):
                 sm._imp_categorical(X, col_name, fill_val, imp_ind)
             # last observation carried forward
             if strat == "locf":
-                sm._imp_locf(X, col_name, fill_val)
+                tm._imp_locf(X, col_name, fill_val)
             # next observation carried backward
             if strat == "nocb":
-                sm._imp_nocb(X, col_name, fill_val)
+                tm._imp_nocb(X, col_name, fill_val)
             # no imputation if strategy is none
             if strat == "none":
                 pass

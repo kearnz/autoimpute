@@ -13,8 +13,9 @@ Todo:
 from sklearn.base import BaseEstimator, TransformerMixin
 from sklearn.utils.validation import check_is_fitted
 from autoimpute.utils import check_nan_columns
-from autoimpute.imputations import BaseImputer, single_methods
+from autoimpute.imputations import BaseImputer, single_methods, ts_methods
 sm = single_methods
+tm = ts_methods
 # pylint:disable=attribute-defined-outside-init
 # pylint:disable=arguments-differ
 # pylint:disable=protected-access
@@ -63,7 +64,7 @@ class SingleImputer(BaseImputer, BaseEstimator, TransformerMixin):
         "random": sm._fit_random,
         "norm": sm._fit_norm,
         "categorical": sm._fit_categorical,
-        "linear": sm._fit_linear,
+        "linear": tm._fit_linear,
         "none": sm._fit_none
     }
 
@@ -234,7 +235,7 @@ class SingleImputer(BaseImputer, BaseEstimator, TransformerMixin):
                 sm._imp_random(X, col_name, fill_val, imp_ind)
             # linear interpolation imputation
             if strat == "linear":
-                sm._imp_interp(X, col_name, strat)
+                tm._imp_interp(X, col_name, strat)
             # normal distribution imputatinon
             if strat == "norm":
                 sm._imp_norm(X, col_name, fill_val, imp_ind)

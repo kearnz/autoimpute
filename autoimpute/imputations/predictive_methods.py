@@ -29,7 +29,7 @@ def _predictive_default(series, predictors):
     method = "default"
     if is_numeric_dtype(series):
         return _fit_linear_reg(series, predictors)
-    if is_string_dtype(series):
+    elif is_string_dtype(series):
         ser_unique = series.unique()
         ser_len = len(ser_unique)
         if ser_len == 1:
