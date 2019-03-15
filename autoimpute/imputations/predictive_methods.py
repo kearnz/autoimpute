@@ -3,7 +3,7 @@
 import pandas as pd
 from pandas.api.types import is_string_dtype
 from pandas.api.types import is_numeric_dtype
-from autoimpute.imputations import listwise_delete
+from autoimpute.imputations.deletion import listwise_delete
 from autoimpute.imputations.single_methods import _fit_none
 from autoimpute.imputations.errors import _not_num_series, _not_num_matrix
 

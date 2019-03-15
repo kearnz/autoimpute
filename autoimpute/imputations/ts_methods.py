@@ -3,7 +3,7 @@
 import pandas as pd
 from pandas.api.types import is_string_dtype
 from pandas.api.types import is_numeric_dtype
-from autoimpute.imputations.errors import _not_num_err
+from autoimpute.imputations.errors import _not_num_series
 from autoimpute.imputations.single_methods import _fit_none, _fit_mode
 
 # FIT IMPUTATION
@@ -13,26 +13,26 @@ from autoimpute.imputations.single_methods import _fit_none, _fit_mode
 def _fit_linear(series):
     """Private method to fit data for linear interpolation."""
     method = "linear"
-    _not_num_err(method, series)
+    _not_num_series(method, series)
     return None, method
 
 def _fit_time(series):
     """Private method to fit data for time-weighted interpolation."""
     method = "time"
-    _not_num_err(method, series)
+    _not_num_series(method, series)
     return None, method
 
 def _fit_locf(series):
     """Private method to fit data for last obs carried forward imputation."""
     method = "locf"
-    _not_num_err(method, series)
+    _not_num_series(method, series)
     # return mean incase needed for first observation
     return series.mean(), method
 
 def _fit_nocb(series):
     """Private method to fit data for next obs carried backward imputation."""
     method = "nocb"
-    _not_num_err(method, series)
+    _not_num_series(method, series)
     # return mean incase needed for last observation
     return series.mean(), method
 
