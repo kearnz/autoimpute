@@ -15,7 +15,8 @@ import pandas as pd
 from sklearn.base import clone
 # pylint:disable=attribute-defined-outside-init
 # pylint:disable=too-many-arguments
-# pylint:disable=too-many-instance-attributes
+# pylint:disable=too-many-instance-attributes, inconsistent-return-statements
+
 
 class BaseImputer:
     """Building blocks for more advanced imputers and missingness classifiers.

@@ -13,11 +13,9 @@ Methods:
     _sq_output(data, cols, square=False)
     _index_output(data, index)
     _nan_col_dropper(data)
-    _mode_output(series, mode, strategy)
 """
 
 import warnings
-import numpy as np
 import pandas as pd
 
 def _sq_output(data, cols, square=False):
@@ -82,38 +80,3 @@ def _nan_col_dropper(data):
         wrn = f"{cdiff} dropped from DataFrame because all rows were missing."
         warnings.warn(wrn)
     return data, cdiff
-
-def _mode_output(series, mode, strategy):
-    """Determine number of modes and which to use for imputation.
-
-    A dataset can have multiple modes if more than one distinct value ties for
-    the greatest frequency in the series. This method determines which mode to
-    use during imputation. If only one mode exists, use that mode. If more than
-    one mode exists, default to the first mode (as is done in scipy). If the
-    user specifies `random` as the strategy, then randomly sample from the
-    modes and impute the random sample.
-
-    Args:
-        series (pd.Series): the series to impute with the mode.
-        mode (pd.Series): the mode method from pandas always returns a Series.
-        strategy (string): strategy to employ. Default `None` in Imputer class.
-
-    Returns:
-        None: imputes values in place.
-
-    Raises:
-        ValueError: if strategy is not `None` or `random`.
-    """
-    num_modes = len(mode)
-    if num_modes == 1:
-        return series.fillna(mode[0], inplace=True)
-    else:
-        if strategy is None:
-            return series.fillna(mode[0], inplace=True)
-        elif strategy == "random":
-            ind = series[series.isnull()].index
-            fills = np.random.choice(mode, len(ind))
-            series.loc[ind] = fills
-        else:
-            err = f"{strategy} not accepted for mode imputation"
-            raise ValueError(err)

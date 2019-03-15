@@ -4,7 +4,7 @@ import numpy as np
 from pandas.api.types import is_string_dtype
 from pandas.api.types import is_numeric_dtype
 from scipy.stats import norm
-from autoimpute.imputations.errors import _not_cat_err, _not_num_err
+from autoimpute.imputations.errors import _not_num_series, _not_cat_series
 # pylint:disable=unused-argument
 
 # FIT IMPUTATION
@@ -19,13 +19,13 @@ def _fit_none(series):
 def _fit_mean(series):
     """Private method to fit data for mean imputation."""
     method = "mean"
-    _not_num_err(method, series)
+    _not_num_series(method, series)
     return series.mean(), method
 
 def _fit_median(series):
     """Private method to fit data for median imputation."""
     method = "median"
-    _not_num_err(method, series)
+    _not_num_series(method, series)
     return series.median(), method
 
 def _fit_mode(series):
@@ -41,7 +41,7 @@ def _fit_random(series):
 def _fit_norm(series):
     """Private method to fit data for normal distribution imputation."""
     method = "norm"
-    _not_num_err(method, series)
+    _not_num_series(method, series)
     mu = series.mean()
     sd = series.std()
     return (mu, sd), method
@@ -49,7 +49,7 @@ def _fit_norm(series):
 def _fit_categorical(series):
     """Private method to fit data for categorical distribution imputation."""
     method = "categorical"
-    _not_cat_err(method, series)
+    _not_cat_series(method, series)
     proportions = series.value_counts() / np.sum(~series.isnull())
     return proportions, method
 

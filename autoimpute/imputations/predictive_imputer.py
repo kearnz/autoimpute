@@ -20,7 +20,7 @@ pm = predictive_methods
 # pylint:disable=attribute-defined-outside-init
 # pylint:disable=arguments-differ
 # pylint:disable=protected-access
-# pylint:disable=too-many-arguments
+# pylint:disable=too-many-arguments, too-many-locals
 
 class PredictiveImputer(BaseImputer, BaseEstimator, TransformerMixin):
     """Techniques to impute Series with missing values through learning."""
@@ -78,13 +78,37 @@ class PredictiveImputer(BaseImputer, BaseEstimator, TransformerMixin):
         cols = X.columns.tolist()
         self._strats = self.check_strategy_fit(self.strategy, cols)
         self._preds = self.check_predictors_fit(self.predictors, cols)
+        # next, prep the categorical / numerical split
+        self._prep_fit_dataframe(X)
         return X
 
     @check_nan_columns
-    def fit(self, X):
+    def fit(self, X, **kwargs):
         """Fit placeholder."""
         # first, prep columns we plan to use and make sure they are valid
         self._fit_strategy_validator(X)
-        # next, prep the categorical / numerical split
-        self._prep_fit_dataframe(X)
         self.statistics_ = {}
+
+        # header print statement if verbose = true
+        if self.verbose:
+            st = "Strategies & Predictors used to fit each column:"
+            print(f"{st}\n{'-'*len(st)}")
+
+        # perform fit on each column, depending on that column's strategy
+        # note - because we use predictors, logic more involved than single
+        for col_name, func_name in self._strats.items():
+            f = self.strategies[func_name]
+            x, _ = self._prep_pred_cols(col_name, self._preds)
+            if x.ndim == 1:
+                x = x.values.reshape().reshape(-1, 1)
+            y = X[col_name]
+            fit_param, fit_name = f(x, y, self.verbose, **kwargs)
+            self.statistics_[col_name] = {"param": fit_param,
+                                          "strategy": fit_name}
+            # print strategies if verbose
+            if self.verbose:
+                resp = f"Response: {col_name}"
+                preds = f"Predictors: {self._preds[col_name]}"
+                strat = f"Strategy {fit_name}"
+                print(f"{resp}\n{preds}\n{strat}\n{'-'*len(st)}")
+        return self
