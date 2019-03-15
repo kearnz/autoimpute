@@ -13,9 +13,12 @@ Todo:
     * create multivariate methods module with predictive strategies
 """
 
+import pandas as pd
 from sklearn.base import BaseEstimator, TransformerMixin
+from sklearn.utils.validation import check_is_fitted
 from autoimpute.utils import check_nan_columns
-from autoimpute.imputations import BaseImputer, predictive_methods
+from autoimpute.imputations import BaseImputer, SingleImputer
+from autoimpute.imputations import predictive_methods
 pm = predictive_methods
 # pylint:disable=attribute-defined-outside-init
 # pylint:disable=arguments-differ
@@ -26,14 +29,14 @@ class PredictiveImputer(BaseImputer, BaseEstimator, TransformerMixin):
     """Techniques to impute Series with missing values through learning."""
 
     strategies = {
-        "linear": pm._fit_linear_reg,
-        "binary logistic": pm._fit_binary_logistic,
-        "multinomial logistic": pm._fit_multi_logistic,
+        "least squares": pm._fit_least_squares_reg,
+        "binary logistic": pm._fit_binary_logistic_reg,
+        "multinomial logistic": pm._fit_multi_logistic_reg,
         "default": pm._predictive_default
     }
 
-    def __init__(self, strategy="default", predictors="all",
-                 fill_predictors=False, scaler=None, verbose=None):
+    def __init__(self, strategy="default", strategy_args=None,
+                 predictors="all", scaler=None, verbose=None, copy=True):
         """Create an instance of the PredictiveImputer class."""
         BaseImputer.__init__(
             self,
@@ -41,8 +44,9 @@ class PredictiveImputer(BaseImputer, BaseEstimator, TransformerMixin):
             verbose=verbose
         )
         self.strategy = strategy
+        self.strategy_args = strategy_args
         self.predictors = predictors
-        self.fill_predictors = fill_predictors
+        self.copy = copy
 
     @property
     def strategy(self):
@@ -68,6 +72,7 @@ class PredictiveImputer(BaseImputer, BaseEstimator, TransformerMixin):
         strat_names = self.strategies.keys()
         self._strategy = self.check_strategy_allowed(strat_names, s)
 
+
     def _fit_strategy_validator(self, X):
         """Internal helper method to validate strategies appropriate for fit.
 
@@ -83,11 +88,13 @@ class PredictiveImputer(BaseImputer, BaseEstimator, TransformerMixin):
         return X
 
     @check_nan_columns
-    def fit(self, X, **kwargs):
+    def fit(self, X):
         """Fit placeholder."""
         # first, prep columns we plan to use and make sure they are valid
         self._fit_strategy_validator(X)
         self.statistics_ = {}
+        if not self.scaler is None:
+            self._scaler_fit()
 
         # header print statement if verbose = true
         if self.verbose:
@@ -101,8 +108,9 @@ class PredictiveImputer(BaseImputer, BaseEstimator, TransformerMixin):
             x, _ = self._prep_pred_cols(col_name, self._preds)
             if x.ndim == 1:
                 x = x.values.reshape().reshape(-1, 1)
+            x = pd.DataFrame(x)
             y = X[col_name]
-            fit_param, fit_name = f(x, y, self.verbose, **kwargs)
+            fit_param, fit_name = f(x, y, self.verbose)
             self.statistics_[col_name] = {"param": fit_param,
                                           "strategy": fit_name}
             # print strategies if verbose
@@ -112,3 +120,53 @@ class PredictiveImputer(BaseImputer, BaseEstimator, TransformerMixin):
                 strat = f"Strategy {fit_name}"
                 print(f"{resp}\n{preds}\n{strat}\n{'-'*len(st)}")
         return self
+
+    @check_nan_columns
+    def transform(self, X):
+        """Transform placeholder."""
+        # initial checks before transformation
+        check_is_fitted(self, "statistics_")
+        if self.copy:
+            X = X.copy()
+
+        # check columns
+        X_cols = X.columns.tolist()
+        fit_cols = set(self._strats.keys())
+        diff_fit = set(fit_cols).difference(X_cols)
+        if diff_fit:
+            err = "Same columns that were fit must appear in transform."
+            raise ValueError(err)
+
+        # transformation logic
+        self.imputed_ = {}
+        for col_name, fit_data in self.statistics_.items():
+            strat = fit_data["strategy"]
+            fill_ = fit_data["param"]
+            imp_ind = X[col_name][X[col_name].isnull()].index
+            imps = len(imp_ind)
+            self.imputed_[col_name] = imp_ind.tolist()
+            if self.verbose:
+                print(f"Transforming {col_name} with strategy '{strat}'")
+                print(f"Numer of imputations to perform: {imps}")
+            # continue if there are no imputations to make
+            if not imps:
+                continue
+            x, _ = self._prep_pred_cols(col_name, self._preds)
+            if x.ndim == 1:
+                x = x.values.reshape().reshape(-1, 1)
+            x = pd.DataFrame(x)
+            x = x.loc[imp_ind, :]
+            # may abstract SingleImputer in future for flexibility
+            x = SingleImputer().fit_transform(x)
+            # fill missing values based on the method selected
+            # note that default picks a method below depending on col
+            # -------------------------------------------------------
+            # linear regression imputation
+            if strat == "least squares":
+                pm._imp_least_squares_reg(X, col_name, x, fill_, imp_ind)
+            if strat in ("binary logistic", "multinomial logistic"):
+                pm._imp_logistic_reg(X, col_name, x, fill_, imp_ind)
+            # no imputation if strategy is none
+            if strat == "none":
+                pass
+        return X

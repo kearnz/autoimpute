@@ -199,7 +199,7 @@ class SingleImputer(BaseImputer, BaseEstimator, TransformerMixin):
             ValueError: same columns must appear in fit and transform.
         """
         # initial checks before transformation
-        check_is_fitted(self, 'statistics_')
+        check_is_fitted(self, "statistics_")
         if self.copy:
             X = X.copy()
 

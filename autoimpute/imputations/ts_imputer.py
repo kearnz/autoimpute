@@ -256,7 +256,7 @@ class TimeSeriesImputer(BaseImputer, BaseEstimator, TransformerMixin):
             ValueError: same columns must appear in fit and transform.
         """
         # initial checks before transformation
-        check_is_fitted(self, 'statistics_')
+        check_is_fitted(self, "statistics_")
 
         # create dataframe index then proceed
         X = self._transform_strategy_validator(X)

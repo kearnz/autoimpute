@@ -20,6 +20,23 @@ df_num["C"] = np.random.choice(np.arange(1, 100), 1000)
 df_num["A"] = df_num["A"].apply(eq_miss)
 df_num["B"] = df_num["B"].apply(val_miss)
 
+# Mixed DataFrame with different % missingness per column & some dependence
+df_mix = pd.DataFrame()
+df_mix["gender"] = np.random.choice(["Male", "Female", None], 500)
+df_mix["salary"] = np.random.choice(np.arange(20, 100), 500)
+df_mix["age"] = np.random.choice(
+    [10, 20, 30, 40, 50, 60, 70], 500,
+    p=[0.1, 0.1, 0.2, 0.2, 0.2, 0.1, 0.1]
+)
+df_mix["amm"] = np.random.choice(np.arange(0, 100), 500)
+
+for each in df_mix.index:
+    s = df_mix.loc[each, "salary"]
+    if df_mix.loc[each, "age"] > 50:
+        s = np.random.choice([s, np.nan], p=[0.3, 0.7])
+    elif df_mix.loc[each, "age"] < 30:
+        s = np.random.choice([s, np.nan], p=[0.4, 0.6])
+
 # DataFrame with numerical feature, `np.nan` column, `None` column
 df_col_miss = pd.DataFrame()
 df_col_miss["A"] = np.random.choice(np.arange(90, 100), 1000)
