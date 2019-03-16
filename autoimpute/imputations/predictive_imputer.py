@@ -144,7 +144,7 @@ class PredictiveImputer(BaseImputer, BaseEstimator, TransformerMixin):
                 print(f"Transforming {col_name} with strategy '{strat}'")
                 print(f"Numer of imputations to perform: {len(imp_ix)}")
             # continue if there are no imputations to make
-            if not imp_ix:
+            if imp_ix.empty:
                 continue
             x, _ = self._prep_predictor_cols(col_name, self._preds)
             x = x.loc[imp_ix, :]

@@ -17,7 +17,8 @@ def _not_num_matrix(m, mat):
     """Private method to detect columns of Matrix that are not numerical."""
     try:
         for each_col in mat:
-            _not_num_series(m, each_col)
+            c = mat[each_col]
+            _not_num_series(m, c)
     except TypeError as te:
         err = f"{m} not appropriate for Matrix with non-numerical columns."
         raise TypeError(err) from te
@@ -33,7 +34,8 @@ def _not_cat_matrix(m, mat):
     """Private method to detect columns of Matrix that are not categorical."""
     try:
         for each_col in mat:
-            _not_cat_series(m, each_col)
+            c = mat[each_col]
+            _not_cat_series(m, c)
     except TypeError as te:
         err = f"{m} not appropriate for Matrix with non-categorical columns."
         raise TypeError(err) from te
