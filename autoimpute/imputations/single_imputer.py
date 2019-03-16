@@ -215,33 +215,33 @@ class SingleImputer(BaseImputer, BaseEstimator, TransformerMixin):
         self.imputed_ = {}
         for col_name, fit_data in self.statistics_.items():
             strat = fit_data["strategy"]
-            fill_val = fit_data["param"]
-            imp_ind = X[col_name][X[col_name].isnull()].index
-            self.imputed_[col_name] = imp_ind.tolist()
+            fill = fit_data["param"]
+            imp_ix = X[col_name][X[col_name].isnull()].index
+            self.imputed_[col_name] = imp_ix.tolist()
             if self.verbose:
                 print(f"Transforming {col_name} with strategy '{strat}'")
-                print(f"Numer of imputations to perform: {len(imp_ind)}")
+                print(f"Numer of imputations to perform: {len(imp_ix)}")
             # fill missing values based on the method selected
             # note that default picks a method below depending on col
             # -------------------------------------------------------
             # mean and median imputation
             if strat in ("mean", "median"):
-                sm._imp_central(X, col_name, fill_val)
+                sm._imp_central(X, col_name, fill)
             # mode imputation
             if strat == "mode":
-                sm._imp_mode(X, col_name, fill_val, self.fill_value)
+                sm._imp_mode(X, col_name, fill, self.fill_value)
             # imputatation w/ random value from observed data
             if strat == "random":
-                sm._imp_random(X, col_name, fill_val, imp_ind)
+                sm._imp_random(X, col_name, fill, imp_ix)
             # linear interpolation imputation
             if strat == "linear":
                 tm._imp_interp(X, col_name, strat)
             # normal distribution imputatinon
             if strat == "norm":
-                sm._imp_norm(X, col_name, fill_val, imp_ind)
+                sm._imp_norm(X, col_name, fill, imp_ix)
             # categorical distribution imputation
             if strat == "categorical":
-                sm._imp_categorical(X, col_name, fill_val, imp_ind)
+                sm._imp_categorical(X, col_name, fill, imp_ix)
             # no imputation if strategy is none
             if strat == "none":
                 pass

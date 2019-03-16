@@ -150,9 +150,9 @@ class MissingnessClassifier(BaseImputer, BaseEstimator, ClassifierMixin):
         for c in self.data_mi:
             # only fit non time-based columns...
             if c not in self._cols_time:
-                x, y = self._prep_pred_cols(c, self._preds)
+                x, y = self._prep_predictor_cols(c, self._preds)
                 clf = clone(self.classifier)
-                cls_fit = clf.fit(x, y, **kwargs)
+                cls_fit = clf.fit(x.values, y.values, **kwargs)
                 self.statistics_[c] = cls_fit
         return self
 
@@ -182,9 +182,9 @@ class MissingnessClassifier(BaseImputer, BaseEstimator, ClassifierMixin):
         preds_mat = []
         for c in self.data_mi:
             if c not in self._cols_time:
-                x, _ = self._prep_pred_cols(c, self._preds)
+                x, _ = self._prep_predictor_cols(c, self._preds)
                 cls_fit = self.statistics_[c]
-                y_pred = cls_fit.predict(x, **kwargs)
+                y_pred = cls_fit.predict(x.values, **kwargs)
                 preds_mat.append(y_pred)
             else:
                 y_pred = np.zeros(len(self.data_mi.index))
@@ -222,9 +222,9 @@ class MissingnessClassifier(BaseImputer, BaseEstimator, ClassifierMixin):
         preds_mat = []
         for c in self.data_mi:
             if c not in self._cols_time:
-                x, _ = self._prep_pred_cols(c, self._preds)
+                x, _ = self._prep_predictor_cols(c, self._preds)
                 cls_fit = self.statistics_[c]
-                y_pred = cls_fit.predict_proba(x, **kwargs)[:, 1]
+                y_pred = cls_fit.predict_proba(x.values, **kwargs)[:, 1]
                 preds_mat.append(y_pred)
             else:
                 y_pred = np.zeros(len(self.data_mi.index))

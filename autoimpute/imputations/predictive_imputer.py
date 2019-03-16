@@ -13,7 +13,6 @@ Todo:
     * create multivariate methods module with predictive strategies
 """
 
-import pandas as pd
 from sklearn.base import BaseEstimator, TransformerMixin
 from sklearn.utils.validation import check_is_fitted
 from autoimpute.utils import check_nan_columns
@@ -105,10 +104,7 @@ class PredictiveImputer(BaseImputer, BaseEstimator, TransformerMixin):
         # note - because we use predictors, logic more involved than single
         for col_name, func_name in self._strats.items():
             f = self.strategies[func_name]
-            x, _ = self._prep_pred_cols(col_name, self._preds)
-            if x.ndim == 1:
-                x = x.values.reshape().reshape(-1, 1)
-            x = pd.DataFrame(x)
+            x, _ = self._prep_predictor_cols(col_name, self._preds)
             y = X[col_name]
             fit_param, fit_name = f(x, y, self.verbose)
             self.statistics_[col_name] = {"param": fit_param,
@@ -141,21 +137,17 @@ class PredictiveImputer(BaseImputer, BaseEstimator, TransformerMixin):
         self.imputed_ = {}
         for col_name, fit_data in self.statistics_.items():
             strat = fit_data["strategy"]
-            fill_ = fit_data["param"]
-            imp_ind = X[col_name][X[col_name].isnull()].index
-            imps = len(imp_ind)
-            self.imputed_[col_name] = imp_ind.tolist()
+            fill = fit_data["param"]
+            imp_ix = X[col_name][X[col_name].isnull()].index
+            self.imputed_[col_name] = imp_ix.tolist()
             if self.verbose:
                 print(f"Transforming {col_name} with strategy '{strat}'")
-                print(f"Numer of imputations to perform: {imps}")
+                print(f"Numer of imputations to perform: {len(imp_ix)}")
             # continue if there are no imputations to make
-            if not imps:
+            if not imp_ix:
                 continue
-            x, _ = self._prep_pred_cols(col_name, self._preds)
-            if x.ndim == 1:
-                x = x.values.reshape().reshape(-1, 1)
-            x = pd.DataFrame(x)
-            x = x.loc[imp_ind, :]
+            x, _ = self._prep_predictor_cols(col_name, self._preds)
+            x = x.loc[imp_ix, :]
             # may abstract SingleImputer in future for flexibility
             x = SingleImputer().fit_transform(x)
             # fill missing values based on the method selected
@@ -163,9 +155,9 @@ class PredictiveImputer(BaseImputer, BaseEstimator, TransformerMixin):
             # -------------------------------------------------------
             # linear regression imputation
             if strat == "least squares":
-                pm._imp_least_squares_reg(X, col_name, x, fill_, imp_ind)
+                pm._imp_least_squares_reg(X, col_name, x, fill, imp_ix)
             if strat in ("binary logistic", "multinomial logistic"):
-                pm._imp_logistic_reg(X, col_name, x, fill_, imp_ind)
+                pm._imp_logistic_reg(X, col_name, x, fill, imp_ix)
             # no imputation if strategy is none
             if strat == "none":
                 pass

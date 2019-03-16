@@ -16,12 +16,6 @@ Methods:
     outflux(data)
     proportions(data)
     flux(data)
-
-Todo:
-    * Add futher functionality to assess missing data patterns.
-        - Examples include those in missingno package.
-        - Other R packages have EDA not contained in VB 4.1.
-    * Add examples of each method in respective function docstrings.
 """
 
 import numpy as np
@@ -166,53 +160,26 @@ def feature_corr(data, method="pearson"):
     """
     accepted_methods = ("pearson", "kendall", "spearman")
     if method not in accepted_methods:
-        raise ValueError(f"Correlation method must be in {accepted_methods}")
+        err = f"Correlation method must be in {accepted_methods}"
+        raise ValueError(err)
     return data.corr(method=method)
 
 def _inbound(pairs):
-    """Helper to get inbound from pairs. Intended for private use.
-
-    Args:
-        pairs (dict): Pairs generated from md_pairs function.
-
-    Returns:
-        np.ndarray: Pairwise stat for inbound.
-    """
+    """Private method to get inbound from pairs."""
     return pairs["mr"]/(pairs["mr"]+pairs["mm"])
 
 def _outbound(pairs):
-    """Helper to get outbound from pairs. Intended for private use.
-
-    Args:
-        pairs (dict): Pairs generated from md_pairs function.
-
-    Returns:
-        np.ndarray: Pairwise stat for outbound.
-    """
+    """Private method to get outbound from pairs."""
     return pairs["rm"]/(pairs["rm"]+pairs["rr"])
 
 def _influx(pairs):
-    """Helper to get influx from pairs. Intended for private use.
-
-    Args:
-        pairs (dict): Pairs generated from md_pairs function.
-
-    Returns:
-        np.ndarray: Pairwise stat for influx.
-    """
+    """Private method to get influx from pairs."""
     num = np.nansum(pairs["mr"], axis=1)
     denom = np.nansum(pairs["mr"]+pairs["rr"], axis=1)
     return num/denom
 
 def _outflux(pairs):
-    """Helper to get outflux from pairs. Intended for private use.
-
-    Args:
-        pairs (dict): Pairs generated from md_pairs function.
-
-    Returns:
-        np.ndarray: Pairwise stat for outflux.
-    """
+    """Private method to get outflux from pairs."""
     num = np.nansum(pairs["rm"], axis=1)
     denom = np.nansum(pairs["rm"]+pairs["mm"], axis=1)
     return num/denom

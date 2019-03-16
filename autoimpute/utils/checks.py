@@ -4,24 +4,12 @@ This module is a series of decorators and functions used throughout autoimpute.
 The decorators perform checks or transformations on functions that accept data.
 They ensure the data is well formatted prior to running a given method.
 Additional functions perform data validation and error handling. They are used
-in different classes or methods where the same behavior is reused.
+in different classes or methods where the same cheks must be performed often.
 
 Methods:
     check_data_structure(func)
     check_missingness(func)
     check_nan_columns(func)
-
-Todo:
-    * Support data structures other than pandas DataFrame. Consider:
-        - list, tuple, and other built-in iterators and collections
-        - numpy array, and pandas Series
-        - scipy sparse matrices
-    * If other data structures added, bring back decorator to verify 2D
-        - Right now, we only accept pandas DataFrames. All pandas datafrmes
-          are 2-dimensional, so no need to verify their shape.
-        - If we allow for arrays or other data types, we don't get
-          this verification for free and need to enforce. We can introduce
-          a `check_dimensions` decorator, which checks shape of input data.
 """
 
 import functools
@@ -49,40 +37,33 @@ def check_data_structure(func):
         """Wrapper function that does the pandas DataFrame verification.
 
         The wrapper within the decorator does the actual verification. It
-        is flexible in that it checks whether the first argument, d, is a
-        pandas DataFrame. If it's not, it checks whether the second arg
-        (which would be the first arg of *args) is a DataFrame. This flexible
-        checking means this decorator can be used to validate methods
-        within a class (which have self as their first argument). Class
-        methods using this decorator must take a DataFrame as their second
-        argument (which comes up in *args as args[0]).
+        checks whether the first argument, d, is a pandas DataFrame.
+        If it's not, it checks whether the second arg (which would be the
+        first arg of *args) is a DataFrame. This flexible checking means
+        this decorator can validate methods within a class. Class methods
+        using the decorator must take a DataFrame as the first arg after self.
 
         Args:
-            d (any): Any data type allowed, but all data types raise an
-                error unless they are a pandas DataFrame.
-            *args: Any number of arguments. If d is NOT a pandas DataFrame,
-                first arg MUST be a pandas DataFrame, or error raised.
+            d (self, pd.DataFrame): data to check. should be a DataFrame
+                or self if an instance of a class.
+            *args: Any number of arguments. If d is not a DataFrame, first arg
+                must be or error raised.
             **kwargs: Keyword arguments for original function.
 
         Returns:
             function: Returns original function being decorated.
 
         Raises:
-            TypeError: If one of d, args[0] not pandas DataFrame.
+            TypeError: If one of d, args[0] not DataFrame.
         """
-        if isinstance(d, pd.DataFrame):
-            return func(d, *args, **kwargs)
-        else:
-            if args:
-                a = args[0]
-                if isinstance(a, pd.DataFrame):
-                    return func(d, *args, **kwargs)
-                else:
-                    err = a.__class__.__name__
-                    raise TypeError(f"Type '{err}' not a DataFrame")
-            else:
-                err = d.__class__.__name__
-                raise TypeError(f"Type '{err}' not a DataFrame'")
+        d_df = isinstance(d, pd.DataFrame)
+        a_df = isinstance(args[0], pd.DataFrame) if args else False
+        if not any([d_df, a_df]):
+            d_err = d.__class__.__name__
+            a_err = args[0].__class__.__name__ if args else "first args"
+            err = f"Neither {d_err} nor {a_err} are of type pd.DataFrame"
+            raise TypeError(err)
+        return func(d, *args, **kwargs)
     return wrapper
 
 def check_missingness(func):
@@ -91,10 +72,9 @@ def check_missingness(func):
     This method acts as a decorator. It takes a function that takes data
     as its first argument and checks whether that data contains any
     missing or real values. This method leverages the check_data_structure
-    decorator above to first verify that the data is a DataFrame, and then
-    verify that the data contains real and missing values. This decorator
-    also works well with classes and utilizes the `functools.wrap`
-    decorator to keep function names in tact.
+    decorator to verify that the data is a DataFrame, and then verify that the
+    data contains observed and missing values. This method utilizes the
+    `functools.wrap` decorator to keep function names in tact.
 
     Args:
         func (function): The function that will be decorated.
@@ -105,7 +85,7 @@ def check_missingness(func):
     @functools.wraps(func)
     @check_data_structure
     def wrapper(d, *args, **kwargs):
-        """Wrap function that checks a DataFrame for missing and real values.
+        """Wrap function that checks a DataFrame's level of missingness.
 
         This wrapper within the decorator does the actual verification. It
         checks that a DataFrame has both missing and real values. If the
@@ -113,10 +93,10 @@ def check_missingness(func):
         has datetime columns that are not fully complete, an error is raised.
 
         Args:
-            d (any): Again, anything can be passed, but DataFrame required
-                to continue without error from check_data_structure.
-            *args: A number of arguments. First must be DataFrame if
-                working within a class.
+            d (self, pd.DataFrame): Data to check for real and missing values.
+                d can be instance of class if not pd.DataFrame.
+            *args: Any number of arguments. If d is not a DataFrame, first arg
+                must be or error raised.
             **kwargs: Keyword arguments from original function.
 
         Returns:
@@ -124,8 +104,9 @@ def check_missingness(func):
 
         Raises:
             ValueError: If all values in DataFrame are missing.
-            ValueError: If timeseries values in DataFrame are missing.
+            ValueError: If any timeseries values in DataFrame are missing.
         """
+        # b/c of check_data_structure, we know one of (d, a) is DataFrame
         if isinstance(d, pd.DataFrame):
             n_ts = d.select_dtypes(include=(np.number, np.object))
             ts = d.select_dtypes(include=(np.datetime64,))
@@ -151,13 +132,12 @@ def check_missingness(func):
     return wrapper
 
 def check_nan_columns(func):
-    """Removes columns inplace in DataFrame if column all missing values.
+    """Checks if any column in DataFrame has all missing values.
 
-    This method acts as a decorator. It first leverages the decorator
-    `check_missingness` to verify that a proper DataFrame is passed. It
-    then drops the columns with all rows missing from said DataFrame.
-    Dropped columns result in a warning issued with the dropped column
-    name. Again, it leverages `functools.wrap` to keep func names in place.
+    This method acts as a decorator. It leverages `check_missingness`
+    to verify data is DataFrame with real and missing values. It then checks
+    each column within the DataFrame to ensure no columns are fully missing.
+    Decorator leverages `functools.wrap` to keep function names in place.
 
     Args:
         func (function): The function that will be decorated.
@@ -168,25 +148,32 @@ def check_nan_columns(func):
     @functools.wraps(func)
     @check_missingness
     def wrapper(d, *args, **kwargs):
-        """Wrap function that removes columns w/ all rows missing.
+        """Wrap function that checks if all rows in any one column missing.
 
-        The wrapper leverages the `_nan_col_dropper` helper function,
-        which removes columns from a DataFrame that have all rows missing.
+        This wrapper does the actual verification. It ensures that each column
+        within a DataFrame has at least one complete row. If any column is
+        fully missing, an error is thrown. Users should remove columns from
+        DataFrames if columns have no information whatsoever, as these columns
+        are not useful for imputation nor analysis.
 
         Args:
-            d (pd.DataFrame): DataFrame to check, if not in args.
-            *args: Variable number of arguments, first of which may be df.
+            d (self, pd.DataFrame): DataFrame to check for missingness. If not
+                DataFrame, should be instance of a class.
+            *args: Variable number of arguments. If d not DataFrame, first arg
+                in args should be DataFrame.
             **kwargs: Keyword arguments from original function.
+
+        Raises:
+            ValueError: If all values in any DataFrame column are missing.
         """
+        # previous decorator checks ensure we are working with a DataFrame
         if isinstance(d, pd.DataFrame):
-            null_df = pd.isnull(d)
+            ndf = pd.isnull(d)
         else:
-            null_df = pd.isnull(args[0])
-        null_cols = []
-        for col in null_df:
-            if null_df[col].all():
-                null_cols.append(col)
-        if null_cols:
-            raise ValueError(f"Columns {null_cols} have all values missing.")
+            ndf = pd.isnull(args[0])
+        nc = [c for c in ndf if ndf[c].all()]
+        if nc:
+            err = f"All values missing in column(s) {nc}. Should be removed."
+            raise ValueError(err)
         return func(d, *args, **kwargs)
     return wrapper

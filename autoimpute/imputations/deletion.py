@@ -42,15 +42,13 @@ def listwise_delete(data, inplace=False, verbose=False):
     Raises:
         ValueError: columns with all data missing. Raised through decorator.
     """
-    if not verbose:
-        return data.dropna(inplace=inplace)
+    num_records_before = len(data.index)
+    if inplace:
+        data.dropna(inplace=True)
     else:
-        num_records_before = len(data.index)
-        if not inplace:
-            data.dropna(inplace=True)
-        else:
-            data = data.dropna(inplace=False)
-        num_records_after = len(data.index)
+        data = data.dropna(inplace=False)
+    num_records_after = len(data.index)
+    if verbose:
         print(f"Number of records before delete: {num_records_before}")
         print(f"Number of records after delete: {num_records_after}")
-        return data
+    return data

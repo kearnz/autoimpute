@@ -7,33 +7,33 @@ from pandas.api.types import is_numeric_dtype
 # --------------
 
 def _not_num_series(m, s):
-    """error handling for all single private methods that are numerical."""
+    """Private method to detect columns of Matrix that are not categorical."""
     if not is_numeric_dtype(s):
         t = s.dtype
-        e = f"{m} not appropriate for Series with type {t}. Need numeric."
-        raise TypeError(e)
+        err = f"{m} not appropriate for Series type {t}. Need numeric."
+        raise TypeError(err)
 
 def _not_num_matrix(m, mat):
-    """error handling for all multi private methods that are numerical."""
+    """Private method to detect columns of Matrix that are not numerical."""
     try:
         for each_col in mat:
             _not_num_series(m, each_col)
-    except TypeError:
-        e = f"{m} not appropriate for Matrix with any non-numerical column."
-        raise TypeError(e)
+    except TypeError as te:
+        err = f"{m} not appropriate for Matrix with non-numerical columns."
+        raise TypeError(err) from te
 
 def _not_cat_series(m, s):
-    """error handling for all single private methods that are categorical."""
+    """Private method to detect Series that are not categorical."""
     if not is_string_dtype(s):
         t = s.dtype
-        e = f"{m} not appropriate for Series with type {t}. Need categorical."
-        raise TypeError(e)
+        err = f"{m} not appropriate for Series type {t}. Need categorical."
+        raise TypeError(err)
 
 def _not_cat_matrix(m, mat):
-    """error handling for all muilti private methods that are categorical."""
+    """Private method to detect columns of Matrix that are not categorical."""
     try:
         for each_col in mat:
             _not_cat_series(m, each_col)
-    except TypeError:
-        e = f"{m} not appropriate for Matrix with any non-categorical column."
-        raise TypeError(e)
+    except TypeError as te:
+        err = f"{m} not appropriate for Matrix with non-categorical columns."
+        raise TypeError(err) from te

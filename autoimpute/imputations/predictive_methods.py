@@ -24,7 +24,6 @@ def _get_observed(method, predictors, series, verbose):
     series = predictors.pop(series.name)
     return predictors, series
 
-
 def _fit_least_squares_reg(predictors, series, verbose):
     """Private method to fit data for linear regression imputation."""
     method = "least squares"

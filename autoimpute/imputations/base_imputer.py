@@ -2,10 +2,6 @@
 
 This module contains the `BaseImputer`, which is used to abstract away
 functionality in both missingness classifiers and predictive imputers.
-
-Todo:
-    * Finish logic for predictors
-    * Rename and reorder methods for style / conventions
 """
 
 import warnings
@@ -15,7 +11,8 @@ import pandas as pd
 from sklearn.base import clone
 # pylint:disable=attribute-defined-outside-init
 # pylint:disable=too-many-arguments
-# pylint:disable=too-many-instance-attributes, inconsistent-return-statements
+# pylint:disable=too-many-instance-attributes
+# pylint:disable=inconsistent-return-statements
 
 
 class BaseImputer:
@@ -23,7 +20,7 @@ class BaseImputer:
 
     The `BaseImputer` is not a stand-alone class and thus serves no purpose
     other than as a Parent to Imputers and MissingnessClassifiers. Therefore,
-    the BaseImputer should not be used directly unless creating a
+    the BaseImputer should not be used directly unless creating an Imputer.
     """
 
     def __init__(self, scaler, verbose):
@@ -31,7 +28,7 @@ class BaseImputer:
 
         Args:
             scaler (sklearn scaler, optional): A scaler supported by sklearn.
-                Defaults to None, so no scaling of fit/transform data.
+                Default to None. Otherwise, must be sklearn-compliant scaler.
             verbose (bool, optional): Print information to the console.
                 Defaults to False.
         """
@@ -63,7 +60,6 @@ class BaseImputer:
 
     def _scaler_fit(self):
         """Private method to scale data based on scaler provided."""
-        # if scaler used, must be from sklearn library
         if self._len_num > 0:
             sc = clone(self.scaler)
             self._scaled_num = sc.fit(self._data_num.values)
@@ -74,13 +70,11 @@ class BaseImputer:
     def _scaler_transform(self):
         """Private method to transform data using scaled fit."""
         if not self._scaled_num is None:
-            cn = self._data_num.columns.tolist()
             sn = self._scaled_num.transform(self._data_num.values)
-            self._data_num = pd.DataFrame(sn, columns=cn)
+            self._data_num = pd.DataFrame(sn, columns=self._cols_num)
         if not self._scaled_dum is None:
-            cd = self._data_dum.columns.tolist()
             sd = self._scaled_dum.transform(self._data_dum.values)
-            self._data_dum = pd.DataFrame(sd, columns=cd)
+            self._data_dum = pd.DataFrame(sd, columns=self._cols_dum)
 
     def check_strategy_allowed(self, strat_names, s):
         """Logic to determine if the strategy passed for imputation is valid.
@@ -317,9 +311,11 @@ class BaseImputer:
             d_c = [v for k, v in self._dum_dict.items()
                    if k != c and k in preds]
         else:
-            d_c = [v for k, v in self._dum_dict.items() if k in preds]
+            d_c = [v for k, v in self._dum_dict.items()
+                   if k in preds]
         d_fc = list(itertools.chain.from_iterable(d_c))
-        d = [k for k in self._data_dum.columns if k in d_fc]
+        d = [k for k in self._data_dum.columns
+             if k in d_fc]
         dum_cols = self._data_dum[d]
 
         # set the time columns last
@@ -328,7 +324,7 @@ class BaseImputer:
 
         return num_cols, dum_cols, time_cols
 
-    def _prep_pred_cols(self, c, predictors):
+    def _prep_predictor_cols(self, c, predictors):
         """Private method to prep cols for prediction."""
         preds = predictors[c]
         if isinstance(preds, str):
@@ -346,21 +342,19 @@ class BaseImputer:
             num, dum, time = self._use_iter_cols(c, preds)
 
         # error handling and printing to console
-        num_str = num.columns.tolist()
-        dum_str = dum.columns.tolist()
-        time_str = time.columns.tolist()
-        if not any([len(num_str), len(dum_str), len(time_str)]):
+        predictors = [num, dum, time]
+        predictor_str = list(map(lambda df: df.columns.tolist(), predictors))
+        if not any(predictor_str):
             err = f"Need at least one predictor column to fit {c}."
             raise ValueError(err)
         if self.verbose:
             print(f"Columns used for {c}:")
-            print(f"Numeric: {num_str}")
-            print(f"Categorical: {dum_str}")
-            print(f"Datetime: {time_str}")
+            print(f"Numeric: {predictor_str[0]}")
+            print(f"Categorical: {predictor_str[1]}")
+            print(f"Datetime: {predictor_str[2]}")
 
-        # pick final columns to return for x and y
-        predictors = [num.values, dum.values, time.values]
+        # final columns to return for x and y
         predictors = [p for p in predictors if p.size > 0]
-        x = np.concatenate(predictors, axis=1)
-        y = self.data_mi[c].values
+        x = pd.concat(predictors, axis=1)
+        y = self.data_mi[c]
         return x, y

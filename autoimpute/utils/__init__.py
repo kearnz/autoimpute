@@ -8,7 +8,7 @@ below specifies the methods and classes that are currently available on import.
 Imported:
     check_data_structure
     check_missingness
-    remove_nan_columns
+    check_nan_columns
     md_pairs
     md_pattern
     md_locations

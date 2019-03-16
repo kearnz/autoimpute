@@ -18,10 +18,10 @@ EXTRAS = {}
 
 here = os.path.abspath(os.path.dirname(__file__))
 
-# Import the README and use it as the long-description.
+# Import the README and use it as the long description.
 try:
     with io.open(os.path.join(here, "README.md"), encoding="utf-8") as f:
-        long_description = "\n" + f.read()
+        long_description = f"\n{f.read()}"
 except FileNotFoundError:
     long_description = DESCRIPTION
 
@@ -39,7 +39,7 @@ setup(
     version=about["__version__"],
     description=DESCRIPTION,
     long_description=long_description,
-    long_description_content_type="text/rst",
+    long_description_content_type="text/md",
     author=AUTHOR,
     author_email=EMAIL,
     python_requires=REQUIRES_PYTHON,
