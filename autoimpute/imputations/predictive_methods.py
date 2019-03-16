@@ -3,7 +3,9 @@
 import pandas as pd
 from pandas.api.types import is_string_dtype
 from pandas.api.types import is_numeric_dtype
+from scipy.stats import norm
 from sklearn.linear_model import LinearRegression, LogisticRegression
+from sklearn.metrics import mean_squared_error
 from autoimpute.imputations import single_methods
 from autoimpute.imputations.deletion import listwise_delete
 from autoimpute.imputations.errors import _not_num_series, _not_num_matrix
@@ -32,6 +34,17 @@ def _fit_least_squares_reg(predictors, series, verbose):
     lm = LinearRegression()
     lm.fit(X, y)
     return lm, method
+
+def _fit_stochastic_reg(predictors, series, verbose):
+    """Private method to fit data for stochastic regression imputation."""
+    method = "stochastic"
+    _not_num_series(method, series)
+    X, y = _get_observed(method, predictors, series, verbose)
+    lm = LinearRegression()
+    lm.fit(X, y)
+    preds = lm.predict(X)
+    mse = mean_squared_error(y, preds)
+    return (lm, mse), method
 
 def _fit_binary_logistic_reg(predictors, series, verbose):
     """Private method to fit data for binary logistic imputation."""
@@ -72,15 +85,23 @@ def _predictive_default(predictors, series, verbose):
 # --------------------
 # Methods below represent transformations for associated fit methods above.
 
-def _imp_least_squares_reg(X, col_name, x, lm, imp_ind):
+def _imp_least_squares_reg(X, col_name, x, lm, imp_ix):
     """Private method to perform linear regression imputation."""
     fills = lm.predict(x)
-    X.loc[imp_ind, col_name] = fills
+    X.loc[imp_ix, col_name] = fills
 
-def _imp_logistic_reg(X, col_name, x, lm, imp_ind):
+def _imp_logistic_reg(X, col_name, x, lm, imp_ix):
     """Private method to perform linear regression imputation."""
     model, labels = lm
     fills = model.predict(x)
     label_dict = {i:j for i, j in enumerate(labels.values)}
-    X.loc[imp_ind, col_name] = fills
+    X.loc[imp_ix, col_name] = fills
     X[col_name].replace(label_dict, inplace=True)
+
+def _imp_stochastic_reg(X, col_name, x, lm, imp_ix):
+    """Private method to perform stochastic regression imputation."""
+    model, mse = lm
+    preds = model.predict(x)
+    mse_dist = norm.rvs(loc=0, scale=mse, size=len(preds))
+    fills = preds + mse_dist
+    X.loc[imp_ix, col_name] = fills

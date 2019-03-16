@@ -86,20 +86,20 @@ def _imp_mode(X, col_name, mode, strategy):
             err = f"{strategy} not accepted for mode imputation"
             raise ValueError(err)
 
-def _imp_random(X, col_name, fill_val, imp_ind):
+def _imp_random(X, col_name, fill_val, imp_ix):
     """Private method for random value imputation."""
-    fills = np.random.choice(fill_val, len(imp_ind))
-    X.loc[imp_ind, col_name] = fills
+    fills = np.random.choice(fill_val, len(imp_ix))
+    X.loc[imp_ix, col_name] = fills
 
-def _imp_norm(X, col_name, fill_val, imp_ind):
+def _imp_norm(X, col_name, fill_val, imp_ix):
     """Private method for imputation using random draws from norm dist."""
     mu, std = fill_val
-    fills = norm.rvs(loc=mu, scale=std, size=len(imp_ind))
-    X.loc[imp_ind, col_name] = fills
+    fills = norm.rvs(loc=mu, scale=std, size=len(imp_ix))
+    X.loc[imp_ix, col_name] = fills
 
-def _imp_categorical(X, col_name, fill_val, imp_ind):
+def _imp_categorical(X, col_name, fill_val, imp_ix):
     """Private method for imputation using random draws from cat pmf."""
     cats = fill_val.index
     proportions = fill_val.tolist()
-    fills = np.random.choice(cats, size=len(imp_ind), p=proportions)
-    X.loc[imp_ind, col_name] = fills
+    fills = np.random.choice(cats, size=len(imp_ix), p=proportions)
+    X.loc[imp_ix, col_name] = fills
