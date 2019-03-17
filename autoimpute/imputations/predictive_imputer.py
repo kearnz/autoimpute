@@ -32,11 +32,13 @@ class PredictiveImputer(BaseImputer, BaseEstimator, TransformerMixin):
         "binary logistic": pm._fit_binary_logistic_reg,
         "multinomial logistic": pm._fit_multi_logistic_reg,
         "stochastic": pm._fit_stochastic_reg,
+        "bayesian least squares": pm._fit_bayes_least_squares_reg,
         "default": pm._predictive_default
     }
 
     def __init__(self, strategy="default", strategy_args=None,
-                 predictors="all", scaler=None, verbose=None, copy=True):
+                 predictors="all", fill_val=None, copy=True,
+                 scaler=None, verbose=None):
         """Create an instance of the PredictiveImputer class."""
         BaseImputer.__init__(
             self,
@@ -46,6 +48,7 @@ class PredictiveImputer(BaseImputer, BaseEstimator, TransformerMixin):
         self.strategy = strategy
         self.strategy_args = strategy_args
         self.predictors = predictors
+        self.fill_val = fill_val
         self.copy = copy
 
     @property
@@ -161,6 +164,10 @@ class PredictiveImputer(BaseImputer, BaseEstimator, TransformerMixin):
                 pm._imp_logistic_reg(X, col_name, x, fill, imp_ix)
             if strat == "stochastic":
                 pm._imp_stochastic_reg(X, col_name, x, fill, imp_ix)
+            if strat == "bayesian least squares":
+                pm._imp_bayes_least_squares_reg(
+                    X, col_name, x, fill, imp_ix, self.fill_val
+                )
             # no imputation if strategy is none
             if strat == "none":
                 pass

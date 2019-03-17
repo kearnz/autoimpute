@@ -2,6 +2,7 @@
 
 import numpy as np
 import pandas as pd
+from sklearn.datasets import make_regression
 
 # missingness lambdas
 eq_miss = lambda x: np.random.choice([x, np.nan], 1)[0]
@@ -67,3 +68,14 @@ df_ts_mixed = pd.DataFrame({
     "values": [271238, 329285, np.nan, 260260, 263711, np.nan],
     "cats": ["red", None, "green", "green", "red", "green"]
 })
+
+# bayesian regression testing
+sc = lambda x, d: (x-d.mean())/d.std()
+mis = lambda x: np.random.choice([x, np.nan], 1, p=[0.8, 0.2])[0]
+X, y = make_regression(n_samples=1000, n_features=3, noise=0.50)
+df_bayes_reg = pd.DataFrame({"x1": X[:, 0], "x2": X[:, 1],
+                             "x3": X[:, 2], "y": y})
+df_bayes_reg.x1 = df_bayes_reg.x1.apply(lambda x: sc(x, df_bayes_reg.x1))
+df_bayes_reg.x2 = df_bayes_reg.x2.apply(lambda x: sc(x, df_bayes_reg.x2))
+df_bayes_reg.x3 = df_bayes_reg.x3.apply(lambda x: sc(x, df_bayes_reg.x1))
+df_bayes_reg.y = df_bayes_reg.y.apply(mis)

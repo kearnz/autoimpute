@@ -1,11 +1,13 @@
 """Private imputation methods used by different Imputer Classes."""
 
+import numpy as np
 import pandas as pd
 from pandas.api.types import is_string_dtype
 from pandas.api.types import is_numeric_dtype
 from scipy.stats import norm
 from sklearn.linear_model import LinearRegression, LogisticRegression
 from sklearn.metrics import mean_squared_error
+import pymc3 as pm
 from autoimpute.imputations import single_methods
 from autoimpute.imputations.deletion import listwise_delete
 from autoimpute.imputations.errors import _not_num_series, _not_num_matrix
@@ -13,6 +15,8 @@ sm = single_methods
 # pylint:disable=unused-argument
 # pylint:disable=inconsistent-return-statements
 # pylint:disable=protected-access
+# pylint:disable=unused-variable
+# pylint:disable=no-member
 
 # FIT IMPUTATION
 # --------------
@@ -45,6 +49,21 @@ def _fit_stochastic_reg(predictors, series, verbose):
     preds = lm.predict(X)
     mse = mean_squared_error(y, preds)
     return (lm, mse), method
+
+def _fit_bayes_least_squares_reg(predictors, series, verbose):
+    """Private method to fit data for bayesian regression imputation."""
+    method = "bayesian least squares"
+    _not_num_series(method, series)
+    X, y = _get_observed(method, predictors, series, verbose)
+    #testval = X.mean().values()
+    # initialize model for bayesian linear regression
+    with pm.Model() as fit_model:
+        alpha = pm.Normal("alpha", 0, sd=10)
+        beta = pm.Normal("beta", 0, sd=10, shape=len(X.columns))
+        sigma = pm.HalfCauchy("σ", 1)
+        mu = alpha+beta.dot(X.T)
+        score = pm.Normal("score", mu, sd=sigma, observed=y)
+    return fit_model, method
 
 def _fit_binary_logistic_reg(predictors, series, verbose):
     """Private method to fit data for binary logistic imputation."""
@@ -90,14 +109,6 @@ def _imp_least_squares_reg(X, col_name, x, lm, imp_ix):
     fills = lm.predict(x)
     X.loc[imp_ix, col_name] = fills
 
-def _imp_logistic_reg(X, col_name, x, lm, imp_ix):
-    """Private method to perform linear regression imputation."""
-    model, labels = lm
-    fills = model.predict(x)
-    label_dict = {i:j for i, j in enumerate(labels.values)}
-    X.loc[imp_ix, col_name] = fills
-    X[col_name].replace(label_dict, inplace=True)
-
 def _imp_stochastic_reg(X, col_name, x, lm, imp_ix):
     """Private method to perform stochastic regression imputation."""
     model, mse = lm
@@ -105,3 +116,26 @@ def _imp_stochastic_reg(X, col_name, x, lm, imp_ix):
     mse_dist = norm.rvs(loc=0, scale=mse, size=len(preds))
     fills = preds + mse_dist
     X.loc[imp_ix, col_name] = fills
+
+def _imp_bayes_least_squares_reg(X, col_name, x, lm, imp_ix, fill_val):
+    """Private method to perform bayesian regression imputation."""
+    with lm:
+        mu_pred = pm.Deterministic("mu_pred", lm["alpha"]+lm["beta"].dot(x.T))
+        tr = pm.sample(1000, tune=1000)
+    if not fill_val or fill_val == "mean":
+        fills = tr["mu_pred"].mean(0)
+    elif fill_val == "random":
+        fills = np.apply_along_axis(np.random.choice, 0, tr["mu_pred"])
+    else:
+        err = f"{fill_val} not accepted reducer. Choose `mean` or `random`."
+        raise ValueError(err)
+    X.loc[imp_ix, col_name] = fills
+    return tr
+
+def _imp_logistic_reg(X, col_name, x, lm, imp_ix):
+    """Private method to perform linear regression imputation."""
+    model, labels = lm
+    fills = model.predict(x)
+    label_dict = {i:j for i, j in enumerate(labels.values)}
+    X.loc[imp_ix, col_name] = fills
+    X[col_name].replace(label_dict, inplace=True)
