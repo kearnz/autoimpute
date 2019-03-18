@@ -63,9 +63,13 @@ class BaseImputer:
         if self._len_num > 0:
             sc = clone(self.scaler)
             self._scaled_num = sc.fit(self._data_num.values)
+        else:
+            self._scaled_dum = None
         if self._len_dum > 0:
             sc = clone(self.scaler)
             self._scaled_dum = sc.fit(self._data_dum.values)
+        else:
+            self._scaled_dum = None
 
     def _scaler_transform(self):
         """Private method to transform data using scaled fit."""
