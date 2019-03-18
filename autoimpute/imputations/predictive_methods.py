@@ -1,5 +1,7 @@
 """Private imputation methods used by different Imputer Classes."""
 
+import warnings
+import logging
 import numpy as np
 import pandas as pd
 from pandas.api.types import is_string_dtype
@@ -30,6 +32,15 @@ def _get_observed(method, predictors, series, verbose):
     series = predictors.pop(series.name)
     return predictors, series
 
+def _pymc3_logger(verbose):
+    """Private method to handle pymc3 logging."""
+    progress = 1
+    if not verbose:
+        progress = 0
+        logger = logging.getLogger('pymc3')
+        logger.setLevel(logging.ERROR)
+    return progress
+
 def _fit_least_squares_reg(predictors, series, verbose):
     """Private method to fit data for linear regression imputation."""
     method = "least squares"
@@ -55,7 +66,6 @@ def _fit_bayes_least_squares_reg(predictors, series, verbose):
     method = "bayesian least squares"
     _not_num_series(method, series)
     X, y = _get_observed(method, predictors, series, verbose)
-    #testval = X.mean().values()
     # initialize model for bayesian linear regression
     with pm.Model() as fit_model:
         alpha = pm.Normal("alpha", 0, sd=10)
@@ -71,6 +81,10 @@ def _fit_binary_logistic_reg(predictors, series, verbose):
     X, y = _get_observed(method, predictors, series, verbose)
     glm = LogisticRegression(solver="liblinear")
     y = y.astype("category").cat
+    y_cat_l = len(y.codes.unique())
+    if y_cat_l != 2:
+        err = "This method requires 2 categories. Use multinomial instead."
+        raise ValueError(err)
     glm.fit(X, y.codes)
     return (glm, y.categories), method
 
@@ -80,8 +94,29 @@ def _fit_multi_logistic_reg(predictors, series, verbose):
     X, y = _get_observed(method, predictors, series, verbose)
     glm = LogisticRegression(solver="saga", multi_class="multinomial")
     y = y.astype("category").cat
+    y_cat_l = len(y.codes.unique())
+    if y_cat_l == 2:
+        w = "Multiple categories expected. Consider binary instead if c = 2."
+        warnings.warn(w)
     glm.fit(X, y.codes)
     return (glm, y.categories), method
+
+def _fit_bayes_binary_logistic_reg(predictors, series, verbose):
+    """Private method to fit data for binary bayesian logistic imputation."""
+    method = "bayesian binary logistic"
+    X, y = _get_observed(method, predictors, series, verbose)
+    y = y.astype("category").cat
+    y_cat_l = len(y.codes.unique())
+    if y_cat_l != 2:
+        err = "Only two categories supported. Multinomial bayes coming soon."
+        raise ValueError(err)
+    # initialize model for bayesian linear regression
+    with pm.Model() as fit_model:
+        mu = pm.Normal("mu", 0, sd=10)
+        beta = pm.Normal("beta", 0, sd=10, shape=len(X.columns))
+        p = pm.invlogit(mu + beta.dot(X.T))
+        score = pm.Bernoulli("score", p, observed=y.codes)
+    return (fit_model, y.categories), method
 
 def _predictive_default(predictors, series, verbose):
     """Private method to fit data for default predictive imputation."""
@@ -117,17 +152,18 @@ def _imp_stochastic_reg(X, col_name, x, lm, imp_ix):
     fills = preds + mse_dist
     X.loc[imp_ix, col_name] = fills
 
-def _imp_bayes_least_squares_reg(X, col_name, x, lm, imp_ix, fill_val):
+def _imp_bayes_least_squares_reg(X, col_name, x, lm, imp_ix, fv, vb):
     """Private method to perform bayesian regression imputation."""
+    progress = _pymc3_logger(vb)
     with lm:
         mu_pred = pm.Deterministic("mu_pred", lm["alpha"]+lm["beta"].dot(x.T))
-        tr = pm.sample(1000, tune=1000)
-    if not fill_val or fill_val == "mean":
+        tr = pm.sample(1000, tune=1000, progress_bar=progress)
+    if not fv or fv == "mean":
         fills = tr["mu_pred"].mean(0)
-    elif fill_val == "random":
+    elif fv == "random":
         fills = np.apply_along_axis(np.random.choice, 0, tr["mu_pred"])
     else:
-        err = f"{fill_val} not accepted reducer. Choose `mean` or `random`."
+        err = f"{fv} not accepted reducer. Choose `mean` or `random`."
         raise ValueError(err)
     X.loc[imp_ix, col_name] = fills
     return tr
@@ -139,3 +175,26 @@ def _imp_logistic_reg(X, col_name, x, lm, imp_ix):
     label_dict = {i:j for i, j in enumerate(labels.values)}
     X.loc[imp_ix, col_name] = fills
     X[col_name].replace(label_dict, inplace=True)
+
+def _imp_bayes_logistic_reg(X, col_name, x, lm, imp_ix, fv, vb, thresh=0.5):
+    """Private method to perform bayesian logistic imputation."""
+    progress = _pymc3_logger(vb)
+    model, labels = lm
+    with model:
+        p_pred = pm.Deterministic(
+            "p_pred", pm.invlogit(model["mu"] + model["beta"].dot(x.T))
+        )
+        tr = pm.sample(1000, tune=1000, progress_bar=progress)
+    if not fv or fv == "mean":
+        fills = tr["p_pred"].mean(0)
+    elif fv == "random":
+        fills = np.apply_along_axis(np.random.choice, 0, tr["p_pred"])
+    else:
+        err = f"{fv} not accepted reducer. Choose `mean` or `random`."
+        raise ValueError(err)
+    fill_thresh = np.vectorize(lambda f: 1 if f > thresh else 0)
+    fills = fill_thresh(fills)
+    label_dict = {i:j for i, j in enumerate(labels.values)}
+    X.loc[imp_ix, col_name] = fills
+    X[col_name].replace(label_dict, inplace=True)
+    return tr

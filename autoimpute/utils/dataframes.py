@@ -3,6 +3,7 @@
 import numpy as np
 import pandas as pd
 from sklearn.datasets import make_regression
+# pylint:disable=missing-docstring
 
 # missingness lambdas
 eq_miss = lambda x: np.random.choice([x, np.nan], 1)[0]
@@ -79,3 +80,14 @@ df_bayes_reg.x1 = df_bayes_reg.x1.apply(lambda x: sc(x, df_bayes_reg.x1))
 df_bayes_reg.x2 = df_bayes_reg.x2.apply(lambda x: sc(x, df_bayes_reg.x2))
 df_bayes_reg.x3 = df_bayes_reg.x3.apply(lambda x: sc(x, df_bayes_reg.x1))
 df_bayes_reg.y = df_bayes_reg.y.apply(mis)
+
+# bayesian logistic testing
+def trans_binary(c):
+    m = df_bayes_log.y.mean()
+    if not pd.isnull(c):
+        if c > m:
+            return "male"
+        return "female"
+
+df_bayes_log = df_bayes_reg.copy()
+df_bayes_log.y = df_bayes_log.y.apply(trans_binary)

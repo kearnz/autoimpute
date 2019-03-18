@@ -23,7 +23,7 @@ def test_stochastic_predictive_imputer():
     _ = imp_s.fit_transform(dfs.df_num)
     assert imp_p.imputed_["A"] == imp_s.imputed_["A"]
 
-def test_bayesian_predictive_imputer():
+def test_bayesian_reg_imputer():
     """Test bayesian works for numerical column of PredictiveImputer."""
     # test designed first
     imp_b = PredictiveImputer(strategy={"y":"bayesian least squares"})
@@ -31,3 +31,9 @@ def test_bayesian_predictive_imputer():
     # test on numerical in general
     imp_n = PredictiveImputer(strategy="bayesian least squares")
     imp_n.fit_transform(dfs.df_num)
+
+def test_bayesian_logistic_imputer():
+    """Test bayesian works for binary column of PredictiveImputer."""
+    imp_b = PredictiveImputer(strategy={"y":"bayesian binary logistic"},
+                              fill_val="random")
+    imp_b.fit_transform(dfs.df_bayes_log)

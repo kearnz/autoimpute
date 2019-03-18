@@ -6,11 +6,6 @@ of the other available features. This class extends the behavior of the
 SingleImputer. Unlike the SingleImputer, the supported methods in this class
 are multivariate - they use more than just the series itself to determine the
 best estimated values for imputaiton.
-
-Todo:
-    * class specification
-    * outline strategies planned for implementation
-    * create multivariate methods module with predictive strategies
 """
 
 from sklearn.base import BaseEstimator, TransformerMixin
@@ -33,6 +28,7 @@ class PredictiveImputer(BaseImputer, BaseEstimator, TransformerMixin):
         "multinomial logistic": pm._fit_multi_logistic_reg,
         "stochastic": pm._fit_stochastic_reg,
         "bayesian least squares": pm._fit_bayes_least_squares_reg,
+        "bayesian binary logistic": pm._fit_bayes_binary_logistic_reg,
         "default": pm._predictive_default
     }
 
@@ -166,7 +162,11 @@ class PredictiveImputer(BaseImputer, BaseEstimator, TransformerMixin):
                 pm._imp_stochastic_reg(X, col_name, x, fill, imp_ix)
             if strat == "bayesian least squares":
                 pm._imp_bayes_least_squares_reg(
-                    X, col_name, x, fill, imp_ix, self.fill_val
+                    X, col_name, x, fill, imp_ix, self.fill_val, self.verbose
+                )
+            if strat == "bayesian binary logistic":
+                pm._imp_bayes_logistic_reg(
+                    X, col_name, x, fill, imp_ix, self.fill_val, self.verbose
                 )
             # no imputation if strategy is none
             if strat == "none":
