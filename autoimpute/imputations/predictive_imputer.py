@@ -86,12 +86,14 @@ class PredictiveImputer(BaseImputer, BaseEstimator, TransformerMixin):
         # next, prep the categorical / numerical split
         self._prep_fit_dataframe(X)
 
-        # finally, scale if necessary
-        if not self.scaler is None:
+        # if scaler passed, need scaler to fit AND transform
+        # we want to fit predictive imputer on correctly scaled dataset
+        if self.scaler:
             self._scaler_fit()
+            self._scaler_transform()
         return X
 
-    def _transform_strategy_validator(self, X):
+    def _transform_strategy_validator(self, X, new_data):
         """Private method to prep for prediction."""
         # initial checks before transformation
         check_is_fitted(self, "statistics_")
@@ -104,8 +106,9 @@ class PredictiveImputer(BaseImputer, BaseEstimator, TransformerMixin):
             err = "Same columns that were fit must appear in transform."
             raise ValueError(err)
 
-        # scaler transform if necessary
-        if not self.scaler is None:
+        # detect if scaling has already taken place
+        # if so, no need to scale again.
+        if new_data and self.scaler:
             self._scaler_transform()
 
     @check_nan_columns
@@ -138,12 +141,12 @@ class PredictiveImputer(BaseImputer, BaseEstimator, TransformerMixin):
         return self
 
     @check_nan_columns
-    def transform(self, X):
+    def transform(self, X, new_data=True):
         """Transform placeholder."""
         # copy the dataset if necessary, then prep predictors
         if self.copy:
             X = X.copy()
-        self._transform_strategy_validator(X)
+        self._transform_strategy_validator(X, new_data)
 
         # transformation logic
         self.imputed_ = {}
@@ -188,3 +191,7 @@ class PredictiveImputer(BaseImputer, BaseEstimator, TransformerMixin):
             if strat == "none":
                 pass
         return X
+
+    def fit_transform(self, X):
+        """Convenience method to fit then transform the same dataset."""
+        return self.fit(X).transform(X, False)

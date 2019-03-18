@@ -100,8 +100,9 @@ class MissingnessClassifier(BaseImputer, BaseEstimator, ClassifierMixin):
         self._prep_fit_dataframe(X)
 
         # scale if necessary
-        if not self.scaler is None:
+        if self.scaler:
             self._scaler_fit()
+            self._scaler_transform()
         return X
 
     def _predictor_strategy_validator(self, X, new_data):
@@ -120,8 +121,8 @@ class MissingnessClassifier(BaseImputer, BaseEstimator, ClassifierMixin):
         # if not error, check if new data and perform scale if necessary
         if new_data:
             self._prep_fit_dataframe(X)
-        if not self.scaler is None:
-            self._scaler_transform()
+            if self.scaler:
+                self._scaler_transform()
 
     @check_nan_columns
     def fit(self, X, **kwargs):
@@ -240,34 +241,30 @@ class MissingnessClassifier(BaseImputer, BaseEstimator, ClassifierMixin):
         self.data_mi_proba = pd.DataFrame(preds_mat, columns=pred_cols)
         return self.data_mi_proba
 
-    def fit_predict(self, X, new_data=False):
+    def fit_predict(self, X):
         """Convenience method for fit and class prediction.
 
         Args:
             X (pd.DataFrame): DataFrame to fit classifier and predict class.
-            new_data (bool, optional): Whether or not new data used.
-                Default is False.
 
         Returns:
             pd.DataFrame: DataFrame of class predictions.
         """
-        return self.fit(X).predict(X, new_data)
+        return self.fit(X).predict(X, False)
 
-    def fit_predict_proba(self, X, new_data=False):
+    def fit_predict_proba(self, X):
         """Convenience method for fit and class probability prediction.
 
         Args:
             X (pd.DataFrame): DataFrame to fit classifier and prredict prob.
-            new_data (bool, optional): Whether or not new data used.
-                Default is False.
 
         Returns:
             pd.DataFrame: DataFrame of class probability predictions.
         """
-        return self.fit(X).predict_proba(X, new_data)
+        return self.fit(X).predict_proba(X, False)
 
     @check_nan_columns
-    def gen_test_indices(self, X, thresh=0.5, new_data=False, use_exist=False):
+    def gen_test_indices(self, X, thresh=0.5, use_exist=False):
         """Generate indices of false positives for each fitted column.
 
         Method generates the locations (indices) of false positives returned
@@ -293,7 +290,7 @@ class MissingnessClassifier(BaseImputer, BaseEstimator, ClassifierMixin):
         # ALWAYS fit_transform with dataset, as test vals can change
         self.test_indices = {}
         if not use_exist:
-            self.fit_predict_proba(X, new_data)
+            self.fit_predict_proba(X)
 
         # loop through missing data indicators, eval new set for missing
         for c in self.data_mi:
@@ -306,8 +303,8 @@ class MissingnessClassifier(BaseImputer, BaseEstimator, ClassifierMixin):
                 print(f"Test indices for {c}:\n{pred_wrong.values.tolist()}")
         return self
 
-    def gen_test_df(self, X, thresh=0.5, m=0.05, inplace=False,
-                    new_data=False, use_exist=False):
+    def gen_test_df(self, X, thresh=0.5, m=0.05,
+                    inplace=False, use_exist=False):
         """Generate new DatFrame with value of false positives set to missing.
 
         Method generates new DataFrame with the locations (indices) of false
@@ -322,8 +319,6 @@ class MissingnessClassifier(BaseImputer, BaseEstimator, ClassifierMixin):
                 observation is considered a false positive and index is stored.
             m (float, optional): % false positive threshhold for warning.
                 If % <= m, issue warning with % of test cases.
-            new_data (bool, optional): Whether or not new data is used.
-                Default is False.
             use_exist (bool, optional): Whether or not to use existing fit and
                 classifiers. Default is False.
 
@@ -333,7 +328,7 @@ class MissingnessClassifier(BaseImputer, BaseEstimator, ClassifierMixin):
         if not inplace:
             X = X.copy()
 
-        self.gen_test_indices(X, thresh, new_data, use_exist)
+        self.gen_test_indices(X, thresh, use_exist)
         min_num = np.floor(m*len(X.index))
         for c in X:
             ix_ = self.test_indices[c]

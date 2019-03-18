@@ -4,10 +4,6 @@ This module contains one class - TimeSeriesImputer. Use this class to perform
 imputations for each Series within a DataFrame that has a time-based index.
 The data within each Series should have logical ordering, even though not all
 the imputation methods supported in this module require a time series.
-
-Todo:
-    * Support additional time series imputation methods.
-    * Add examples of imputations and how the class works in pipeline.
 """
 
 import numpy as np
@@ -162,10 +158,10 @@ class TimeSeriesImputer(BaseImputer, BaseEstimator, TransformerMixin):
         self._strats = self.check_strategy_fit(s, cols)
 
         # scale if necessary
-        if not self.scaler is None:
+        if self.scaler:
             self._scaler_fit()
 
-    def _transform_strategy_validator(self, X):
+    def _transform_strategy_validator(self, X, new_data):
         """Internal helper to validate strategy before transformation.
 
         Checks whether differences in columns, and ensures that datetime
@@ -209,7 +205,7 @@ class TimeSeriesImputer(BaseImputer, BaseEstimator, TransformerMixin):
         X.sort_index(ascending=True, inplace=True)
 
         # scaler transform if necessary
-        if not self.scaler is None:
+        if new_data and self.scaler:
             self._scaler_transform()
         return X
 
@@ -248,7 +244,7 @@ class TimeSeriesImputer(BaseImputer, BaseEstimator, TransformerMixin):
         return self
 
     @check_nan_columns
-    def transform(self, X):
+    def transform(self, X, new_data=True):
         """Impute each column within a DataFrame using fit imputation methods.
 
         The transform step performs the actual imputations. Given a dataset
@@ -266,7 +262,7 @@ class TimeSeriesImputer(BaseImputer, BaseEstimator, TransformerMixin):
             ValueError: same columns must appear in fit and transform.
         """
         # create dataframe index then proceed
-        X = self._transform_strategy_validator(X)
+        X = self._transform_strategy_validator(X, new_data)
         # transformation logic
         self.imputed_ = {}
         for col_name, fit_data in self.statistics_.items():
@@ -308,3 +304,7 @@ class TimeSeriesImputer(BaseImputer, BaseEstimator, TransformerMixin):
             if strat == "none":
                 pass
         return X
+
+    def fit_transform(self, X):
+        """Convenience method to fit then transform the same dataset."""
+        return self.fit(X).transform(X, False)

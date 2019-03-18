@@ -137,10 +137,11 @@ class SingleImputer(BaseImputer, BaseEstimator, TransformerMixin):
         self._strats = self.check_strategy_fit(s, cols)
 
         # scale if necessary
-        if not self.scaler is None:
+        if self.scaler:
             self._scaler_fit()
+            self._scaler_transform()
 
-    def _transform_strategy_validator(self, X):
+    def _transform_strategy_validator(self, X, new_data):
         """Private method to validate before transformation phase."""
         # initial checks before transformation
         check_is_fitted(self, "statistics_")
@@ -154,7 +155,7 @@ class SingleImputer(BaseImputer, BaseEstimator, TransformerMixin):
             raise ValueError(err)
 
         # scaler transform if necessary
-        if not self.scaler is None:
+        if new_data and self.scaler:
             self._scaler_transform()
 
     @check_nan_columns
@@ -195,7 +196,7 @@ class SingleImputer(BaseImputer, BaseEstimator, TransformerMixin):
         return self
 
     @check_nan_columns
-    def transform(self, X):
+    def transform(self, X, new_data=True):
         """Impute each column within a DataFrame using fit imputation methods.
 
         The transform step performs the actual imputations. Given a dataset
@@ -205,6 +206,8 @@ class SingleImputer(BaseImputer, BaseEstimator, TransformerMixin):
 
         Args:
             X (pd.DataFrame): fit DataFrame to impute.
+            new_data (bool, Optional): whether or not new data is used.
+                Default is False.
 
         Returns:
             X (pd.DataFrame): imputed in place or copy of original.
@@ -214,7 +217,7 @@ class SingleImputer(BaseImputer, BaseEstimator, TransformerMixin):
         """
         if self.copy:
             X = X.copy()
-        self._transform_strategy_validator(X)
+        self._transform_strategy_validator(X, new_data)
 
         # transformation logic
         self.imputed_ = {}
@@ -251,3 +254,7 @@ class SingleImputer(BaseImputer, BaseEstimator, TransformerMixin):
             if strat == "none":
                 pass
         return X
+
+    def fit_transform(self, X):
+        """Convenience method to fit then transform the same dataset."""
+        return self.fit(X).transform(X, False)
