@@ -28,6 +28,14 @@ def _get_observed(method, predictors, series, verbose):
     """Helper method to test datasets and get observed data."""
     _not_num_matrix(method, predictors)
     conc = pd.concat([predictors, series], axis=1)
+    if verbose:
+        null_pred = pd.isnull(predictors)
+        null_ser = pd.isnull(series)
+        for each in null_pred:
+            sum_null_pred = null_pred[each].sum()
+            print(f"Missing values in predictor {each}: {sum_null_pred}")
+        sum_null_ser = null_ser.sum()
+        print(f"Missing values in predictor {series.name}: {sum_null_ser}")
     predictors = listwise_delete(conc, verbose=verbose)
     series = predictors.pop(series.name)
     return predictors, series
@@ -152,9 +160,9 @@ def _imp_stochastic_reg(X, col_name, x, lm, imp_ix):
     fills = preds + mse_dist
     X.loc[imp_ix, col_name] = fills
 
-def _imp_bayes_least_squares_reg(X, col_name, x, lm, imp_ix, fv, vb):
+def _imp_bayes_least_squares_reg(X, col_name, x, lm, imp_ix, fv, verbose):
     """Private method to perform bayesian regression imputation."""
-    progress = _pymc3_logger(vb)
+    progress = _pymc3_logger(verbose)
     with lm:
         mu_pred = pm.Deterministic("mu_pred", lm["alpha"]+lm["beta"].dot(x.T))
         tr = pm.sample(1000, tune=1000, progress_bar=progress)
@@ -176,9 +184,10 @@ def _imp_logistic_reg(X, col_name, x, lm, imp_ix):
     X.loc[imp_ix, col_name] = fills
     X[col_name].replace(label_dict, inplace=True)
 
-def _imp_bayes_logistic_reg(X, col_name, x, lm, imp_ix, fv, vb, thresh=0.5):
+def _imp_bayes_logistic_reg(X, col_name, x, lm, imp_ix,
+                            fv, verbose, thresh=0.5):
     """Private method to perform bayesian logistic imputation."""
-    progress = _pymc3_logger(vb)
+    progress = _pymc3_logger(verbose)
     model, labels = lm
     with model:
         p_pred = pm.Deterministic(

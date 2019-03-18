@@ -49,7 +49,7 @@ class PredictiveImputer(BaseImputer, BaseEstimator, TransformerMixin):
 
     @property
     def strategy(self):
-        """Property getter to return the value of the strategy property"""
+        """Property getter to return the value of the strategy property."""
         return self._strategy
 
     @strategy.setter
@@ -149,7 +149,7 @@ class PredictiveImputer(BaseImputer, BaseEstimator, TransformerMixin):
             x, _ = self._prep_predictor_cols(col_name, self._preds)
             x = x.loc[imp_ix, :]
             # may abstract SingleImputer in future for flexibility
-            x = SingleImputer().fit_transform(x)
+            x = SingleImputer(verbose=self.verbose).fit_transform(x)
             # fill missing values based on the method selected
             # note that default picks a method below depending on col
             # -------------------------------------------------------
