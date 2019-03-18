@@ -4,10 +4,6 @@ This module contains one class - the SingleImputer. Use this class to perform
 one imputation for each Series within a DataFrame. The methods available are
 all univariate - they do not use any other features to perform a given Series'
 imputation. Rather, they rely on the Series itself.
-
-Todo:
-    * Support additional single imputation methods.
-    * Add examples of imputations and how the class works in pipeline.
 """
 
 from sklearn.base import BaseEstimator, TransformerMixin
@@ -139,7 +135,27 @@ class SingleImputer(BaseImputer, BaseEstimator, TransformerMixin):
         s = self.strategy
         cols = X.columns.tolist()
         self._strats = self.check_strategy_fit(s, cols)
-        return X
+
+        # scale if necessary
+        if not self.scaler is None:
+            self._scaler_fit()
+
+    def _transform_strategy_validator(self, X):
+        """Private method to validate before transformation phase."""
+        # initial checks before transformation
+        check_is_fitted(self, "statistics_")
+
+        # check columns
+        X_cols = X.columns.tolist()
+        fit_cols = set(self._strats.keys())
+        diff_fit = set(fit_cols).difference(X_cols)
+        if diff_fit:
+            err = "Same columns that were fit must appear in transform."
+            raise ValueError(err)
+
+        # scaler transform if necessary
+        if not self.scaler is None:
+            self._scaler_transform()
 
     @check_nan_columns
     def fit(self, X):
@@ -158,9 +174,7 @@ class SingleImputer(BaseImputer, BaseEstimator, TransformerMixin):
         Returns:
             self: instance of the SingleImputer class.
         """
-        # copy, validate, and create statistics if validated
-        if self.copy:
-            X = X.copy()
+        # create statistics if validated
         self._fit_strategy_validator(X)
         self.statistics_ = {}
 
@@ -198,18 +212,9 @@ class SingleImputer(BaseImputer, BaseEstimator, TransformerMixin):
         Raises:
             ValueError: same columns must appear in fit and transform.
         """
-        # initial checks before transformation
-        check_is_fitted(self, "statistics_")
         if self.copy:
             X = X.copy()
-
-        # check columns
-        X_cols = X.columns.tolist()
-        fit_cols = set(self._strats.keys())
-        diff_fit = set(fit_cols).difference(X_cols)
-        if diff_fit:
-            err = "Same columns that were fit must appear in transform."
-            raise ValueError(err)
+        self._transform_strategy_validator(X)
 
         # transformation logic
         self.imputed_ = {}

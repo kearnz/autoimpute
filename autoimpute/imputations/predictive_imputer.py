@@ -82,9 +82,31 @@ class PredictiveImputer(BaseImputer, BaseEstimator, TransformerMixin):
         cols = X.columns.tolist()
         self._strats = self.check_strategy_fit(self.strategy, cols)
         self._preds = self.check_predictors_fit(self.predictors, cols)
+
         # next, prep the categorical / numerical split
         self._prep_fit_dataframe(X)
+
+        # finally, scale if necessary
+        if not self.scaler is None:
+            self._scaler_fit()
         return X
+
+    def _transform_strategy_validator(self, X):
+        """Private method to prep for prediction."""
+        # initial checks before transformation
+        check_is_fitted(self, "statistics_")
+
+        # check columns are the same
+        X_cols = X.columns.tolist()
+        fit_cols = set(self._strats.keys())
+        diff_fit = set(fit_cols).difference(X_cols)
+        if diff_fit:
+            err = "Same columns that were fit must appear in transform."
+            raise ValueError(err)
+
+        # scaler transform if necessary
+        if not self.scaler is None:
+            self._scaler_transform()
 
     @check_nan_columns
     def fit(self, X):
@@ -92,8 +114,6 @@ class PredictiveImputer(BaseImputer, BaseEstimator, TransformerMixin):
         # first, prep columns we plan to use and make sure they are valid
         self._fit_strategy_validator(X)
         self.statistics_ = {}
-        if not self.scaler is None:
-            self._scaler_fit()
 
         # header print statement if verbose = true
         if self.verbose:
@@ -120,21 +140,14 @@ class PredictiveImputer(BaseImputer, BaseEstimator, TransformerMixin):
     @check_nan_columns
     def transform(self, X):
         """Transform placeholder."""
-        # initial checks before transformation
-        check_is_fitted(self, "statistics_")
+        # copy the dataset if necessary, then prep predictors
         if self.copy:
             X = X.copy()
-
-        # check columns
-        X_cols = X.columns.tolist()
-        fit_cols = set(self._strats.keys())
-        diff_fit = set(fit_cols).difference(X_cols)
-        if diff_fit:
-            err = "Same columns that were fit must appear in transform."
-            raise ValueError(err)
+        self._transform_strategy_validator(X)
 
         # transformation logic
         self.imputed_ = {}
+        self.traces_ = {}
         for col_name, fit_data in self.statistics_.items():
             strat = fit_data["strategy"]
             fill = fit_data["param"]
@@ -149,7 +162,9 @@ class PredictiveImputer(BaseImputer, BaseEstimator, TransformerMixin):
             x, _ = self._prep_predictor_cols(col_name, self._preds)
             x = x.loc[imp_ix, :]
             # may abstract SingleImputer in future for flexibility
-            x = SingleImputer(verbose=self.verbose).fit_transform(x)
+            x = SingleImputer(
+                verbose=self.verbose, copy=False
+            ).fit_transform(x)
             # fill missing values based on the method selected
             # note that default picks a method below depending on col
             # -------------------------------------------------------
@@ -161,11 +176,12 @@ class PredictiveImputer(BaseImputer, BaseEstimator, TransformerMixin):
             if strat == "stochastic":
                 pm._imp_stochastic_reg(X, col_name, x, fill, imp_ix)
             if strat == "bayesian least squares":
-                pm._imp_bayes_least_squares_reg(
+                tr = pm._imp_bayes_least_squares_reg(
                     X, col_name, x, fill, imp_ix, self.fill_val, self.verbose
                 )
+                self.traces_[col_name] = tr
             if strat == "bayesian binary logistic":
-                pm._imp_bayes_logistic_reg(
+                tr = pm._imp_bayes_logistic_reg(
                     X, col_name, x, fill, imp_ix, self.fill_val, self.verbose
                 )
             # no imputation if strategy is none

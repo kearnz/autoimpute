@@ -98,6 +98,10 @@ class MissingnessClassifier(BaseImputer, BaseEstimator, ClassifierMixin):
         cols = X.columns.tolist()
         self._preds = self.check_predictors_fit(self.predictors, cols)
         self._prep_fit_dataframe(X)
+
+        # scale if necessary
+        if not self.scaler is None:
+            self._scaler_fit()
         return X
 
     def _predictor_strategy_validator(self, X, new_data):
@@ -113,7 +117,7 @@ class MissingnessClassifier(BaseImputer, BaseEstimator, ClassifierMixin):
         if diff_X or diff_mi:
             raise ValueError("Same columns must appear in fit and predict.")
 
-        # if not error, check if new data
+        # if not error, check if new data and perform scale if necessary
         if new_data:
             self._prep_fit_dataframe(X)
         if not self.scaler is None:
@@ -136,10 +140,10 @@ class MissingnessClassifier(BaseImputer, BaseEstimator, ClassifierMixin):
         Returns:
             self: instance of MissingnessClassifier
         """
+        # start with fit checks
         self._fit_strategy_validator(X)
         self.statistics_ = {}
-        if not self.scaler is None:
-            self._scaler_fit()
+
         if self.verbose:
             if hasattr(self.classifier, "__name__"):
                 self._c_name = self.classifier.__name__

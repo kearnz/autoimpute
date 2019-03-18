@@ -161,12 +161,18 @@ class TimeSeriesImputer(BaseImputer, BaseEstimator, TransformerMixin):
         cols = X.columns.tolist()
         self._strats = self.check_strategy_fit(s, cols)
 
+        # scale if necessary
+        if not self.scaler is None:
+            self._scaler_fit()
+
     def _transform_strategy_validator(self, X):
         """Internal helper to validate strategy before transformation.
 
         Checks whether differences in columns, and ensures that datetime
         column exists to set as index before imputation methods take place.
         """
+        # initial checks before transformation
+        check_is_fitted(self, "statistics_")
 
         # check columns
         X_cols = X.columns.tolist()
@@ -201,6 +207,10 @@ class TimeSeriesImputer(BaseImputer, BaseEstimator, TransformerMixin):
                         raise KeyError(err)
         # sort and return X
         X.sort_index(ascending=True, inplace=True)
+
+        # scaler transform if necessary
+        if not self.scaler is None:
+            self._scaler_transform()
         return X
 
     @check_nan_columns
@@ -255,9 +265,6 @@ class TimeSeriesImputer(BaseImputer, BaseEstimator, TransformerMixin):
         Raises:
             ValueError: same columns must appear in fit and transform.
         """
-        # initial checks before transformation
-        check_is_fitted(self, "statistics_")
-
         # create dataframe index then proceed
         X = self._transform_strategy_validator(X)
         # transformation logic

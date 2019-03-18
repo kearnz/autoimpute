@@ -35,7 +35,7 @@ def _get_observed(method, predictors, series, verbose):
             sum_null_pred = null_pred[each].sum()
             print(f"Missing values in predictor {each}: {sum_null_pred}")
         sum_null_ser = null_ser.sum()
-        print(f"Missing values in predictor {series.name}: {sum_null_ser}")
+        print(f"Missing values in response {series.name}: {sum_null_ser}")
     predictors = listwise_delete(conc, verbose=verbose)
     series = predictors.pop(series.name)
     return predictors, series
