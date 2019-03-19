@@ -6,7 +6,7 @@ import numpy as np
 import pandas as pd
 from pandas.api.types import is_string_dtype
 from pandas.api.types import is_numeric_dtype
-from scipy.stats import norm
+from scipy.stats import norm, multivariate_normal
 from sklearn.linear_model import LinearRegression, LogisticRegression
 from sklearn.metrics import mean_squared_error
 import pymc3 as pm
@@ -19,6 +19,8 @@ sm = single_methods
 # pylint:disable=protected-access
 # pylint:disable=unused-variable
 # pylint:disable=no-member
+# pylint:disable=too-many-locals
+# pylint:disable=too-many-arguments
 
 # FIT IMPUTATION
 # --------------
@@ -126,17 +128,27 @@ def _fit_bayes_binary_logistic_reg(predictors, series, verbose):
         score = pm.Bernoulli("score", p, observed=y.codes)
     return (fit_model, y.categories), method
 
+def _fit_pmm_reg(predictors, series, verbose):
+    """Private method to fit data for predictive mean matching imputation."""
+    method = "pmm"
+    _not_num_series(method, series)
+    X, y = _get_observed(method, predictors, series, verbose)
+    # get predictions for the observed, which will be used for "closest" vals
+    lm = LinearRegression()
+    y_pred = lm.fit(X, y).predict(X)
+    y_df = pd.DataFrame({"y":y, "y_pred":y_pred})
+    lm_bayes, _ = _fit_bayes_least_squares_reg(predictors, series, False)
+    return (lm_bayes, lm, y_df), method
+
 def _predictive_default(predictors, series, verbose):
     """Private method to fit data for default predictive imputation."""
     method = "default"
     if is_numeric_dtype(series):
-        return _fit_least_squares_reg(predictors, series, verbose)
+        return _fit_pmm_reg(predictors, series, verbose)
     elif is_string_dtype(series):
         ser_unique = series.dropna().unique()
         ser_len = len(ser_unique)
-        if ser_len == 1:
-            return series.unique()[0], method
-        if ser_len == 2:
+        if ser_len <= 2:
             return _fit_binary_logistic_reg(predictors, series, verbose)
         if ser_len > 2:
             return _fit_multi_logistic_reg(predictors, series, verbose)
@@ -207,3 +219,45 @@ def _imp_bayes_logistic_reg(X, col_name, x, lm, imp_ix,
     X.loc[imp_ix, col_name] = fills
     X[col_name].replace(label_dict, inplace=True)
     return tr
+
+def _neighbors(x, n, df, choose):
+    al = len(df.index)
+    if n > al:
+        err = "# neighbors greater than # predictions. Reduce neighbor count."
+        raise ValueError(err)
+    indexarr = np.argpartition(abs(df["y_pred"] - x), n)[:n]
+    neighbs = df.loc[indexarr, "y"].values
+    return choose(neighbs)
+
+def _imp_pmm_reg(X, col_name, x, lm, imp_ix, fv, verbose, n=5):
+    """Private method to perform predictive mean matching imputation."""
+    progress = _pymc3_logger(verbose)
+    model, _, df = lm
+    df = df.reset_index()
+    # generate posterior for alpha, beta
+    with model:
+        tr = pm.sample(1000, tune=1000, progress_bar=progress)
+
+    # sample random alpha, get mean and covariance of beta coefficients
+    # beta assumed multivariate normal by linear reg rules
+    # sample beta w/ cov structure to create realistic variability
+    alpha_bayes = np.random.choice(tr["alpha"])
+    beta_means = tr["beta"].mean(0)
+    beta_cov = np.cov(tr["beta"].T)
+    beta_bayes = np.array(multivariate_normal(beta_means, beta_cov).rvs())
+
+    # predictions for missing y, using bayes alpha + coeff samples
+    # use these preds for nearest neighbor search from reg results
+    y_pred_bayes = alpha_bayes + beta_bayes.dot(x.T)
+    if not fv or fv == "mean":
+        fills = [_neighbors(x, n, df, np.mean) for x in y_pred_bayes]
+    elif fv == "random":
+        fills = [_neighbors(x, n, df, np.random.choice) for x in y_pred_bayes]
+    else:
+        err = f"{fv} not accepted reducer. Choose `mean` or `random`."
+        raise ValueError(err)
+
+    # finally, impute and return trace for bayes
+    X.loc[imp_ix, col_name] = fills
+    return (tr, y_pred_bayes)
+    

@@ -17,7 +17,9 @@ pm = predictive_methods
 # pylint:disable=attribute-defined-outside-init
 # pylint:disable=arguments-differ
 # pylint:disable=protected-access
-# pylint:disable=too-many-arguments, too-many-locals
+# pylint:disable=too-many-arguments
+# pylint:disable=too-many-locals
+# pylint:disable=too-many-instance-attributes
 
 class PredictiveImputer(BaseImputer, BaseEstimator, TransformerMixin):
     """Techniques to impute Series with missing values through learning."""
@@ -29,6 +31,7 @@ class PredictiveImputer(BaseImputer, BaseEstimator, TransformerMixin):
         "stochastic": pm._fit_stochastic_reg,
         "bayesian least squares": pm._fit_bayes_least_squares_reg,
         "bayesian binary logistic": pm._fit_bayes_binary_logistic_reg,
+        "pmm": pm._fit_pmm_reg,
         "default": pm._predictive_default
     }
 
@@ -91,7 +94,6 @@ class PredictiveImputer(BaseImputer, BaseEstimator, TransformerMixin):
         if self.scaler:
             self._scaler_fit()
             self._scaler_transform()
-        return X
 
     def _transform_strategy_validator(self, X, new_data):
         """Private method to prep for prediction."""
@@ -187,7 +189,13 @@ class PredictiveImputer(BaseImputer, BaseEstimator, TransformerMixin):
                 tr = pm._imp_bayes_logistic_reg(
                     X, col_name, x, fill, imp_ix, self.fill_val, self.verbose
                 )
+                self.traces_[col_name] = tr
             # no imputation if strategy is none
+            if strat == "pmm":
+                tr = pm._imp_pmm_reg(
+                    X, col_name, x, fill, imp_ix, self.fill_val, self.verbose
+                )
+                self.traces_[col_name] = tr
             if strat == "none":
                 pass
         return X
