@@ -71,16 +71,17 @@ def _fit_stochastic_reg(predictors, series, verbose):
     mse = mean_squared_error(y, preds)
     return (lm, mse), method
 
-def _fit_bayes_least_squares_reg(predictors, series, verbose):
+def _fit_bayes_least_squares_reg(predictors, series, verbose,
+                                 am=0, asd=10, bm=0, bsd=10, sig=1):
     """Private method to fit data for bayesian regression imputation."""
     method = "bayesian least squares"
     _not_num_series(method, series)
     X, y = _get_observed(method, predictors, series, verbose)
     # initialize model for bayesian linear regression
     with pm.Model() as fit_model:
-        alpha = pm.Normal("alpha", 0, sd=10)
-        beta = pm.Normal("beta", 0, sd=10, shape=len(X.columns))
-        sigma = pm.HalfCauchy("σ", 1)
+        alpha = pm.Normal("alpha", am, sd=asd)
+        beta = pm.Normal("beta", bm, sd=bsd, shape=len(X.columns))
+        sigma = pm.HalfCauchy("σ", sig)
         mu = alpha+beta.dot(X.T)
         score = pm.Normal("score", mu, sd=sigma, observed=y)
     return fit_model, method
@@ -111,7 +112,8 @@ def _fit_multi_logistic_reg(predictors, series, verbose):
     glm.fit(X, y.codes)
     return (glm, y.categories), method
 
-def _fit_bayes_binary_logistic_reg(predictors, series, verbose):
+def _fit_bayes_binary_logistic_reg(predictors, series, verbose,
+                                   am=0, asd=10, bm=0, bsd=10):
     """Private method to fit data for binary bayesian logistic imputation."""
     method = "bayesian binary logistic"
     X, y = _get_observed(method, predictors, series, verbose)
@@ -122,13 +124,14 @@ def _fit_bayes_binary_logistic_reg(predictors, series, verbose):
         raise ValueError(err)
     # initialize model for bayesian linear regression
     with pm.Model() as fit_model:
-        mu = pm.Normal("mu", 0, sd=10)
-        beta = pm.Normal("beta", 0, sd=10, shape=len(X.columns))
-        p = pm.invlogit(mu + beta.dot(X.T))
+        alpha = pm.Normal("alpha", am, asd)
+        beta = pm.Normal("beta", bm, bsd, shape=len(X.columns))
+        p = pm.invlogit(alpha + beta.dot(X.T))
         score = pm.Bernoulli("score", p, observed=y.codes)
     return (fit_model, y.categories), method
 
-def _fit_pmm_reg(predictors, series, verbose):
+def _fit_pmm_reg(predictors, series, verbose,
+                 am=0, asd=10, bm=0, bsd=10, sig=1):
     """Private method to fit data for predictive mean matching imputation."""
     method = "pmm"
     _not_num_series(method, series)
@@ -137,7 +140,9 @@ def _fit_pmm_reg(predictors, series, verbose):
     lm = LinearRegression()
     y_pred = lm.fit(X, y).predict(X)
     y_df = pd.DataFrame({"y":y, "y_pred":y_pred})
-    lm_bayes, _ = _fit_bayes_least_squares_reg(predictors, series, False)
+    lm_bayes, _ = _fit_bayes_least_squares_reg(
+        predictors, series, False, am, asd, bm, bsd, sig
+        )
     return (lm_bayes, lm, y_df), method
 
 def _predictive_default(predictors, series, verbose):
@@ -172,12 +177,15 @@ def _imp_stochastic_reg(X, col_name, x, lm, imp_ix):
     fills = preds + mse_dist
     X.loc[imp_ix, col_name] = fills
 
-def _imp_bayes_least_squares_reg(X, col_name, x, lm, imp_ix, fv, verbose):
+def _imp_bayes_least_squares_reg(X, col_name, x, lm, imp_ix, fv, verbose,
+                                 sample=1000, tune=1000, init="auto"):
     """Private method to perform bayesian regression imputation."""
     progress = _pymc3_logger(verbose)
     with lm:
         mu_pred = pm.Deterministic("mu_pred", lm["alpha"]+lm["beta"].dot(x.T))
-        tr = pm.sample(1000, tune=1000, progress_bar=progress)
+        tr = pm.sample(
+            sample=sample, tune=tune, init=init, progress_bar=progress
+        )
     if not fv or fv == "mean":
         fills = tr["mu_pred"].mean(0)
     elif fv == "random":
@@ -196,16 +204,18 @@ def _imp_logistic_reg(X, col_name, x, lm, imp_ix):
     X.loc[imp_ix, col_name] = fills
     X[col_name].replace(label_dict, inplace=True)
 
-def _imp_bayes_logistic_reg(X, col_name, x, lm, imp_ix,
-                            fv, verbose, thresh=0.5):
+def _imp_bayes_logistic_reg(X, col_name, x, lm, imp_ix, fv, verbose,
+                            sample=1000, tune=1000, init="auto", thresh=0.5):
     """Private method to perform bayesian logistic imputation."""
     progress = _pymc3_logger(verbose)
     model, labels = lm
     with model:
         p_pred = pm.Deterministic(
-            "p_pred", pm.invlogit(model["mu"] + model["beta"].dot(x.T))
+            "p_pred", pm.invlogit(model["alpha"] + model["beta"].dot(x.T))
         )
-        tr = pm.sample(1000, tune=1000, progress_bar=progress)
+        tr = pm.sample(
+            sample=sample, tune=tune, init=init, progress_bar=progress
+        )
     if not fv or fv == "mean":
         fills = tr["p_pred"].mean(0)
     elif fv == "random":
@@ -229,14 +239,17 @@ def _neighbors(x, n, df, choose):
     neighbs = df.loc[indexarr, "y"].values
     return choose(neighbs)
 
-def _imp_pmm_reg(X, col_name, x, lm, imp_ix, fv, verbose, n=5):
+def _imp_pmm_reg(X, col_name, x, lm, imp_ix, fv, verbose, n=5,
+                 sample=1000, tune=1000, init="auto"):
     """Private method to perform predictive mean matching imputation."""
     progress = _pymc3_logger(verbose)
     model, _, df = lm
-    df = df.reset_index()
+    df = df.reset_index(drop=True)
     # generate posterior for alpha, beta
     with model:
-        tr = pm.sample(1000, tune=1000, progress_bar=progress)
+        tr = pm.sample(
+            sample=sample, tune=tune, init=init, progress_bar=progress
+            )
 
     # sample random alpha, get mean and covariance of beta coefficients
     # beta assumed multivariate normal by linear reg rules
