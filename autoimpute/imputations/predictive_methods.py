@@ -272,5 +272,6 @@ def _imp_pmm_reg(X, col_name, x, lm, imp_ix, fv, verbose, n=5,
 
     # finally, impute and return trace for bayes
     X.loc[imp_ix, col_name] = fills
-    return (tr, y_pred_bayes)
-    
+    stats = {"tr": tr, "y_pred": y_pred_bayes,
+             "betas": beta_bayes, "alpha": alpha_bayes}
+    return stats
