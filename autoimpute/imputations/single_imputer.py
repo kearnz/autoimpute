@@ -9,7 +9,9 @@ imputation. Rather, they rely on the Series itself.
 from sklearn.base import BaseEstimator, TransformerMixin
 from sklearn.utils.validation import check_is_fitted
 from autoimpute.utils import check_nan_columns
-from autoimpute.imputations import BaseImputer, single_methods, ts_methods
+from autoimpute.imputations import BaseImputer
+from autoimpute.imputations import method_names, single_methods, ts_methods
+methods = method_names
 sm = single_methods
 tm = ts_methods
 # pylint:disable=attribute-defined-outside-init
@@ -53,19 +55,19 @@ class SingleImputer(BaseImputer, BaseEstimator, TransformerMixin):
     """
 
     strategies = {
-        "default": sm._fit_single_default,
-        "mean": sm._fit_mean,
-        "median": sm._fit_median,
-        "mode":  sm._fit_mode,
-        "random": sm._fit_random,
-        "norm": sm._fit_norm,
-        "categorical": sm._fit_categorical,
-        "linear": tm._fit_linear,
-        "none": sm._fit_none
+        methods.DEFAULT: sm._fit_single_default,
+        methods.MEAN: sm._fit_mean,
+        methods.MEDIAN: sm._fit_median,
+        methods.MODE:  sm._fit_mode,
+        methods.RANDOM: sm._fit_random,
+        methods.NORM: sm._fit_norm,
+        methods.CATEGORICAL: sm._fit_categorical,
+        methods.LINEAR: tm._fit_linear,
+        methods.NONE: sm._fit_none
     }
 
-    def __init__(self, strategy="default", fill_value=None, scaler=None,
-                 verbose=False, copy=True):
+    def __init__(self, strategy="default", fill_value=None,
+                 copy=True, scaler=None, verbose=False):
         """Create an instance of the SingleImputer class.
 
         As with sklearn classes, all arguments take default values. Therefore,
@@ -83,10 +85,7 @@ class SingleImputer(BaseImputer, BaseEstimator, TransformerMixin):
                 imputation strategies if not using the default. Dict does not
                 require method for every column; just those specified as keys.
             fill_value (str, optional): fill val when strategy needs more info.
-                Right now, fill_value ignored for everything except mode.
-                If strategy = mode, fill_value = None or `random`. If None,
-                first mode is used (default strategy of SciPy). If `random`,
-                imputer will select 1 of n modes at random.
+                See details of individual strategies for more info.
             verbose (bool, optional): print more information to console.
                 Default value is False.
             copy (bool, optional): create copy of DataFrame or operate inplace.
@@ -108,11 +107,11 @@ class SingleImputer(BaseImputer, BaseEstimator, TransformerMixin):
 
     @strategy.setter
     def strategy(self, s):
-        """Validate the strategy property to ensure it's Type and Value.
+        """Validate the strategy property to ensure it's type and value.
 
         Class instance only possible if strategy is proper type, as outlined
-        in the init method. Passes supported strategies and user arg to
-        helper method, which performs strategy checks.
+        in the init method. Passes supported strategies and user-defined
+        strategy to helper method, which performs strategy checks.
 
         Args:
             s (str, iter, dict): Strategy passed as arg to class instance.
@@ -181,8 +180,9 @@ class SingleImputer(BaseImputer, BaseEstimator, TransformerMixin):
 
         # header print statement if verbose = true
         if self.verbose:
+            ft = "FITTING IMPUTATION METHODS TO DATA..."
             st = "Strategies used to fit each column:"
-            print(f"{st}\n{'-'*len(st)}")
+            print(f"{ft}\n{st}\n{'-'*len(st)}")
 
         # perform fit on each column, depending on that column's strategy
         for col_name, func_name in self._strats.items():
@@ -218,6 +218,9 @@ class SingleImputer(BaseImputer, BaseEstimator, TransformerMixin):
         if self.copy:
             X = X.copy()
         self._transform_strategy_validator(X, new_data)
+        if self.verbose:
+            trans = "PERFORMING IMPUTATIONS ON DATA BASED ON FIT..."
+            print(f"{trans}\n{'-'*len(trans)}")
 
         # transformation logic
         self.imputed_ = {}
@@ -233,25 +236,25 @@ class SingleImputer(BaseImputer, BaseEstimator, TransformerMixin):
             # note that default picks a method below depending on col
             # -------------------------------------------------------
             # mean and median imputation
-            if strat in ("mean", "median"):
+            if strat in (methods.MEAN, methods.MEDIAN):
                 sm._imp_central(X, col_name, fill)
             # mode imputation
-            if strat == "mode":
+            if strat == methods.MODE:
                 sm._imp_mode(X, col_name, fill, self.fill_value)
             # imputatation w/ random value from observed data
-            if strat == "random":
+            if strat == methods.RANDOM:
                 sm._imp_random(X, col_name, fill, imp_ix)
             # linear interpolation imputation
-            if strat == "linear":
+            if strat == methods.LINEAR:
                 tm._imp_interp(X, col_name, strat)
             # normal distribution imputatinon
-            if strat == "norm":
+            if strat == methods.NORM:
                 sm._imp_norm(X, col_name, fill, imp_ix)
             # categorical distribution imputation
-            if strat == "categorical":
+            if strat == methods.CATEGORICAL:
                 sm._imp_categorical(X, col_name, fill, imp_ix)
             # no imputation if strategy is none
-            if strat == "none":
+            if strat == methods.NONE:
                 pass
         return X
 

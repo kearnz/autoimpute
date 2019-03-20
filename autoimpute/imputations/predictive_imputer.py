@@ -8,11 +8,13 @@ are multivariate - they use more than just the series itself to determine the
 best estimated values for imputaiton.
 """
 
+import pandas as pd
 from sklearn.base import BaseEstimator, TransformerMixin
 from sklearn.utils.validation import check_is_fitted
 from autoimpute.utils import check_nan_columns
 from autoimpute.imputations import BaseImputer, SingleImputer
-from autoimpute.imputations import predictive_methods
+from autoimpute.imputations import method_names, predictive_methods
+methods = method_names
 pm = predictive_methods
 # pylint:disable=attribute-defined-outside-init
 # pylint:disable=arguments-differ
@@ -53,14 +55,14 @@ class PredictiveImputer(BaseImputer, BaseEstimator, TransformerMixin):
     """
 
     strategies = {
-        "least squares": pm._fit_least_squares_reg,
-        "binary logistic": pm._fit_binary_logistic_reg,
-        "multinomial logistic": pm._fit_multi_logistic_reg,
-        "stochastic": pm._fit_stochastic_reg,
-        "bayesian least squares": pm._fit_bayes_least_squares_reg,
-        "bayesian binary logistic": pm._fit_bayes_binary_logistic_reg,
-        "pmm": pm._fit_pmm_reg,
-        "default": pm._predictive_default
+        methods.DEFAULT: pm._predictive_default,
+        methods.LS: pm._fit_least_squares_reg,
+        methods.BINARY_LOGISTIC: pm._fit_binary_logistic_reg,
+        methods.MULTI_LOGISTIC: pm._fit_multi_logistic_reg,
+        methods.STOCHASTIC: pm._fit_stochastic_reg,
+        methods.BAYESIAN_LS: pm._fit_bayes_least_squares_reg,
+        methods.BAYESIAN_BINARY_LOGISTIC: pm._fit_bayes_binary_logistic_reg,
+        methods.PMM: pm._fit_pmm_reg
     }
 
     def __init__(self, strategy="default", predictors="all",
@@ -88,10 +90,7 @@ class PredictiveImputer(BaseImputer, BaseEstimator, TransformerMixin):
                 predictors for each imputation. Columns not specified in dict
                 but present in `strategy` receive `all` other cols as preds.
             fill_value (str, optional): fill val when strategy needs more info.
-                Right now, fill_value ignored for everything except mode.
-                If strategy = mode, fill_value = None or `random`. If None,
-                first mode is used (default strategy of SciPy). If `random`,
-                imputer will select 1 of n modes at random.
+                See details of individual strategies for more info.
             copy (bool, optional): create copy of DataFrame or operate inplace.
                 Default value is True. Copy created.
             scaler (scaler, optional): scale variables before transformation.
@@ -194,8 +193,9 @@ class PredictiveImputer(BaseImputer, BaseEstimator, TransformerMixin):
 
         # header print statement if verbose = true
         if self.verbose:
+            ft = "FITTING IMPUTATION METHODS TO DATA..."
             st = "Strategies & Predictors used to fit each column:"
-            print(f"{st}\n{'-'*len(st)}")
+            print(f"{ft}\n{st}\n{'-'*len(st)}")
 
         # perform fit on each column, depending on that column's strategy
         # note - because we use predictors, logic more involved than single
@@ -238,6 +238,9 @@ class PredictiveImputer(BaseImputer, BaseEstimator, TransformerMixin):
         if self.copy:
             X = X.copy()
         self._transform_strategy_validator(X, new_data)
+        if self.verbose:
+            trans = "PERFORMING IMPUTATIONS ON DATA BASED ON FIT..."
+            print(f"{trans}\n{'-'*len(trans)}")
 
         # transformation logic
         self.imputed_ = {}
@@ -248,8 +251,12 @@ class PredictiveImputer(BaseImputer, BaseEstimator, TransformerMixin):
             imp_ix = X[col_name][X[col_name].isnull()].index
             self.imputed_[col_name] = imp_ix.tolist()
             if self.verbose:
-                print(f"Transforming {col_name} with strategy '{strat}'")
-                print(f"Numer of imputations to perform: {len(imp_ix)}")
+                nimp = len(imp_ix)
+                print(f"Numer of imputations to perform: {nimp}")
+                if nimp > 0:
+                    print(f"Transforming {col_name} with strategy '{strat}'")
+                else:
+                    print(f"No imputations, moving to next column...")
 
             # continue if there are no imputations to make
             if imp_ix.empty:
@@ -258,36 +265,41 @@ class PredictiveImputer(BaseImputer, BaseEstimator, TransformerMixin):
             x = x.loc[imp_ix, :]
 
             # may abstract SingleImputer in future for flexibility
-            x = SingleImputer(
-                verbose=self.verbose, copy=False
-            ).fit_transform(x)
+            mis_cov = pd.isnull(x).sum()
+            if any(mis_cov):
+                if self.verbose:
+                    print(f"Missing Covariates:\n{mis_cov}\n")
+                    print("Using single imputer for missing covariates...")
+                x = SingleImputer(
+                    verbose=self.verbose, copy=False
+                ).fit_transform(x)
 
             # fill missing values based on the method selected
             # note that default picks a method below depending on col
             # -------------------------------------------------------
             # linear regression imputation
-            if strat == "least squares":
+            if strat == methods.LS:
                 pm._imp_least_squares_reg(X, col_name, x, fill, imp_ix)
-            if strat in ("binary logistic", "multinomial logistic"):
+            if strat in (methods.BINARY_LOGISTIC, methods.MULTI_LOGISTIC):
                 pm._imp_logistic_reg(X, col_name, x, fill, imp_ix)
-            if strat == "stochastic":
+            if strat == methods.STOCHASTIC:
                 pm._imp_stochastic_reg(X, col_name, x, fill, imp_ix)
-            if strat == "bayesian least squares":
+            if strat == methods.BAYESIAN_LS:
                 tr = pm._imp_bayes_least_squares_reg(
                     X, col_name, x, fill, imp_ix, self.fill_value, self.verbose
                 )
                 self.traces_[col_name] = tr
-            if strat == "bayesian binary logistic":
+            if strat == methods.BAYESIAN_BINARY_LOGISTIC:
                 tr = pm._imp_bayes_logistic_reg(
                     X, col_name, x, fill, imp_ix, self.fill_value, self.verbose
                 )
                 self.traces_[col_name] = tr
-            if strat == "pmm":
+            if strat == methods.PMM:
                 tr = pm._imp_pmm_reg(
                     X, col_name, x, fill, imp_ix, self.fill_value, self.verbose
                 )
                 self.traces_[col_name] = tr
-            if strat == "none":
+            if strat == methods.NONE:
                 pass
         return X
 

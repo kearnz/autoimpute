@@ -241,6 +241,9 @@ class BaseImputer:
     def _prep_fit_dataframe(self, X):
         """Private method to process numeric & categorical data for fit."""
         self.data_mi = pd.isnull(X)*1
+        if self.verbose:
+            prep = "PREPPING DATAFRAME FOR IMPUTATION ANALYSIS..."
+            print(f"{prep}\n{'-'*len(prep)}")
 
         # numerical columns first
         self._data_num = X.select_dtypes(include=(np.number,))
@@ -252,6 +255,7 @@ class BaseImputer:
         self._cols_time = self._data_time.columns.tolist()
         self._len_time = len(self._cols_time)
 
+        # check categorical columns last
         # right now, only support for one-hot encoding
         orig_dum = X.select_dtypes(include=(np.object,))
         self._orig_dum = orig_dum.columns.tolist()
@@ -332,6 +336,10 @@ class BaseImputer:
     def _prep_predictor_cols(self, c, predictors):
         """Private method to prep cols for prediction."""
         preds = predictors[c]
+        if self.verbose:
+            prep = f"PREPPING COLUMNS TO PREDICT {c}..."
+            print(f"{prep}\n{'-'*len(prep)}")
+
         if isinstance(preds, str):
             if preds == "all":
                 if self.verbose:

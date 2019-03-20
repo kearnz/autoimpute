@@ -4,7 +4,7 @@ This module is a series of decorators and functions used throughout autoimpute.
 The decorators perform checks or transformations on functions that accept data.
 They ensure the data is well formatted prior to running a given method.
 Additional functions perform data validation and error handling. They are used
-in different classes or methods where the same cheks must be performed often.
+in different classes or methods where the same checks must be performed often.
 
 Methods:
     check_data_structure(func)
@@ -93,11 +93,11 @@ def check_missingness(func):
         has datetime columns that are not fully complete, an error is raised.
 
         Args:
-            d (self, pd.DataFrame): Data to check for real and missing values.
-                d can be instance of class if not pd.DataFrame.
+            d (self, pd.DataFrame): data to check. should be a DataFrame
+                or self if an instance of a class.
             *args: Any number of arguments. If d is not a DataFrame, first arg
                 must be or error raised.
-            **kwargs: Keyword arguments from original function.
+            **kwargs: Keyword arguments for original function.
 
         Returns:
             function: Returns original function being decorated.
@@ -157,11 +157,11 @@ def check_nan_columns(func):
         are not useful for imputation nor analysis.
 
         Args:
-            d (self, pd.DataFrame): DataFrame to check for missingness. If not
-                DataFrame, should be instance of a class.
-            *args: Variable number of arguments. If d not DataFrame, first arg
-                in args should be DataFrame.
-            **kwargs: Keyword arguments from original function.
+            d (self, pd.DataFrame): data to check. should be a DataFrame
+                or self if an instance of a class.
+            *args: Any number of arguments. If d is not a DataFrame, first arg
+                must be or error raised.
+            **kwargs: Keyword arguments for original function.
 
         Raises:
             ValueError: If all values in any DataFrame column are missing.

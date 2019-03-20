@@ -11,7 +11,9 @@ import pandas as pd
 from sklearn.base import BaseEstimator, TransformerMixin
 from sklearn.utils.validation import check_is_fitted
 from autoimpute.utils import check_nan_columns
-from autoimpute.imputations import BaseImputer, single_methods, ts_methods
+from autoimpute.imputations import BaseImputer
+from autoimpute.imputations import method_names, single_methods, ts_methods
+methods = method_names
 sm = single_methods
 tm = ts_methods
 # pylint:disable=attribute-defined-outside-init
@@ -61,22 +63,22 @@ class TimeSeriesImputer(BaseImputer, BaseEstimator, TransformerMixin):
     """
 
     strategies = {
-        "default": tm._fit_ts_default,
-        "mean": sm._fit_mean,
-        "median": sm._fit_median,
-        "mode":  sm._fit_mode,
-        "random": sm._fit_random,
-        "norm": sm._fit_norm,
-        "categorical": sm._fit_categorical,
-        "linear": tm._fit_linear,
-        "time": tm._fit_time,
-        "locf": tm._fit_locf,
-        "nocb": tm._fit_nocb,
-        "none": sm._fit_none,
+        methods.DEFAULT: tm._fit_ts_default,
+        methods.MEAN: sm._fit_mean,
+        methods.MEDIAN: sm._fit_median,
+        methods.MODE:  sm._fit_mode,
+        methods.RANDOM: sm._fit_random,
+        methods.NORM: sm._fit_norm,
+        methods.CATEGORICAL: sm._fit_categorical,
+        methods.LINEAR: tm._fit_linear,
+        methods.TIME: tm._fit_time,
+        methods.LOCF: tm._fit_locf,
+        methods.NOCB: tm._fit_nocb,
+        methods.NONE: sm._fit_none,
     }
 
-    def __init__(self, strategy="default", fill_value=None, scaler=None,
-                 index_column=None, verbose=False):
+    def __init__(self, strategy="default", fill_value=None, index_column=None,
+                 scaler=None, verbose=False):
         """Create an instance of the TimeSeriesImputer class.
 
         As with sklearn classes, all arguments take default values. Therefore,
@@ -94,10 +96,7 @@ class TimeSeriesImputer(BaseImputer, BaseEstimator, TransformerMixin):
                 imputation strategies if not using the default. Dict does not
                 require method for every column; just those specified as keys.
             fill_value (str, optional): fill val when strategy needs more info.
-                Right now, fill_value ignored for everything except mode.
-                If strategy = mode, fill_value = None or `random`. If None,
-                first mode is used (default strategy of SciPy). If `random`,
-                imputer will select 1 of n modes at random.
+                See details of individual strategies for more info.
             index_column (str, optional): the name of the column to index.
                 Defaults to None. If None, first column with datetime dtype
                 selected as the index.
@@ -230,8 +229,10 @@ class TimeSeriesImputer(BaseImputer, BaseEstimator, TransformerMixin):
         self.statistics_ = {}
 
         if self.verbose:
+            ft = "FITTING IMPUTATION METHODS TO DATA..."
             st = "Strategies used to fit each column:"
-            print(f"{st}\n{'-'*len(st)}")
+            print(f"{ft}\n{st}\n{'-'*len(st)}")
+
         # perform fit on each column, depending on that column's strategy
         for col_name, func_name in self._strats.items():
             f = self.strategies[func_name]
@@ -263,6 +264,10 @@ class TimeSeriesImputer(BaseImputer, BaseEstimator, TransformerMixin):
         """
         # create dataframe index then proceed
         X = self._transform_strategy_validator(X, new_data)
+        if self.verbose:
+            trans = "PERFORMING IMPUTATIONS ON DATA BASED ON FIT..."
+            print(f"{trans}\n{'-'*len(trans)}")
+
         # transformation logic
         self.imputed_ = {}
         for col_name, fit_data in self.statistics_.items():
@@ -277,31 +282,31 @@ class TimeSeriesImputer(BaseImputer, BaseEstimator, TransformerMixin):
             # note that default picks a method below depending on col
             # -------------------------------------------------------
             # mean and median imputation
-            if strat in ("mean", "median"):
+            if strat in (methods.MEAN, methods.MEDIAN):
                 sm._imp_central(X, col_name, fill)
             # mode imputation
-            if strat == "mode":
+            if strat == methods.MODE:
                 sm._imp_mode(X, col_name, fill, self.fill_value)
             # imputatation w/ random value from observed data
-            if strat == "random":
+            if strat == methods.RANDOM:
                 sm._imp_random(X, col_name, fill, imp_ix)
             # linear interpolation imputation
-            if strat in ("linear", "time"):
+            if strat in (methods.LINEAR, methods.TIME):
                 tm._imp_interp(X, col_name, strat)
             # normal distribution imputatinon
-            if strat == "norm":
+            if strat == methods.NORM:
                 sm._imp_norm(X, col_name, fill, imp_ix)
             # categorical distribution imputation
-            if strat == "categorical":
+            if strat == methods.CATEGORICAL:
                 sm._imp_categorical(X, col_name, fill, imp_ix)
             # last observation carried forward
-            if strat == "locf":
+            if strat == methods.LOCF:
                 tm._imp_locf(X, col_name, fill)
             # next observation carried backward
-            if strat == "nocb":
+            if strat == methods.NOCB:
                 tm._imp_nocb(X, col_name, fill)
             # no imputation if strategy is none
-            if strat == "none":
+            if strat == methods.NONE:
                 pass
         return X
 
