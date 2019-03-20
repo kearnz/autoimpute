@@ -10,10 +10,6 @@ completion and thoroughness even though there are often preferred alternatives.
 
 Methods:
     listwise_delete(data, inplace=False, verbose=False)
-
-Todo:
-    * Add method for pairwise deletion.
-    * Update docstrings in methods with examples.
 """
 
 from autoimpute.utils import check_nan_columns

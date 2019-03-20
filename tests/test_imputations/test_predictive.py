@@ -9,9 +9,9 @@ def test_default_predictive_imputer():
     imp = PredictiveImputer()
     imp.fit_transform(dfs.df_mix)
     assert imp.statistics_["gender"]["strategy"] == "binary logistic"
-    assert imp.statistics_["salary"]["strategy"] == "least squares"
-    assert imp.statistics_["age"]["strategy"] == "least squares"
-    assert imp.statistics_["amm"]["strategy"] == "least squares"
+    assert imp.statistics_["salary"]["strategy"] == "pmm"
+    assert imp.statistics_["age"]["strategy"] == "pmm"
+    assert imp.statistics_["amm"]["strategy"] == "pmm"
 
 def test_stochastic_predictive_imputer():
     """Test stochastic works for numerical columns of PredictiveImputer."""
@@ -35,5 +35,5 @@ def test_bayesian_reg_imputer():
 def test_bayesian_logistic_imputer():
     """Test bayesian works for binary column of PredictiveImputer."""
     imp_b = PredictiveImputer(strategy={"y":"bayesian binary logistic"},
-                              fill_val="random")
+                              fill_value="random")
     imp_b.fit_transform(dfs.df_bayes_log)

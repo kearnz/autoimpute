@@ -2,11 +2,6 @@
 
 This module contains the MissingnessClassifier, which is used to predict
 missingness within a dataset using information derived from other features.
-
-Todo:
-    * Alllow for basic imputation methods before classification.
-    * Update docstrings for class initialization and instance methods.
-    * Add examples of proper usage for the class and its instance methods.
 """
 
 import warnings
@@ -54,6 +49,12 @@ class MissingnessClassifier(BaseImputer, BaseEstimator, ClassifierMixin):
                 If None, default is xgboost. Note that classifier must
                 conform to sklearn style. This means it must implement the
                 `predict_proba` method and act as a porper classifier.
+            predictors (str, iter, dict, optiona): defaults to all, i.e.
+                use all predictors. If all, every column will be used for
+                every class prediction. If a list, subset of columns used for
+                all predictions. If a dict, specify which columns to use as
+                predictors for each imputation. Columns not specified in dict
+                will receive `all` by default.
             scaler (scaler, optional): valid scaler from sklearn.
                 If None, default is None. Note that scaler must conform to
                 sklearn style. This means it must implement the `transform`

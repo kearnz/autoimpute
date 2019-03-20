@@ -22,7 +22,35 @@ pm = predictive_methods
 # pylint:disable=too-many-instance-attributes
 
 class PredictiveImputer(BaseImputer, BaseEstimator, TransformerMixin):
-    """Techniques to impute Series with missing values through learning."""
+    """Techniques to impute Series with missing values through learning.
+
+    The PredictiveImputer class takes a DataFrame and performs imputations
+    on each Series within the DataFrame. The Predictive does one pass for
+    each column, and it supports multivariate methods for each column.
+
+    The class is a valid transformer that can be used in an sklearn pipeline
+    because it inherits from the TransformerMixin and implements both fit and
+    transform methods.
+
+    All of the imputers are inductive (i.e. fit and transform for new data).
+    That being said, the `fit` stage deviates from what one might expect in a
+    few cases. The `predictive_method` module goes into detail of each method.
+
+    Attributes:
+        strategies (dict): dictionary of supported imputation methods.
+            Key = imputation name; Value = function to perform imputation.
+            `default` imputes pmm for numerical, logistic for categorical.
+            `least squares` predict missing values from linear regression.
+            `binary logistic` predict missing values with 2 classes.
+            `multinomial logistic` predict missing values with multiclass.
+            `stochastic` linear regression + random draw from norm w/ mse std.
+            `bayesian least squares` draw from the posterior predictive
+                distribution for each missing value, using underlying OLS.
+            `bayesian binary logistic` draw from the posterior predictive
+                distribution for each missing value, using underling logistic.
+            `pmm` imputes series using predictive mean matching. PMM is a
+                semi-supervised method using bayesian & hot-deck imputation.
+    """
 
     strategies = {
         "least squares": pm._fit_least_squares_reg,
@@ -35,19 +63,51 @@ class PredictiveImputer(BaseImputer, BaseEstimator, TransformerMixin):
         "default": pm._predictive_default
     }
 
-    def __init__(self, strategy="default", strategy_args=None,
-                 predictors="all", fill_val=None, copy=True,
-                 scaler=None, verbose=None):
-        """Create an instance of the PredictiveImputer class."""
+    def __init__(self, strategy="default", predictors="all",
+                 fill_value=None, copy=True, scaler=None, verbose=None):
+        """Create an instance of the PredictiveImputer class.
+
+        As with sklearn classes, all arguments take default values. Therefore,
+        PredictiveImputer creates a valid class instance. The instance is used
+        to set up an imputer and perform checks on arguments.
+
+        Args:
+            strategy (str, iter, dict; optional): strategies for imputation.
+                Default value is str -> "default". I.e. default imputation.
+                If str, single strategy broadcast to all series in DataFrame.
+                If iter, must provide 1 strategy per column. Each method within
+                iterator applies to column with same index value in DataFrame.
+                If dict, must provide key = column name, value = imputer.
+                Dict the most flexible and PREFERRED way to create custom
+                imputation strategies if not using the default. Dict does not
+                require method for every column; just those specified as keys.
+            predictors (str, iter, dict, optiona): defaults to all, i.e.
+                use all predictors. If all, every column will be used for
+                every class prediction. If a list, subset of columns used for
+                all predictions. If a dict, specify which columns to use as
+                predictors for each imputation. Columns not specified in dict
+                but present in `strategy` receive `all` other cols as preds.
+            fill_value (str, optional): fill val when strategy needs more info.
+                Right now, fill_value ignored for everything except mode.
+                If strategy = mode, fill_value = None or `random`. If None,
+                first mode is used (default strategy of SciPy). If `random`,
+                imputer will select 1 of n modes at random.
+            copy (bool, optional): create copy of DataFrame or operate inplace.
+                Default value is True. Copy created.
+            scaler (scaler, optional): scale variables before transformation.
+                Default is None, although StandardScaler recommended.
+            verbose (bool, optional): print more information to console.
+                Default value is False.
+        """
+
         BaseImputer.__init__(
             self,
             scaler=scaler,
             verbose=verbose
         )
         self.strategy = strategy
-        self.strategy_args = strategy_args
         self.predictors = predictors
-        self.fill_val = fill_val
+        self.fill_value = fill_value
         self.copy = copy
 
     @property
@@ -115,7 +175,19 @@ class PredictiveImputer(BaseImputer, BaseEstimator, TransformerMixin):
 
     @check_nan_columns
     def fit(self, X):
-        """Fit placeholder."""
+        """Fit imputation methods to each column within a DataFrame.
+
+        The fit method calclulates the `statistics` necessary to later
+        transform a dataset (i.e. perform actual imputatations). Inductive
+        methods calculate statistic on the fit data, then impute new missing
+        data with that value. All currently supported methods are inductive.
+
+        Args:
+            X (pd.DataFrame): pandas DataFrame on which imputer is fit.
+
+        Returns:
+            self: instance of the PredictiveImputer class.
+        """
         # first, prep columns we plan to use and make sure they are valid
         self._fit_strategy_validator(X)
         self.statistics_ = {}
@@ -144,7 +216,24 @@ class PredictiveImputer(BaseImputer, BaseEstimator, TransformerMixin):
 
     @check_nan_columns
     def transform(self, X, new_data=True):
-        """Transform placeholder."""
+        """Impute each column within a DataFrame using fit imputation methods.
+
+        The transform step performs the actual imputations. Given a dataset
+        previously fit, `transform` imputes each column with it's respective
+        imputed values from fit (in the case of inductive) or performs new fit
+        and transform in one sweep (in the case of transductive).
+
+        Args:
+            X (pd.DataFrame): fit DataFrame to impute.
+            new_data (bool, Optional): whether or not new data is used.
+                Default is False.
+
+        Returns:
+            X (pd.DataFrame): imputed in place or copy of original.
+
+        Raises:
+            ValueError: same columns must appear in fit and transform.
+        """
         # copy the dataset if necessary, then prep predictors
         if self.copy:
             X = X.copy()
@@ -161,15 +250,18 @@ class PredictiveImputer(BaseImputer, BaseEstimator, TransformerMixin):
             if self.verbose:
                 print(f"Transforming {col_name} with strategy '{strat}'")
                 print(f"Numer of imputations to perform: {len(imp_ix)}")
+
             # continue if there are no imputations to make
             if imp_ix.empty:
                 continue
             x, _ = self._prep_predictor_cols(col_name, self._preds)
             x = x.loc[imp_ix, :]
+
             # may abstract SingleImputer in future for flexibility
             x = SingleImputer(
                 verbose=self.verbose, copy=False
             ).fit_transform(x)
+
             # fill missing values based on the method selected
             # note that default picks a method below depending on col
             # -------------------------------------------------------
@@ -182,18 +274,17 @@ class PredictiveImputer(BaseImputer, BaseEstimator, TransformerMixin):
                 pm._imp_stochastic_reg(X, col_name, x, fill, imp_ix)
             if strat == "bayesian least squares":
                 tr = pm._imp_bayes_least_squares_reg(
-                    X, col_name, x, fill, imp_ix, self.fill_val, self.verbose
+                    X, col_name, x, fill, imp_ix, self.fill_value, self.verbose
                 )
                 self.traces_[col_name] = tr
             if strat == "bayesian binary logistic":
                 tr = pm._imp_bayes_logistic_reg(
-                    X, col_name, x, fill, imp_ix, self.fill_val, self.verbose
+                    X, col_name, x, fill, imp_ix, self.fill_value, self.verbose
                 )
                 self.traces_[col_name] = tr
-            # no imputation if strategy is none
             if strat == "pmm":
                 tr = pm._imp_pmm_reg(
-                    X, col_name, x, fill, imp_ix, self.fill_val, self.verbose
+                    X, col_name, x, fill, imp_ix, self.fill_value, self.verbose
                 )
                 self.traces_[col_name] = tr
             if strat == "none":

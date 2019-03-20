@@ -241,6 +241,7 @@ class BaseImputer:
     def _prep_fit_dataframe(self, X):
         """Private method to process numeric & categorical data for fit."""
         self.data_mi = pd.isnull(X)*1
+
         # numerical columns first
         self._data_num = X.select_dtypes(include=(np.number,))
         self._cols_num = self._data_num.columns.tolist()
