@@ -8,12 +8,13 @@ Therefore, this package strives to aid the Python user by providing more clarity
 
 ## Versions and Dependencies
 * Python 3.6+
-* Requires:
+* Dependencies:
     - `numpy` >= 1.15.4
     - `scipy` >= 1.2.1
     - `pandas` >= 0.20.3
     - `scikit-learn` >= 0.20.2
     - `xgboost` >= 0.83
+    - `pymc3` >= 3.5
 
 ## Installation
 OS X & Linux:

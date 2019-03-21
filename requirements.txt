@@ -3,3 +3,4 @@ scipy>=1.2.1
 pandas>=0.20.3
 xgboost>=0.81
 sklearn>=0.20.2
+pymc3>=3.5
