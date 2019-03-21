@@ -214,7 +214,7 @@ def _imp_stochastic_reg(X, col_name, x, lm, imp_ix):
 
     # add random draw from normal dist w/ mean squared error
     # from observed model. This makes lm stochastic
-    mse_dist = norm.rvs(loc=0, scale=mse, size=len(preds))
+    mse_dist = norm.rvs(loc=0, scale=np.sqrt(mse), size=len(preds))
     fills = preds + mse_dist
     X.loc[imp_ix, col_name] = fills
 

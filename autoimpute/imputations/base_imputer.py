@@ -260,6 +260,7 @@ class BaseImputer:
         orig_dum = X.select_dtypes(include=(np.object,))
         self._orig_dum = orig_dum.columns.tolist()
         if not orig_dum.columns.tolist():
+            self._dum_dict = {}
             self._data_dum = pd.DataFrame()
         else:
             dummies = []
