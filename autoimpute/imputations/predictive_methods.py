@@ -328,6 +328,8 @@ def _imp_pmm_reg(X, col_name, x, lm, imp_ix, fv, verbose, n=5,
     # imputed values are actual y values corresponding to nearest neighbors
     # therefore, this is a form of "hot-deck" imputation
     y_pred_bayes = alpha_bayes + beta_bayes.dot(x.T)
+    if x.columns.size == 1:
+        y_pred_bayes = y_pred_bayes[0]
     if not fv or fv == "mean":
         fills = [_neighbors(x, n, df, np.mean) for x in y_pred_bayes]
     elif fv == "random":
