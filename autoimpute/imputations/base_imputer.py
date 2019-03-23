@@ -337,10 +337,6 @@ class BaseImputer:
     def _prep_predictor_cols(self, c, predictors):
         """Private method to prep cols for prediction."""
         preds = predictors[c]
-        if self.verbose:
-            prep = f"PREPPING COLUMNS TO PREDICT {c}..."
-            print(f"{prep}\n{'-'*len(prep)}")
-
         if isinstance(preds, str):
             if preds == "all":
                 if self.verbose:
