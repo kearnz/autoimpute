@@ -68,15 +68,15 @@ def missingness_not_allowed():
         "A": [np.nan, np.nan, np.nan],
         "B": [None, None, None]
     })
-    df_ts = pd.DataFrame({
-        "date": ["2018-05-01", "2018-05-02", "2018-05-03",
-                 "2018-05-04", "2018-05-05", "2018-05-06",
-                 "2018-05-07", "2018-05-08", "2018-05-09"],
-        "stats": [3, 4, np.nan, 15, 7, np.nan, 26, 25, 62]
-    })
-    df_ts["date"] = pd.to_datetime(df_ts["date"], utc=True)
-    df_ts.loc[[1, 3], "date"] = np.nan
-    return [df_none, df_ts]
+    #df_ts = pd.DataFrame({
+    #    "date": ["2018-05-01", "2018-05-02", "2018-05-03",
+    #             "2018-05-04", "2018-05-05", "2018-05-06",
+    #             "2018-05-07", "2018-05-08", "2018-05-09"],
+    #    "stats": [3, 4, np.nan, 15, 7, np.nan, 26, 25, 62]
+    #})
+    #df_ts["date"] = pd.to_datetime(df_ts["date"], utc=True)
+    #df_ts.loc[[1, 3], "date"] = np.nan
+    return [df_none]
 
 @pytest.mark.parametrize("ds", data_structures_not_allowed())
 def test_data_structures_not_allowed(ds):

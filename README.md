@@ -1,4 +1,5 @@
 # AutoImpute
+[![Build Status](https://travis-ci.org/kearnz/autoimpute.svg?branch=master)](https://travis-ci.org/kearnz/autoimpute)
 <span style="font-size:1.5em;">A Python package for analysis and implementation of <b>Imputation Methods!</b></span>
 
 ## Motivation
