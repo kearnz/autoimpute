@@ -1,5 +1,5 @@
 # AutoImpute
-[![Build Status](https://travis-ci.org/kearnz/autoimpute.svg?branch=master)](https://travis-ci.org/kearnz/autoimpute)
+[![Build Status](https://travis-ci.com/kearnz/autoimpute.svg?branch=master)](https://travis-ci.com/kearnz/autoimpute)  
 <span style="font-size:1.5em;">A Python package for analysis and implementation of <b>Imputation Methods!</b></span>
 
 ## Motivation
@@ -30,7 +30,7 @@ Therefore, this package strives to aid the Python user by providing more clarity
     - Predictive mean matching
 * Note that some methods offer multiple choices within them:
     - For mode, use first (default in scipy and autoimpute) or randomly sample from modes (if more than one)
-    - For bayesian methods, use random draw from or $\mu$ of posterior predictive dist. (or posterior for pmm)
+    - For bayesian methods, use random draw from or mean of posterior predictive dist. (or posterior for pmm)
     - Also for bayesian methods, multiple MCMC options possible to pass explicitly. See [pymc3 docs](https://docs.pymc.io/) for more. 
     - For missingness classifier, default is XGBoost, although any valid sklearn classifier can be used so long as it implements `predict_proba` method from sklearn. Therefore, classifiers must support probabilistic assignments.
 
