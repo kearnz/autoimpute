@@ -246,6 +246,7 @@ class BaseImputer:
 
     def _prep_fit_dataframe(self, X):
         """Private method to process numeric & categorical data for fit."""
+        self._X_idx = X.index
         self.data_mi = pd.isnull(X)*1
         if self.verbose:
             prep = "PREPPING DATAFRAME FOR IMPUTATION ANALYSIS..."

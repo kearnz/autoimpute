@@ -265,6 +265,8 @@ class PredictiveImputer(BaseImputer, BaseEstimator, TransformerMixin):
             if imp_ix.empty:
                 continue
             x, _ = self._prep_predictor_cols(col_name, self._preds)
+            if new_data:
+                x.index = self._X_idx
             x = x.loc[imp_ix, :]
 
             # may abstract SingleImputer in future for flexibility
