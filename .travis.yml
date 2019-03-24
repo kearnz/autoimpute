@@ -1,11 +1,12 @@
 language: python
+# testing master only right now. dev tested manually
 branches:
   only:
     - master
+# travis does not support windows yet. Need to add pre_install stuff for macOS
 os:
-  - windows
   - linux
-  - osx
+# f-strings (PEP 498) used extensively in autoimpute, so <3.6 not possible
 python:
   - "3.6"
 install:
