@@ -65,7 +65,7 @@ from sklearn.preprocessing import MinMaxScaler
 imp = PredictiveImputer(
     strategy={"x1": "pmm", "x2": "stochastic", "y": "norm"},
     predictors={"x1": "x2", "y": "all"},
-    scaler=MinMaxScaler,
+    scaler=MinMaxScaler(),
     fill_value="random",
     verbose=True
 )
@@ -118,6 +118,9 @@ Shahid Barkat - [@shabarka](https://github.com/shabarka)
 
 ## License
 Distributed under the MIT license. See [LICENSE](https://github.com/kearnz/autoimpute/blob/master/LICENSE) for more information.
+
+## Contributing
+Guidelines for contributing to our project. See [CONTRIBUTING](https://github.com/kearnz/autoimpute/blob/master/CONTRIBUTING)
 
 ## Contributor Code of Conduct
 Adapted from Contributor Covenant, version 1.0.0. See [Code of Conduct](https://github.com/kearnz/autoimpute/blob/master/CODE_OF_CONDUCT)

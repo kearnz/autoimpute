@@ -1,8 +1,14 @@
 language: python
+branches:
+  only:
+    - master
+os:
+  - windows
+  - linux
+  - osx
 python:
   - "3.6"
-  - "3.7-dev"
 install:
   - pip install -r requirements.txt
 script:
-  - pytest
+  - pytest -v
