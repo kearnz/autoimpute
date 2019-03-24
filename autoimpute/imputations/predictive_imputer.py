@@ -133,7 +133,6 @@ class PredictiveImputer(BaseImputer, BaseEstimator, TransformerMixin):
         strat_names = self.strategies.keys()
         self._strategy = self.check_strategy_allowed(strat_names, s)
 
-
     def _fit_strategy_validator(self, X):
         """Internal helper method to validate strategies appropriate for fit.
 
@@ -146,13 +145,14 @@ class PredictiveImputer(BaseImputer, BaseEstimator, TransformerMixin):
         self._preds = self.check_predictors_fit(self.predictors, cols)
 
         # next, prep the categorical / numerical split
+        # only necessary for classes that use other features during imputation
+        # wont see this requirement in the single imputer
         self._prep_fit_dataframe(X)
 
         # if scaler passed, need scaler to fit AND transform
         # we want to fit predictive imputer on correctly scaled dataset
         if self.scaler:
-            self._scaler_fit()
-            self._scaler_transform()
+            self._scaler_fit_transform()
 
     def _transform_strategy_validator(self, X, new_data):
         """Private method to prep for prediction."""
@@ -167,10 +167,13 @@ class PredictiveImputer(BaseImputer, BaseEstimator, TransformerMixin):
             err = "Same columns that were fit must appear in transform."
             raise ValueError(err)
 
-        # detect if scaling has already taken place
-        # if so, no need to scale again.
-        if new_data and self.scaler:
-            self._scaler_transform()
+        # if not error, check if new data and perform scale if necessary
+        # note that this step is crucial if using fit and transform separately
+        # when used separately, new data needs to be prepped again
+        if new_data:
+            self._prep_fit_dataframe(X)
+            if self.scaler:
+                self._scaler_transform()
 
     @check_nan_columns
     def fit(self, X):

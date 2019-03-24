@@ -1,5 +1,3 @@
-# Guidelines for Requesting New Features
-
 Name: **Feature Request**  
 About: **Suggest an idea for what would make AutoImpute even better!**  
 Labels: **enhancement**  

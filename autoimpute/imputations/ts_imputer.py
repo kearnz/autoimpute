@@ -77,8 +77,8 @@ class TimeSeriesImputer(BaseImputer, BaseEstimator, TransformerMixin):
         methods.NONE: sm._fit_none,
     }
 
-    def __init__(self, strategy="default", fill_value=None, index_column=None,
-                 scaler=None, verbose=False):
+    def __init__(self, strategy="default", fill_value=None,
+                 index_column=None, verbose=False):
         """Create an instance of the TimeSeriesImputer class.
 
         As with sklearn classes, all arguments take default values. Therefore,
@@ -105,7 +105,7 @@ class TimeSeriesImputer(BaseImputer, BaseEstimator, TransformerMixin):
         """
         BaseImputer.__init__(
             self,
-            scaler=scaler,
+            scaler=None,
             verbose=verbose
         )
         self.strategy = strategy
@@ -156,11 +156,7 @@ class TimeSeriesImputer(BaseImputer, BaseEstimator, TransformerMixin):
         cols = X.columns.tolist()
         self._strats = self.check_strategy_fit(s, cols)
 
-        # scale if necessary
-        if self.scaler:
-            self._scaler_fit()
-
-    def _transform_strategy_validator(self, X, new_data):
+    def _transform_strategy_validator(self, X):
         """Internal helper to validate strategy before transformation.
 
         Checks whether differences in columns, and ensures that datetime
@@ -200,12 +196,9 @@ class TimeSeriesImputer(BaseImputer, BaseEstimator, TransformerMixin):
                     else:
                         err = f"{ic} can't be set as DatetimeIndex."
                         raise KeyError(err)
+
         # sort and return X
         X.sort_index(ascending=True, inplace=True)
-
-        # scaler transform if necessary
-        if new_data and self.scaler:
-            self._scaler_transform()
         return X
 
     @check_nan_columns
@@ -245,7 +238,7 @@ class TimeSeriesImputer(BaseImputer, BaseEstimator, TransformerMixin):
         return self
 
     @check_nan_columns
-    def transform(self, X, new_data=True):
+    def transform(self, X):
         """Impute each column within a DataFrame using fit imputation methods.
 
         The transform step performs the actual imputations. Given a dataset
@@ -263,7 +256,7 @@ class TimeSeriesImputer(BaseImputer, BaseEstimator, TransformerMixin):
             ValueError: same columns must appear in fit and transform.
         """
         # create dataframe index then proceed
-        X = self._transform_strategy_validator(X, new_data)
+        X = self._transform_strategy_validator(X)
         if self.verbose:
             trans = "PERFORMING IMPUTATIONS ON DATA BASED ON FIT..."
             print(f"{trans}\n{'-'*len(trans)}")
@@ -309,7 +302,3 @@ class TimeSeriesImputer(BaseImputer, BaseEstimator, TransformerMixin):
             if strat == methods.NONE:
                 pass
         return X
-
-    def fit_transform(self, X):
-        """Convenience method to fit then transform the same dataset."""
-        return self.fit(X).transform(X, False)

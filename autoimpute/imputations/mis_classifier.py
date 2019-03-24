@@ -98,12 +98,15 @@ class MissingnessClassifier(BaseImputer, BaseEstimator, ClassifierMixin):
         # remove nan columns and store colnames
         cols = X.columns.tolist()
         self._preds = self.check_predictors_fit(self.predictors, cols)
+
+        # next, prep the categorical / numerical split
+        # only necessary for classes that use other features
+        # wont see this requirement in the single imputer
         self._prep_fit_dataframe(X)
 
-        # scale if necessary
+        # scale if necessary (again only for classes using other features)
         if self.scaler:
-            self._scaler_fit()
-            self._scaler_transform()
+            self._scaler_fit_transform()
         return X
 
     def _predictor_strategy_validator(self, X, new_data):
@@ -120,6 +123,8 @@ class MissingnessClassifier(BaseImputer, BaseEstimator, ClassifierMixin):
             raise ValueError("Same columns must appear in fit and predict.")
 
         # if not error, check if new data and perform scale if necessary
+        # note that this step is crucial if using fit and transform separately
+        # when used separately, new data needs to be prepped again
         if new_data:
             self._prep_fit_dataframe(X)
             if self.scaler:

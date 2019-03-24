@@ -60,11 +60,12 @@ class BaseImputer:
 
     def _scaler_fit(self):
         """Private method to scale data based on scaler provided."""
+        # scale numerical data and dummy data if it exists
         if self._len_num > 0:
             sc = clone(self.scaler)
             self._scaled_num = sc.fit(self._data_num.values)
         else:
-            self._scaled_dum = None
+            self._scaled_num = None
         if self._len_dum > 0:
             sc = clone(self.scaler)
             self._scaled_dum = sc.fit(self._data_dum.values)
@@ -73,12 +74,17 @@ class BaseImputer:
 
     def _scaler_transform(self):
         """Private method to transform data using scaled fit."""
-        if not self._scaled_num is None:
+        if self._scaled_num:
             sn = self._scaled_num.transform(self._data_num.values)
             self._data_num = pd.DataFrame(sn, columns=self._cols_num)
-        if not self._scaled_dum is None:
+        if self._scaled_dum:
             sd = self._scaled_dum.transform(self._data_dum.values)
             self._data_dum = pd.DataFrame(sd, columns=self._cols_dum)
+
+    def _scaler_fit_transform(self):
+        """Private method to perform fit and transform of scaler"""
+        self._scaler_fit()
+        self._scaler_transform()
 
     def check_strategy_allowed(self, strat_names, s):
         """Logic to determine if the strategy passed for imputation is valid.
