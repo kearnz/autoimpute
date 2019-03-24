@@ -1,3 +1,8 @@
+<<<<<<< HEAD
+=======
+# Guidelines for Reporting Bugs
+
+>>>>>>> dev
 Name: **Bug Report**  
 About: **Create a bug report to help us fix what's broken in AutoImpute!**  
 Labels: **bug** 
