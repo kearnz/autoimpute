@@ -16,6 +16,7 @@ from autoimpute.imputations import BaseImputer, SingleImputer
 from autoimpute.imputations import method_names, predictive_methods
 methods = method_names
 pm = predictive_methods
+
 # pylint:disable=attribute-defined-outside-init
 # pylint:disable=arguments-differ
 # pylint:disable=protected-access

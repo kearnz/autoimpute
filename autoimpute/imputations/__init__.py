@@ -18,7 +18,7 @@ from autoimpute.imputations.
 """
 
 from autoimpute.imputations.base_imputer import BaseImputer
-#from autoimpute.imputations.mis_classifier import MissingnessClassifier
+from autoimpute.imputations.default_imputers import DefaultBaseImputer
 from autoimpute.imputations.default_imputers import DefaultSingleImputer
 from autoimpute.imputations.default_imputers import DefaultTimeSeriesImputer
 from autoimpute.imputations.mean_imputer import MeanImputer
@@ -31,8 +31,10 @@ from autoimpute.imputations.interpolation_imputer import InterpolateImputer
 from autoimpute.imputations.ffill_imputer import LOCFImputer, NOCBImputer
 from autoimpute.imputations.single_imputer import SingleImputer
 from autoimpute.imputations.ts_imputer import TimeSeriesImputer
-#from autoimpute.imputations.predictive_imputer import PredictiveImputer
-#from autoimpute.imputations.deletion import listwise_delete
+from autoimpute.imputations.predictive_imputer import PredictiveImputer
+from autoimpute.imputations.deletion import listwise_delete
+from autoimpute.imputations.mis_classifier import MissingnessClassifier
 
-#__all__ = ["BaseImputer", "MissingnessClassifier", "SingleImputer",
-#           "TimeSeriesImputer", "PredictiveImputer", "listwise_delete"]
+
+__all__ = ["BaseImputer", "MissingnessClassifier", "SingleImputer",
+           "TimeSeriesImputer", "PredictiveImputer", "listwise_delete"]

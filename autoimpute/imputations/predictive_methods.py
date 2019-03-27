@@ -10,10 +10,8 @@ from scipy.stats import norm, multivariate_normal
 from sklearn.linear_model import LinearRegression, LogisticRegression
 from sklearn.metrics import mean_squared_error
 import pymc3 as pm
-from autoimpute.imputations import single_methods
 from autoimpute.imputations.deletion import listwise_delete
 from autoimpute.imputations.errors import _not_num_series, _not_num_matrix
-sm = single_methods
 # pylint:disable=unused-argument
 # pylint:disable=inconsistent-return-statements
 # pylint:disable=protected-access
@@ -196,7 +194,7 @@ def _predictive_default(predictors, series, verbose):
         if ser_len > 2:
             return _fit_multi_logistic_reg(predictors, series, verbose)
     else:
-        return sm._fit_none(series)
+        return None, None
 
 # TRANSFORM IMPUTATION
 # --------------------

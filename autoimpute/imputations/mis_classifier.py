@@ -12,6 +12,7 @@ from sklearn.base import clone, BaseEstimator, ClassifierMixin
 from sklearn.utils.validation import check_is_fitted
 from autoimpute.utils import check_nan_columns
 from autoimpute.imputations import BaseImputer
+
 # pylint:disable=attribute-defined-outside-init
 # pylint:disable=arguments-differ
 # pylint:disable=too-many-arguments

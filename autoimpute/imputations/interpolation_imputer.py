@@ -67,6 +67,7 @@ class InterpolateImputer(BaseEstimator, TransformerMixin):
             pd.Series -- imputed dataset
         """
         # check if fitted then impute with interpolation strategy
+        # Note here some of the default argumens should be **kwargs
         check_is_fitted(self, "statistics_")
         imp = self.statistics_["strategy"]
         X.interpolate(method=imp,
