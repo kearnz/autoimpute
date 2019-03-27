@@ -1,0 +1,98 @@
+"""This module implements mode imputation via the ModeImputer.
+
+The ModeImputer computes the mode of observed values then imputes missing
+data with the computed mode. Mode imputation is univariate. Right now,
+this imputer supports imputation on Series only. Use
+SingleImputer(strategy="mode") to broadcast the imputation strategy across
+multiple columns of a DataFrame.
+"""
+
+import numpy as np
+import pandas as pd
+from sklearn.base import BaseEstimator, TransformerMixin
+from sklearn.utils.validation import check_is_fitted
+from autoimpute.imputations import method_names
+methods = method_names
+# pylint:disable=attribute-defined-outside-init
+
+class ModeImputer(BaseEstimator, TransformerMixin):
+    """Techniques to impute the mode for missing values within a dataset.
+
+    More complex autoimpute Imputers delegate work to the ModeImputer if
+    mode is a specified strategy for a given Series. That being said,
+    ModeImputer is a stand-alone class and valid sklearn transformer. It can
+    be used directly, but such behavior is discouraged because this imputer
+    supports Series only. ModeImputer does not have the flexibility or
+    robustness of more complex imputers, nor is its behavior identical.
+    Instead, use SingleImputer(strategy="mode").
+    """
+    # class variables
+    strategy = methods.MODE
+
+    def __init__(self, fill_strategy=None):
+        """Create an instance of the ModeImputer class.
+
+        Args:
+            fill_strategy (str, Optional): strategy to pick mode, if multiple.
+                Default is None, which means first mode taken.
+        """
+        self.fill_strategy = fill_strategy
+
+    def fit(self, X):
+        """Fit the Imputer to the dataset and calculate the mode.
+
+        Args:
+            X (pd.Series): Dataset to fit the imputer
+
+        Returns:
+            self. Instance of the class.
+        """
+        mode = X.mode().values
+        self.statistics_ = {"param": mode, "strategy": self.strategy}
+        return self
+
+    def transform(self, X):
+        """Perform imputations using the statistics generated from fit.
+
+        The transform method handles the actual imputation. Missing values
+        in a given dataset are replaced with the mode observed from fit.
+        Note that there can be more than one mode. If this is the case, there
+        are two possibilities based on the "fill_strategy" parameter. If
+        fill_strategy=None, use the first mode. This is the default. If
+        fill_strategy="random", randomly sample from the modes and impute.
+
+        Args:
+            X (pd.Series): Dataset to fit the imputer
+
+        Returns:
+            pd.Series -- imputed dataset
+
+        Raises:
+            ValueError: fill_strategy not valid. Must be None or random
+        """
+        # check is fitted and identify locations of missingness
+        check_is_fitted(self, "statistics_")
+        ind = X[X.isnull()].index
+
+        # get the number of modes
+        imp = self.statistics_["param"]
+        num_modes = len(imp)
+
+        # start by assuming we will use first mode
+        fills = imp[0]
+
+        # but check if more modes, and if fill strategy passed
+        if num_modes > 1 and self.fill_strategy is not None:
+
+            # random is only supported strategy, so error if something else
+            if self.fill_strategy != "random":
+                err = f"{self.fill_strategy} not accepted for mode imputation"
+                raise ValueError(err)
+
+            # if random is selected, randomly sample the modes
+            samples = np.random.choice(imp, len(ind))
+            fills = pd.Series(samples, index=ind)
+
+        # finally, fill in the right fill values for missing X
+        X.fillna(fills, inplace=True)
+        return X
