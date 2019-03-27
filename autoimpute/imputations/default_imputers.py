@@ -33,10 +33,10 @@ class DefaultBaseImputer:
         """Initialize the DefaultBaseImputer.
 
         Args:
-            num_imputer (Imputer): valid Imputer class for numerical data.
-            cat_imputer (Imputer): valid Imputer class for categorical data.
-            num_kwgs (dict, optional): Keyword args for numerical imputer.
-            cat_kwgs (dict, optional): keyword args for categorical imputer.
+            num_imputer (Imputer): valid Imputer for numerical data.
+            cat_imputer (Imputer): valid Imputer for categorical data.
+            num_kwgs (dict): Keyword args for numerical imputer.
+            cat_kwgs (dict): keyword args for categorical imputer.
 
         Returns:
             self. Instance of the class
@@ -214,8 +214,31 @@ class DefaultSingleImputer(DefaultBaseImputer, BaseEstimator,
             num_imputer=MeanImputer,
             cat_imputer=ModeImputer,
             num_kwgs=None,
-            cat_kwgs={"fill_strategy": "random"}):
-        """Create an instance of the DefaultSingleImputer class."""
+            cat_kwgs={"fill_strategy": "random"}
+        ):
+        """Create an instance of the DefaultSingleImputer class.
+
+        The SingleImputer delegates work to the DefaultSingleImputer if
+        strategy="default" or no strategy is given when SingleImputer is
+        instantiated. The DefaultSingleImputer then determines how to impute
+        numerical and categorical columns by default. It does so by passing
+        its arguments to the DefaultBaseImputer, which handles validation and
+        instantiation of default numerical and categorical imputers.
+
+        Args:
+            num_imputer (Imputer, Optional): valid Imputer for numerical data.
+                Default is MeanImputer.
+            cat_imputer (Imputer, Optional): valid Imputer for categorical
+                data. Default is ModeImputer.
+            num_kwgs (dict, optional): Keyword args for numerical imputer.
+                Default is None.
+            cat_kwgs (dict, optional): keyword args for categorical imputer.
+                Default is {"fill_strategy": "random"}.
+
+        Returns:
+            self. Instance of class
+        """
+        # delegate to DefaultBaseImputer
         DefaultBaseImputer.__init__(
             self,
             num_imputer=num_imputer,
@@ -258,7 +281,29 @@ class DefaultTimeSeriesImputer(DefaultBaseImputer, BaseEstimator,
             num_kwgs={"strategy": "linear"},
             cat_kwgs={"fill_strategy": "random"}
         ):
-        """Create an instance of the DefaultTimeSeriesImputer class."""
+        """Create an instance of the DefaultTimeSeriesImputer class.
+
+        The TimeSeriesImputer delegates work to the DefaultTimeSeriesImputer
+        if strategy="default" or no strategy is given when TimeSeriesImputer
+        is instantiated. The DefaultTimeSeriesImputer then determines how to
+        impute numerical and categorical columns by default. It does so by
+        passing its arguments to the DefaultBaseImputer, which handles
+        validation and instantiation of default numerical and categorical
+        imputers.
+
+        Args:
+            num_imputer (Imputer, Optional): valid Imputer for numerical data.
+                Default is InterpolateImputer.
+            cat_imputer (Imputer, Optional): valid Imputer for categorical
+                data. Default is ModeImputer.
+            num_kwgs (dict, optional): Keyword args for numerical imputer.
+                Default is {"strategy": "linear"}.
+            cat_kwgs (dict, optional): keyword args for categorical imputer.
+                Default is {"fill_strategy": "random"}.
+
+        Returns:
+            self. Instance of class
+        """
         DefaultBaseImputer.__init__(
             self,
             num_imputer=num_imputer,
