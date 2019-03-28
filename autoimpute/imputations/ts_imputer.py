@@ -110,7 +110,7 @@ class TimeSeriesImputer(BaseImputer, BaseEstimator, TransformerMixin):
             verbose=verbose
         )
         self.strategy = strategy
-        self.img_kwgs = imp_kwgs
+        self.imp_kwgs = imp_kwgs
         self.index_column = index_column
 
     @property
