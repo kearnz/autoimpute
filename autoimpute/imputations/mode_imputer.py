@@ -28,6 +28,7 @@ class ModeImputer(BaseEstimator, TransformerMixin):
     """
     # class variables
     strategy = methods.MODE
+    fill_strategies = (None, "first", "last", "random")
 
     def __init__(self, fill_strategy=None):
         """Create an instance of the ModeImputer class.
@@ -37,6 +38,26 @@ class ModeImputer(BaseEstimator, TransformerMixin):
                 Default is None, which means first mode taken.
         """
         self.fill_strategy = fill_strategy
+
+    @property
+    def fill_strategy(self):
+        """Property getter to return the value of fill_strategy property."""
+        return self._fill_strategy
+
+    @fill_strategy.setter
+    def fill_strategy(self, fs):
+        """Validate the scaler property and set default parameters.
+
+        Args:
+            s (scaler): if None, implement the xgboost classifier
+
+        Raises:
+            ValueError: classifier does not implement `fit_transform`
+        """
+        if fs not in self.fill_strategies:
+            err = f"{fs} not a valid fill strategy for ModeImputer"
+            raise ValueError(err)
+        self._fill_strategy = fs
 
     def fit(self, X):
         """Fit the Imputer to the dataset and calculate the mode.
@@ -76,22 +97,28 @@ class ModeImputer(BaseEstimator, TransformerMixin):
 
         # get the number of modes
         imp = self.statistics_["param"]
-        num_modes = len(imp)
 
-        # start by assuming we will use first mode
-        fills = imp[0]
+        # default imputation is to pick first, such as scipy does
+        if self.fill_strategy is None:
+            fills = imp[0]
 
-        # but check if more modes, and if fill strategy passed
-        if num_modes > 1 and self.fill_strategy is not None:
+        # picking the first of the modes when fill_strategy = first
+        if self.fill_strategy == "first":
+            fills = imp[0]
 
-            # random is only supported strategy, so error if something else
-            if self.fill_strategy != "random":
-                err = f"{self.fill_strategy} not accepted for mode imputation"
-                raise ValueError(err)
+        # picking the last of the modes when fill_strategy = last
+        if self.fill_strategy == "last":
+            fills = imp[-1]
 
-            # if random is selected, randomly sample the modes
-            samples = np.random.choice(imp, len(ind))
-            fills = pd.Series(samples, index=ind)
+        # sampling when strategy is random
+        if self.fill_strategy == "random":
+            num_modes = len(imp)
+            # check if more modes
+            if num_modes == 1:
+                fills = imp[0]
+            else:
+                samples = np.random.choice(imp, len(ind))
+                fills = pd.Series(samples, index=ind)
 
         # finally, fill in the right fill values for missing X
         X.fillna(fills, inplace=True)

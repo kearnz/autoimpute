@@ -146,25 +146,6 @@ class SingleImputer(BaseImputer, BaseEstimator, TransformerMixin):
         cols = X.columns.tolist()
         self._strats = self.check_strategy_fit(s, cols)
 
-    def _fit_init_params(self, column, method):
-        """Private method to supply imputation model fit params if any."""
-        # first, handle easy case when no kwargs given
-        if self.imp_kwgs is None:
-            final_params = self.imp_kwgs
-
-        # next, check if any kwargs for a given Imputer method type
-        # then, override those parameters if specific column kwargs supplied
-        if isinstance(self.imp_kwgs, dict):
-            initial_params = self.imp_kwgs.get(method, None)
-            final_params = self.imp_kwgs.get(column, initial_params)
-
-        # final params must be None or a dictionary of kwargs
-        # this additional validation step is crucial to dictionary unpacking
-        if not isinstance(final_params, (type(None), dict)):
-            err = "Additional params must be dict of args used to init model."
-            raise ValueError(err)
-        return final_params
-
     def _transform_strategy_validator(self, X):
         """Private method to validate before transformation phase."""
         # initial checks before transformation
@@ -210,13 +191,18 @@ class SingleImputer(BaseImputer, BaseEstimator, TransformerMixin):
         # in the future, we should handle univar methods in parallel
         for column, method in self._strats.items():
             imp = self.strategies[method]
-            imp_params = self._fit_init_params(column, method)
-            imputer = imp() if imp_params is None else imp(**imp_params)
-            imputer.fit(X[column])
-            self.statistics_[column] = imputer
-            # print strategies if verbose
-            if self.verbose:
-                print(f"Column: {column}, Strategy: {method}")
+            imp_params = self._fit_init_params(column, method, self.imp_kwgs)
+            try:
+                imputer = imp() if imp_params is None else imp(**imp_params)
+                imputer.fit(X[column])
+                self.statistics_[column] = imputer
+                # print strategies if verbose
+                if self.verbose:
+                    print(f"Column: {column}, Strategy: {method}")
+            except TypeError as te:
+                name = imp.__name__
+                err = f"Invalid arguments passed to {name} __init__ method."
+                raise ValueError(err) from te
         return self
 
     @check_nan_columns

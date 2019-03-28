@@ -78,7 +78,7 @@ class TimeSeriesImputer(BaseImputer, BaseEstimator, TransformerMixin):
         methods.NOCB: NOCBImputer
     }
 
-    def __init__(self, strategy="default", fill_value=None,
+    def __init__(self, strategy="default", imp_kwgs=None,
                  index_column=None, verbose=False):
         """Create an instance of the TimeSeriesImputer class.
 
@@ -110,7 +110,7 @@ class TimeSeriesImputer(BaseImputer, BaseEstimator, TransformerMixin):
             verbose=verbose
         )
         self.strategy = strategy
-        self.fill_value = fill_value
+        self.img_kwgs = imp_kwgs
         self.index_column = index_column
 
     @property
@@ -136,6 +136,19 @@ class TimeSeriesImputer(BaseImputer, BaseEstimator, TransformerMixin):
         """
         strat_names = self.strategies.keys()
         self._strategy = self.check_strategy_allowed(strat_names, s)
+
+    @property
+    def imp_kwgs(self):
+        """Property getter to return the value of imp_kwgs."""
+        return self._imp_kwgs
+
+    @imp_kwgs.setter
+    def imp_kwgs(self, kwgs):
+        """Validate the imp_kwgs and set default properties."""
+        if not isinstance(kwgs, (type(None), dict)):
+            err = "imp_kwgs must be dict of args to init TimeSeriesImputer."
+            raise ValueError(err)
+        self._imp_kwgs = kwgs
 
     def _fit_strategy_validator(self, X):
         """Internal helper method to validate strategies appropriate for fit.
@@ -232,12 +245,18 @@ class TimeSeriesImputer(BaseImputer, BaseEstimator, TransformerMixin):
         # in the future, we should handle univar methods in parallel
         for column, method in self._strats.items():
             imp = self.strategies[method]
-            imputer = imp()
-            imputer.fit(X[column])
-            self.statistics_[column] = imputer
-            # print strategies if verbose
-            if self.verbose:
-                print(f"Column: {column}, Strategy: {method}")
+            imp_params = self._fit_init_params(column, method, self.imp_kwgs)
+            try:
+                imputer = imp() if imp_params is None else imp(**imp_params)
+                imputer.fit(X[column])
+                self.statistics_[column] = imputer
+                # print strategies if verbose
+                if self.verbose:
+                    print(f"Column: {column}, Strategy: {method}")
+            except TypeError as te:
+                name = imp.__name__
+                err = f"Invalid arguments passed to {name} __init__ method."
+                raise ValueError(err) from te
         return self
 
     @check_nan_columns

@@ -172,6 +172,25 @@ class BaseImputer:
                 raise ValueError(f"{err}{err_k}")
             return s
 
+    def _fit_init_params(self, column, method, kwgs):
+        """Private method to supply imputation model fit params if any."""
+        # first, handle easy case when no kwargs given
+        if kwgs is None:
+            final_params = kwgs
+
+        # next, check if any kwargs for a given Imputer method type
+        # then, override those parameters if specific column kwargs supplied
+        if isinstance(kwgs, dict):
+            initial_params = kwgs.get(method, None)
+            final_params = kwgs.get(column, initial_params)
+
+        # final params must be None or a dictionary of kwargs
+        # this additional validation step is crucial to dictionary unpacking
+        if not isinstance(final_params, (type(None), dict)):
+            err = "Additional params must be dict of args used to init model."
+            raise ValueError(err)
+        return final_params
+
     def check_predictors_fit(self, predictors, cols):
         """Checked predictors used for fitting each column.
 
