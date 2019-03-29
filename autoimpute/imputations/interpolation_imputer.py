@@ -1,13 +1,13 @@
-"""This module implements mean imputation via the InterpolateImputer.
+"""This module implements interpolation methods via the InterpolateImputer.
 
-The InterpolateImputer imputes missing data using an interpolation strategy
+InterpolateImputer imputes missing data using some interpolation strategies
 suppoted by pd.Series.interpolate. Linear is the default strategy, although a
 number of additional strategies exist. Interpolation is transductive, so the
 fit method simply returns the interpolation method but no fit statistic. All
 interpolation is performed in transform. Right now, this imputer
 supports imputation on Series only. Use TimeSeriesImputer with specified
 strategy to broadcast interpolation across multiple columns of a DataFrame.
-Note that some interpolation strategies are valid for SingleImputer as well.
+Note that most interpolation strategies are valid for SingleImputer as well.
 """
 
 import pandas as pd
@@ -44,7 +44,7 @@ class InterpolateImputer(BaseEstimator, TransformerMixin):
 
         Args:
             strategy (str, Optional): type of interpolation to perform
-                Default is linear. fill strategies are supported.
+                Default is linear. check fill_strategies are supported.
             start (int, Optional): value to impute if first number in
                 Series is missing. Default is None, but first valid used
                 when required for quadratic, cubic, polynomial
@@ -91,15 +91,14 @@ class InterpolateImputer(BaseEstimator, TransformerMixin):
         Returns:
             self. Instance of the class.
         """
-        self.statistics_ = {"param": None, "strategy": self.strategy,
-                            "fill_strategy": self.fill_strategy}
+        self.statistics_ = {"param": None, "strategy": self.strategy}
         return self
 
     def transform(self, X):
         """Perform imputations using the statistics generated from fit.
 
         The transform method handles the actual imputation. Missing values
-        in a given dataset are replaced with the respective mean from fit.
+        in a given dataset are replaced with results from interpolation.
 
         Args:
             X (pd.Series): Dataset to fit the imputer
@@ -107,9 +106,14 @@ class InterpolateImputer(BaseEstimator, TransformerMixin):
         Returns:
             pd.Series -- imputed dataset
         """
+        # check if fitted then impute with interpolation strategy
+        check_is_fitted(self, "statistics_")
+        imp = self.fill_strategy
+        num_observed = min(6, X.count())
+        
         # setting defaults if no value passed for start and last
         # quadratic, cubic, and polynomial require first and last
-        if self.fill_strategy in ("quadratic", "cubic", "polynomial"):
+        if imp in ("quadratic", "cubic", "polynomial"):
             if pd.isnull(X.iloc[0]):
                 first_observed = X.loc[X.first_valid_index()]
                 X.iloc[0] = self.start or first_observed
@@ -117,14 +121,8 @@ class InterpolateImputer(BaseEstimator, TransformerMixin):
                 last_observed = X.loc[X.last_valid_index()]
                 X.iloc[-1] = self.start or last_observed
 
-        # check if fitted then impute with interpolation strategy
-        # Note here some of the default argumens should be **kwargs
-        check_is_fitted(self, "statistics_")
-        imp = self.statistics_["fill_strategy"]
-
         # handling for methods that need order
-        num_observed = X.count()
-        if self.fill_strategy in ("polynomial", "spline"):
+        if imp in ("polynomial", "spline"):
             if self.order is None or self.order >= num_observed:
                 err = f"Order must be between 1 and {num_observed-1}"
                 raise ValueError(err)
