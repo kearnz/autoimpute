@@ -10,6 +10,7 @@ strategy to broadcast interpolation across multiple columns of a DataFrame.
 Note that some interpolation strategies are valid for SingleImputer as well.
 """
 
+import pandas as pd
 from sklearn.base import BaseEstimator, TransformerMixin
 from sklearn.utils.validation import check_is_fitted
 from autoimpute.imputations import method_names
@@ -30,17 +31,56 @@ class InterpolateImputer(BaseEstimator, TransformerMixin):
     behavior identical. Instead, use TimeSeriesImputer or SingleImputer
     depending on use case.
     """
-    def __init__(self, strategy="linear"):
+    # class variables
+    strategy = methods.INTERPOLATE
+    fill_strategies = (
+        "linear", "time", "quadratic", "cubic",
+        "spline", "barycentric", "polynomial"
+    )
+
+    def __init__(self, fill_strategy="linear",
+                 start=None, end=None, order=None):
         """Create an instance of the InterpolateImputer class.
 
         Args:
             strategy (str, Optional): type of interpolation to perform
-                Default is linear. Time also supported for now.
+                Default is linear. fill strategies are supported.
+            start (int, Optional): value to impute if first number in
+                Series is missing. Default is None, but first valid used
+                when required for quadratic, cubic, polynomial
+            end (int, Optional): value to impute if last number in
+                Series is missing. Default is None, but last valid used
+                when required for quadratic, cubic, polynomial
+            order (int, Optional): if strategy is spline or polynomial,
+                order must be number. Otherwise not considered.
 
         Returns:
             self. Instance of the class
         """
-        self.strategy = strategy
+        self.fill_strategy = fill_strategy
+        self.start = start
+        self.end = end
+        self.order = order
+
+    @property
+    def fill_strategy(self):
+        """Property getter to return the value of fill_strategy property."""
+        return self._fill_strategy
+
+    @fill_strategy.setter
+    def fill_strategy(self, fs):
+        """Validate the fill_strategy property and set default parameters.
+
+        Args:
+            fs (str, Optional): if None, use linear.
+
+        Raises:
+            ValueError: not a valid fill strategy for InterpolateImputer
+        """
+        if fs not in self.fill_strategies:
+            err = f"{fs} not a valid fill strategy for InterpolateImputer"
+            raise ValueError(err)
+        self._fill_strategy = fs
 
     def fit(self, X):
         """Fit the Imputer to the dataset. Nothing to calculate.
@@ -51,7 +91,8 @@ class InterpolateImputer(BaseEstimator, TransformerMixin):
         Returns:
             self. Instance of the class.
         """
-        self.statistics_ = {"param": None, "strategy": self.strategy}
+        self.statistics_ = {"param": None, "strategy": self.strategy,
+                            "fill_strategy": self.fill_strategy}
         return self
 
     def transform(self, X):
@@ -66,12 +107,32 @@ class InterpolateImputer(BaseEstimator, TransformerMixin):
         Returns:
             pd.Series -- imputed dataset
         """
+        # setting defaults if no value passed for start and last
+        # quadratic, cubic, and polynomial require first and last
+        if self.fill_strategy in ("quadratic", "cubic", "polynomial"):
+            if pd.isnull(X.iloc[0]):
+                first_observed = X.loc[X.first_valid_index()]
+                X.iloc[0] = self.start or first_observed
+            if pd.isnull(X.iloc[-1]):
+                last_observed = X.loc[X.last_valid_index()]
+                X.iloc[-1] = self.start or last_observed
+
         # check if fitted then impute with interpolation strategy
         # Note here some of the default argumens should be **kwargs
         check_is_fitted(self, "statistics_")
-        imp = self.statistics_["strategy"]
+        imp = self.statistics_["fill_strategy"]
+
+        # handling for methods that need order
+        num_observed = X.count()
+        if self.fill_strategy in ("polynomial", "spline"):
+            if self.order is None or self.order >= num_observed:
+                err = f"Order must be between 1 and {num_observed-1}"
+                raise ValueError(err)
+
+        # finally, perform interpolation
         X.interpolate(method=imp,
                       limit=None,
                       limit_direction="both",
-                      inplace=True)
+                      inplace=True,
+                      order=self.order)
         return X

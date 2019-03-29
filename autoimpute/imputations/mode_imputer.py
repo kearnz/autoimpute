@@ -46,13 +46,13 @@ class ModeImputer(BaseEstimator, TransformerMixin):
 
     @fill_strategy.setter
     def fill_strategy(self, fs):
-        """Validate the scaler property and set default parameters.
+        """Validate the fill_strategy property and set default parameters.
 
         Args:
-            s (scaler): if None, implement the xgboost classifier
+            fs (str, None): if None, use first mode.
 
         Raises:
-            ValueError: classifier does not implement `fit_transform`
+            ValueError: not a valid fill strategy for ModeImputer
         """
         if fs not in self.fill_strategies:
             err = f"{fs} not a valid fill strategy for ModeImputer"
@@ -69,7 +69,8 @@ class ModeImputer(BaseEstimator, TransformerMixin):
             self. Instance of the class.
         """
         mode = X.mode().values
-        self.statistics_ = {"param": mode, "strategy": self.strategy}
+        self.statistics_ = {"param": mode, "strategy": self.strategy,
+                            "fill_strategy": self.fill_strategy}
         return self
 
     def transform(self, X):
@@ -89,7 +90,7 @@ class ModeImputer(BaseEstimator, TransformerMixin):
             pd.Series -- imputed dataset
 
         Raises:
-            ValueError: fill_strategy not valid. Must be None or random
+            ValueError: fill_strategy not valid.
         """
         # check is fitted and identify locations of missingness
         check_is_fitted(self, "statistics_")

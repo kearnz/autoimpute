@@ -61,7 +61,7 @@ class SingleImputer(BaseImputer, BaseEstimator, TransformerMixin):
         methods.RANDOM: RandomImputer,
         methods.NORM: NormImputer,
         methods.CATEGORICAL: CategoricalImputer,
-        methods.LINEAR: InterpolateImputer
+        methods.INTERPOLATE: InterpolateImputer
     }
 
     def __init__(self, strategy="default", imp_kwgs=None,

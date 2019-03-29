@@ -72,8 +72,7 @@ class TimeSeriesImputer(BaseImputer, BaseEstimator, TransformerMixin):
         methods.RANDOM: RandomImputer,
         methods.NORM: NormImputer,
         methods.CATEGORICAL: CategoricalImputer,
-        methods.LINEAR: InterpolateImputer,
-        methods.TIME: InterpolateImputer,
+        methods.INTERPOLATE: InterpolateImputer,
         methods.LOCF: LOCFImputer,
         methods.NOCB: NOCBImputer
     }
