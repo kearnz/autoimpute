@@ -45,12 +45,14 @@ class SingleImputer(BaseImputer, BaseEstimator, TransformerMixin):
             `mean` imputes missing values with the average of the series.
             `median` imputes missing values with the median of the series.
             `mode` imputes missing values with the mode of the series.
-                Method handles more than one mode (see _mode_helper method).
-            `random` immputes w/ random choice from set of Series unique vals.
+                Method handles more than one mode (see ModeImputer for info).
+            `random` imputes w/ random choice from set of Series unique vals.
             `norm` imputes series using random draws from normal distribution.
                 Mean and std calculated from observed values of the Series.
             `categorical` imputes series using random draws from pmf.
                 Proportions calculated from non-missing category instances.
+            `interpolate` imputes series using chosen interpolation method.
+                Default is linear. See InterpolateImputer for more info.
     """
 
     strategies = {
@@ -82,8 +84,11 @@ class SingleImputer(BaseImputer, BaseEstimator, TransformerMixin):
                 Dict the most flexible and PREFERRED way to create custom
                 imputation strategies if not using the default. Dict does not
                 require method for every column; just those specified as keys.
-            fill_value (str, optional): fill val when strategy needs more info.
-                See details of individual strategies for more info.
+            imp_kwgs (dict, optional): keyword arguments for each imputer.
+                Default is None, which means default imputer created to match
+                specific strategy. imp_kwgs keys can be either columns or
+                strategies. If strategies, each column given that strategy is
+                instantiated with same arguments.
             verbose (bool, optional): print more information to console.
                 Default value is False.
             copy (bool, optional): create copy of DataFrame or operate inplace.
@@ -91,11 +96,11 @@ class SingleImputer(BaseImputer, BaseEstimator, TransformerMixin):
         """
         BaseImputer.__init__(
             self,
+            imp_kwgs=imp_kwgs,
             scaler=None,
             verbose=verbose
         )
         self.strategy = strategy
-        self.imp_kwgs = imp_kwgs
         self.copy = copy
 
     @property
@@ -121,19 +126,6 @@ class SingleImputer(BaseImputer, BaseEstimator, TransformerMixin):
         """
         strat_names = self.strategies.keys()
         self._strategy = self.check_strategy_allowed(strat_names, s)
-
-    @property
-    def imp_kwgs(self):
-        """Property getter to return the value of imp_kwgs."""
-        return self._imp_kwgs
-
-    @imp_kwgs.setter
-    def imp_kwgs(self, kwgs):
-        """Validate the imp_kwgs and set default properties."""
-        if not isinstance(kwgs, (type(None), dict)):
-            err = "imp_kwgs must be dict of args used to init SingleImputer."
-            raise ValueError(err)
-        self._imp_kwgs = kwgs
 
     def _fit_strategy_validator(self, X):
         """Internal helper method to validate strategies appropriate for fit.
@@ -234,10 +226,10 @@ class SingleImputer(BaseImputer, BaseEstimator, TransformerMixin):
         # same applies, should be able to handel in parallel
         self.imputed_ = {}
         for column, imputer in self.statistics_.items():
-            strat = imputer.statistics_["strategy"]
             imp_ix = X[column][X[column].isnull()].index
             self.imputed_[column] = imp_ix.tolist()
             if self.verbose:
+                strat = imputer.statistics_["strategy"]
                 print(f"Transforming {column} with strategy '{strat}'")
                 print(f"Numer of imputations to perform: {len(imp_ix)}")
             imputer.transform(X[column])

@@ -69,8 +69,7 @@ class ModeImputer(BaseEstimator, TransformerMixin):
             self. Instance of the class.
         """
         mode = X.mode().values
-        self.statistics_ = {"param": mode, "strategy": self.strategy,
-                            "fill_strategy": self.fill_strategy}
+        self.statistics_ = {"param": mode, "strategy": self.strategy}
         return self
 
     def transform(self, X):
@@ -79,9 +78,10 @@ class ModeImputer(BaseEstimator, TransformerMixin):
         The transform method handles the actual imputation. Missing values
         in a given dataset are replaced with the mode observed from fit.
         Note that there can be more than one mode. If this is the case, there
-        are two possibilities based on the "fill_strategy" parameter. If
-        fill_strategy=None, use the first mode. This is the default. If
-        fill_strategy="random", randomly sample from the modes and impute.
+        are multiple possibilities based on the "fill_strategy" parameter. If
+        fill_strategy=None or "first", use the first mode. This is default.
+        If fill_strategy="last", use the last mode. If fill_strategy="random",
+        randomly sample from the modes and impute.
 
         Args:
             X (pd.Series): Dataset to fit the imputer
@@ -101,26 +101,26 @@ class ModeImputer(BaseEstimator, TransformerMixin):
 
         # default imputation is to pick first, such as scipy does
         if self.fill_strategy is None:
-            fills = imp[0]
+            imp = imp[0]
 
         # picking the first of the modes when fill_strategy = first
         if self.fill_strategy == "first":
-            fills = imp[0]
+            imp = imp[0]
 
         # picking the last of the modes when fill_strategy = last
         if self.fill_strategy == "last":
-            fills = imp[-1]
+            imp = imp[-1]
 
         # sampling when strategy is random
         if self.fill_strategy == "random":
             num_modes = len(imp)
             # check if more modes
             if num_modes == 1:
-                fills = imp[0]
+                imp = imp[0]
             else:
                 samples = np.random.choice(imp, len(ind))
-                fills = pd.Series(samples, index=ind)
+                imp = pd.Series(samples, index=ind)
 
         # finally, fill in the right fill values for missing X
-        X.fillna(fills, inplace=True)
+        X.fillna(imp, inplace=True)
         return X

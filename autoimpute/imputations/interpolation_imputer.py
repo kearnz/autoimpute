@@ -91,7 +91,8 @@ class InterpolateImputer(BaseEstimator, TransformerMixin):
         Returns:
             self. Instance of the class.
         """
-        self.statistics_ = {"param": None, "strategy": self.strategy}
+        self.statistics_ = {"param": self.fill_strategy,
+                            "strategy": self.strategy}
         return self
 
     def transform(self, X):
@@ -108,9 +109,9 @@ class InterpolateImputer(BaseEstimator, TransformerMixin):
         """
         # check if fitted then impute with interpolation strategy
         check_is_fitted(self, "statistics_")
-        imp = self.fill_strategy
+        imp = self.statistics_["param"]
         num_observed = min(6, X.count())
-        
+
         # setting defaults if no value passed for start and last
         # quadratic, cubic, and polynomial require first and last
         if imp in ("quadratic", "cubic", "polynomial"):
@@ -119,7 +120,7 @@ class InterpolateImputer(BaseEstimator, TransformerMixin):
                 X.iloc[0] = self.start or first_observed
             if pd.isnull(X.iloc[-1]):
                 last_observed = X.loc[X.last_valid_index()]
-                X.iloc[-1] = self.start or last_observed
+                X.iloc[-1] = self.end or last_observed
 
         # handling for methods that need order
         if imp in ("polynomial", "spline"):

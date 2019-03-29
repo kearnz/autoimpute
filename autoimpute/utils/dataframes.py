@@ -10,9 +10,9 @@ eq_miss = lambda x: np.random.choice([x, np.nan], 1)[0]
 val_miss = lambda x: np.random.choice([x, np.nan], 1, p=[x/100, 1-x/100])[0]
 
 # strategies used for imputation
-num_strategies = ["mean", "median", "mode", "random", "norm", "linear"]
+num_strategies = ["mean", "median", "mode", "random", "norm", "interpolate"]
 cat_strategies = ["mode", "categorical"]
-time_strategies = ["time", "linear", "locf", "nocb"]
+time_strategies = ["interpolate", "locf", "nocb"]
 
 # Numerical DataFrame with different % missingness per column
 df_num = pd.DataFrame()

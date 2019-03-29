@@ -70,8 +70,8 @@ class NormImputer(BaseEstimator, TransformerMixin):
         # create normal distribution and sample from it
         imp_mean, imp_var = self.statistics_["param"]
         samples = norm(imp_mean, imp_var).rvs(size=len(ind))
-        fills = pd.Series(samples, index=ind)
+        imp = pd.Series(samples, index=ind)
 
         # fill missing values in X with draws from normal
-        X.fillna(fills, inplace=True)
+        X.fillna(imp, inplace=True)
         return X

@@ -23,15 +23,21 @@ class BaseImputer:
     the BaseImputer should not be used directly unless creating an Imputer.
     """
 
-    def __init__(self, scaler, verbose):
+    def __init__(self, imp_kwgs, scaler, verbose):
         """Initialize the BaseImputer.
 
         Args:
+            imp_kwgs (dict, optional): keyword arguments for each imputer.
+                Default is None, which means default imputer created to match
+                specific strategy. imp_kwgs keys can be either columns or
+                strategies. If strategies, each column given that strategy is
+                instantiated with same arguments.
             scaler (sklearn scaler, optional): A scaler supported by sklearn.
                 Default to None. Otherwise, must be sklearn-compliant scaler.
             verbose (bool, optional): Print information to the console.
                 Defaults to False.
         """
+        self.imp_kwgs = imp_kwgs
         self.scaler = scaler
         self.verbose = verbose
 
@@ -57,6 +63,19 @@ class BaseImputer:
             if not hasattr(s, m):
                 raise ValueError(f"Scaler must implement {m} method.")
             self._scaler = s
+
+    @property
+    def imp_kwgs(self):
+        """Property getter to return the value of imp_kwgs."""
+        return self._imp_kwgs
+
+    @imp_kwgs.setter
+    def imp_kwgs(self, kwgs):
+        """Validate the imp_kwgs and set default properties."""
+        if not isinstance(kwgs, (type(None), dict)):
+            err = "imp_kwgs must be dict of args used to instantiate Imputer."
+            raise ValueError(err)
+        self._imp_kwgs = kwgs
 
     def _scaler_fit(self):
         """Private method to scale data based on scaler provided."""

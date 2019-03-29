@@ -19,6 +19,8 @@ Therefore, this package strives to aid the Python user by providing more clarity
     - Categorical
     - Linear interpolation
     - Time-weighted interpolation
+    - Quadratic, Cubic, and Polynomial interpolation
+    - Spline interpolation
     - Last observation carried forward (LOCF)
     - Next observation carried backward (NOCB)
     - Least squares (linear regression)

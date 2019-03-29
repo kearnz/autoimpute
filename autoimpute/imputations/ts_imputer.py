@@ -55,8 +55,8 @@ class TimeSeriesImputer(BaseImputer, BaseEstimator, TransformerMixin):
                 Mean and std calculated from observed values of the Series.
             `categorical` imputes series using random draws from pmf.
                 Proportions calculated from non-missing category instances.
-            `linear` imputes series using linear interpolation.
-            `time` imputes series using time-weighted interpolation.
+            `interpolate` imputes series using chosen interpolation method.
+                Default is linear. See InterpolateImputer for more info.
             `locf` imputes series using last observation carried forward.
                 Uses series mean if the first value is missing.
             `nocb` imputes series using next observation carried backward.
@@ -95,8 +95,11 @@ class TimeSeriesImputer(BaseImputer, BaseEstimator, TransformerMixin):
                 Dict the most flexible and PREFERRED way to create custom
                 imputation strategies if not using the default. Dict does not
                 require method for every column; just those specified as keys.
-            fill_value (str, optional): fill val when strategy needs more info.
-                See details of individual strategies for more info.
+            imp_kwgs (dict, optional): keyword arguments for each imputer.
+                Default is None, which means default imputer created to match
+                specific strategy. imp_kwgs keys can be either columns or
+                strategies. If strategies, each column given that strategy is
+                instantiated with same arguments.
             index_column (str, optional): the name of the column to index.
                 Defaults to None. If None, first column with datetime dtype
                 selected as the index.
@@ -105,6 +108,7 @@ class TimeSeriesImputer(BaseImputer, BaseEstimator, TransformerMixin):
         """
         BaseImputer.__init__(
             self,
+            imp_kwgs=imp_kwgs,
             scaler=None,
             verbose=verbose
         )
@@ -135,19 +139,6 @@ class TimeSeriesImputer(BaseImputer, BaseEstimator, TransformerMixin):
         """
         strat_names = self.strategies.keys()
         self._strategy = self.check_strategy_allowed(strat_names, s)
-
-    @property
-    def imp_kwgs(self):
-        """Property getter to return the value of imp_kwgs."""
-        return self._imp_kwgs
-
-    @imp_kwgs.setter
-    def imp_kwgs(self, kwgs):
-        """Validate the imp_kwgs and set default properties."""
-        if not isinstance(kwgs, (type(None), dict)):
-            err = "imp_kwgs must be dict of args to init TimeSeriesImputer."
-            raise ValueError(err)
-        self._imp_kwgs = kwgs
 
     def _fit_strategy_validator(self, X):
         """Internal helper method to validate strategies appropriate for fit.
@@ -286,10 +277,10 @@ class TimeSeriesImputer(BaseImputer, BaseEstimator, TransformerMixin):
         # same applies, should be able to handel in parallel
         self.imputed_ = {}
         for column, imputer in self.statistics_.items():
-            strat = imputer.statistics_["strategy"]
             imp_ix = X[column][X[column].isnull()].index
             self.imputed_[column] = imp_ix.tolist()
             if self.verbose:
+                strat = imputer.statistics_["strategy"]
                 print(f"Transforming {column} with strategy '{strat}'")
                 print(f"Numer of imputations to perform: {len(imp_ix)}")
             imputer.transform(X[column])

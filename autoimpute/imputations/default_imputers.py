@@ -111,8 +111,10 @@ class DefaultBaseImputer:
                 raise ValueError(err)
             # if valid imputer, instantiate it with kwargs
             # if kwargs contains improper args, imp will handle error
-            init_imp = imp() if self.num_kwgs is None else imp(**self.num_kwgs)
-            self._num_imputer = init_imp
+            if self.num_kwgs is None:
+                self._num_imputer = imp()
+            else:
+                self._num_imputer = imp(**self.num_kwgs)
         # deal with imp that doesn't have __base__ attribute
         except AttributeError as ae:
             err = f"{imp} is not an instance of an Imputer"
@@ -143,8 +145,10 @@ class DefaultBaseImputer:
                 raise ValueError(err)
             # if valid imputer, instantiate it with kwargs
             # if kwargs contains improper args, imp will handle error
-            init_imp = imp() if self.cat_kwgs is None else imp(**self.cat_kwgs)
-            self._cat_imputer = init_imp
+            if self.cat_kwgs is None:
+                self._cat_imputer = imp()
+            else:
+                self._cat_imputer = imp(**self.cat_kwgs)
         except AttributeError as ae:
             err = f"{imp} is not a valid Imputer"
             raise ValueError(err) from ae
@@ -278,7 +282,7 @@ class DefaultTimeSeriesImputer(DefaultBaseImputer, BaseEstimator,
             self,
             num_imputer=InterpolateImputer,
             cat_imputer=ModeImputer,
-            num_kwgs={"strategy": "linear"},
+            num_kwgs={"fill_strategy": "linear"},
             cat_kwgs={"fill_strategy": "random"}
         ):
         """Create an instance of the DefaultTimeSeriesImputer class.

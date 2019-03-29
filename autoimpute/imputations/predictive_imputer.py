@@ -102,6 +102,7 @@ class PredictiveImputer(BaseImputer, BaseEstimator, TransformerMixin):
 
         BaseImputer.__init__(
             self,
+            imp_kwgs=None,
             scaler=scaler,
             verbose=verbose
         )

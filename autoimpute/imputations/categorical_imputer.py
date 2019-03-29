@@ -72,8 +72,8 @@ class CategoricalImputer(BaseEstimator, TransformerMixin):
         cats = imp.index
         proportions = imp.tolist()
         samples = np.random.choice(cats, size=len(ind), p=proportions)
-        fills = pd.Series(samples, index=ind)
+        imp = pd.Series(samples, index=ind)
 
         # fill missing values in X with samples from distribution
-        X.fillna(fills, inplace=True)
+        X.fillna(imp, inplace=True)
         return X
