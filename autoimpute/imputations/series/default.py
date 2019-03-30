@@ -12,10 +12,10 @@ from pandas.api.types import is_string_dtype
 from pandas.api.types import is_numeric_dtype
 from sklearn.base import BaseEstimator, TransformerMixin
 from sklearn.utils.validation import check_is_fitted
-from autoimpute.imputations.mean_imputer import MeanImputer
-from autoimpute.imputations.mode_imputer import ModeImputer
-from autoimpute.imputations.interpolation_imputer import InterpolateImputer
 from autoimpute.imputations import method_names
+from .mean import MeanImputer
+from .mode import ModeImputer
+from .interpolation import InterpolateImputer
 methods = method_names
 # pylint:disable=attribute-defined-outside-init
 # pylint:disable=unnecessary-pass

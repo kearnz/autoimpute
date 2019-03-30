@@ -11,12 +11,13 @@ import pandas as pd
 from sklearn.base import BaseEstimator, TransformerMixin
 from sklearn.utils.validation import check_is_fitted
 from autoimpute.utils import check_nan_columns
-from autoimpute.imputations import BaseImputer, DefaultTimeSeriesImputer
-from autoimpute.imputations import MeanImputer, MedianImputer, ModeImputer
-from autoimpute.imputations import NormImputer, CategoricalImputer
-from autoimpute.imputations import RandomImputer, InterpolateImputer
-from autoimpute.imputations import LOCFImputer, NOCBImputer
 from autoimpute.imputations import method_names
+from .base_imputer import BaseImputer
+from ..series import DefaultTimeSeriesImputer
+from ..series import MeanImputer, MedianImputer, ModeImputer
+from ..series import NormImputer, CategoricalImputer
+from ..series import RandomImputer, InterpolateImputer
+from ..series import LOCFImputer, NOCBImputer
 methods = method_names
 # pylint:disable=attribute-defined-outside-init
 # pylint:disable=arguments-differ
@@ -61,7 +62,6 @@ class TimeSeriesImputer(BaseImputer, BaseEstimator, TransformerMixin):
                 Uses series mean if the first value is missing.
             `nocb` imputes series using next observation carried backward.
                 Uses series mean if the last value is missing.
-            `none` does not impute the series. Mainly used for time series.
     """
 
     strategies = {

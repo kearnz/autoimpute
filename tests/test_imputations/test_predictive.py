@@ -1,8 +1,15 @@
 """Tests for the PredictiveImputer Class."""
 
 from autoimpute.imputations import PredictiveImputer
+from autoimpute.imputations.dataframe._predictive_imputer import PredictiveImputer as _PI
 from autoimpute.utils import dataframes
 dfs = dataframes
+
+def test_new_predictive_imputer():
+    """Test the new imputer."""
+    imp = _PI()
+    imp.fit_transform(dfs.df_num)
+    assert imp.statistics_["A"].statistics_["strategy"] == "least squares"
 
 def test_default_predictive_imputer():
     """Test the _default method and results for PredictiveImputer()."""

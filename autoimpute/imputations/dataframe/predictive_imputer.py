@@ -12,8 +12,10 @@ import pandas as pd
 from sklearn.base import BaseEstimator, TransformerMixin
 from sklearn.utils.validation import check_is_fitted
 from autoimpute.utils import check_nan_columns
-from autoimpute.imputations import BaseImputer, SingleImputer
-from autoimpute.imputations import method_names, predictive_methods
+from autoimpute.imputations import method_names
+from autoimpute.imputations.dataframe import predictive_methods
+from .base_imputer import BaseImputer
+from .single_imputer import SingleImputer
 methods = method_names
 pm = predictive_methods
 
