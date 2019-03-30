@@ -43,7 +43,7 @@ class InterpolateImputer(BaseEstimator, TransformerMixin):
         """Create an instance of the InterpolateImputer class.
 
         Args:
-            strategy (str, Optional): type of interpolation to perform
+            fill_strategy (str, Optional): type of interpolation to perform
                 Default is linear. check fill_strategies are supported.
             start (int, Optional): value to impute if first number in
                 Series is missing. Default is None, but first valid used
@@ -82,6 +82,22 @@ class InterpolateImputer(BaseEstimator, TransformerMixin):
             raise ValueError(err)
         self._fill_strategy = fs
 
+    def _handle_start(self, v, X):
+        "private method to handle start values."
+        if v is None:
+            v = X.loc[X.first_valid_index()]
+        if v == "mean":
+            v = X.mean()
+        return v
+
+    def _handle_end(self, v, X):
+        "private method to handle end values."
+        if v is None:
+            v = X.loc[X.last_valid_index()]
+        if v == "mean":
+            v = X.mean()
+        return v
+
     def fit(self, X):
         """Fit the Imputer to the dataset. Nothing to calculate.
 
@@ -110,19 +126,18 @@ class InterpolateImputer(BaseEstimator, TransformerMixin):
         # check if fitted then impute with interpolation strategy
         check_is_fitted(self, "statistics_")
         imp = self.statistics_["param"]
-        num_observed = min(6, X.count())
 
         # setting defaults if no value passed for start and last
         # quadratic, cubic, and polynomial require first and last
         if imp in ("quadratic", "cubic", "polynomial"):
+            # handle start and end...
             if pd.isnull(X.iloc[0]):
-                first_observed = X.loc[X.first_valid_index()]
-                X.iloc[0] = self.start or first_observed
+                X.iloc[0] = self._handle_start(self.start, X)
             if pd.isnull(X.iloc[-1]):
-                last_observed = X.loc[X.last_valid_index()]
-                X.iloc[-1] = self.end or last_observed
+                X.iloc[-1] = self._handle_end(self.end, X)
 
         # handling for methods that need order
+        num_observed = min(6, X.count())
         if imp in ("polynomial", "spline"):
             if self.order is None or self.order >= num_observed:
                 err = f"Order must be between 1 and {num_observed-1}"

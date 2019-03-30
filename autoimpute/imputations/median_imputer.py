@@ -10,6 +10,7 @@ multiple columns of a DataFrame.
 from sklearn.base import BaseEstimator, TransformerMixin
 from sklearn.utils.validation import check_is_fitted
 from autoimpute.imputations import method_names
+from autoimpute.imputations.errors import _not_num_series
 methods = method_names
 # pylint:disable=attribute-defined-outside-init
 # pylint:disable=unnecessary-pass
@@ -41,6 +42,7 @@ class MedianImputer(BaseEstimator, TransformerMixin):
         Returns:
             self. Instance of the class.
         """
+        _not_num_series(self.strategy, X)
         median = X.median()
         self.statistics_ = {"param": median, "strategy": self.strategy}
         return self
@@ -59,6 +61,7 @@ class MedianImputer(BaseEstimator, TransformerMixin):
         """
         # check is fitted then impute with median
         check_is_fitted(self, "statistics_")
+        _not_num_series(self.strategy, X)
         imp = self.statistics_["param"]
         X.fillna(imp, inplace=True)
         return X

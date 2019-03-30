@@ -12,6 +12,7 @@ from scipy.stats import norm
 from sklearn.base import BaseEstimator, TransformerMixin
 from sklearn.utils.validation import check_is_fitted
 from autoimpute.imputations import method_names
+from autoimpute.imputations.errors import _not_num_series
 methods = method_names
 # pylint:disable=attribute-defined-outside-init
 # pylint:disable=unnecessary-pass
@@ -35,7 +36,7 @@ class NormImputer(BaseEstimator, TransformerMixin):
         pass
 
     def fit(self, X):
-        """Fit the Imputer to the dataset and calculate mean and variance.
+        """Fit Imputer to dataset and calculate mean and sample variance.
 
         Args:
             X (pd.Series): Dataset to fit the imputer
@@ -45,6 +46,7 @@ class NormImputer(BaseEstimator, TransformerMixin):
         """
 
         # get the moments for the normal distribution of feature X
+        _not_num_series(self.strategy, X)
         moments = (X.mean(), X.var()/(len(X.index)-1))
         self.statistics_ = {"param": moments, "strategy": self.strategy}
         return self
@@ -54,8 +56,8 @@ class NormImputer(BaseEstimator, TransformerMixin):
 
         The transform method handles the actual imputation. Transform
         constructs a normal distribution for each feature using the mean
-        and variance from fit. It then imputes missing values with a
-        random draw from the respective distribution
+        and sample variance from fit. It then imputes missing values with a
+        random draw from the respective distribution.
 
         Args:
             X (pd.Series): Dataset to fit the imputer
@@ -65,6 +67,7 @@ class NormImputer(BaseEstimator, TransformerMixin):
         """
         # check if fitted and identify location of missingness
         check_is_fitted(self, "statistics_")
+        _not_num_series(self.strategy, X)
         ind = X[X.isnull()].index
 
         # create normal distribution and sample from it

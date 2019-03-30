@@ -12,6 +12,7 @@ import pandas as pd
 from sklearn.base import BaseEstimator, TransformerMixin
 from sklearn.utils.validation import check_is_fitted
 from autoimpute.imputations import method_names
+from autoimpute.imputations.errors import _not_cat_series
 methods = method_names
 # pylint:disable=attribute-defined-outside-init
 # pylint:disable=unnecessary-pass
@@ -43,7 +44,7 @@ class CategoricalImputer(BaseEstimator, TransformerMixin):
         Returns:
             self. Instance of the class.
         """
-
+        _not_cat_series(self.strategy, X)
         # get proportions of discrete observed values to sample from
         proportions = X.value_counts() / np.sum(~X.isnull())
         self.statistics_ = {"param": proportions, "strategy": self.strategy}
@@ -65,6 +66,7 @@ class CategoricalImputer(BaseEstimator, TransformerMixin):
         """
         # check if fitted and identify location of missingness
         check_is_fitted(self, "statistics_")
+        _not_cat_series(self.strategy, X)
         ind = X[X.isnull()].index
 
         # get observed weighted by count of total and sample
