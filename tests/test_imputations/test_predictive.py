@@ -7,9 +7,11 @@ dfs = dataframes
 
 def test_new_predictive_imputer():
     """Test the new imputer."""
-    imp = _PI()
-    imp.fit_transform(dfs.df_num)
-    assert imp.statistics_["A"].statistics_["strategy"] == "least squares"
+    strategy = {"gender": "binary logistic",
+                "age": "bayesian least squares",
+                "amm": "least squares"}
+    imp = _PI(strategy=strategy)
+    imp.fit_transform(dfs.df_mix)
 
 def test_default_predictive_imputer():
     """Test the _default method and results for PredictiveImputer()."""

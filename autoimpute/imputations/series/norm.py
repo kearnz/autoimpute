@@ -7,9 +7,8 @@ imputation on Series only. Use SingleImputer(strategy="norm") to broadcast
 the imputation strategy across multiple columns of a DataFrame.
 """
 
-import pandas as pd
 from scipy.stats import norm
-from sklearn.base import BaseEstimator, TransformerMixin
+from sklearn.base import BaseEstimator
 from sklearn.utils.validation import check_is_fitted
 from autoimpute.imputations import method_names
 from autoimpute.imputations.errors import _not_num_series
@@ -17,7 +16,7 @@ methods = method_names
 # pylint:disable=attribute-defined-outside-init
 # pylint:disable=unnecessary-pass
 
-class NormImputer(BaseEstimator, TransformerMixin):
+class NormImputer(BaseEstimator):
     """Techniques to impute with draw from a dataset's normal distribution.
 
     More complex autoimpute Imputers delegate work to the NormImputer if
@@ -51,7 +50,7 @@ class NormImputer(BaseEstimator, TransformerMixin):
         self.statistics_ = {"param": moments, "strategy": self.strategy}
         return self
 
-    def transform(self, X):
+    def impute(self, X):
         """Perform imputations using the statistics generated from fit.
 
         The transform method handles the actual imputation. Transform
@@ -72,9 +71,9 @@ class NormImputer(BaseEstimator, TransformerMixin):
 
         # create normal distribution and sample from it
         imp_mean, imp_var = self.statistics_["param"]
-        samples = norm(imp_mean, imp_var).rvs(size=len(ind))
-        imp = pd.Series(samples, index=ind)
+        imp = norm(imp_mean, imp_var).rvs(size=len(ind))
+        return imp
 
-        # fill missing values in X with draws from normal
-        X.fillna(imp, inplace=True)
-        return X
+    def fit_impute(self, X):
+        """Helper method to perform fit and imputation in one go."""
+        return self.fit(X).impute(X)

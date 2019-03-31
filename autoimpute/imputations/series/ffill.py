@@ -9,7 +9,7 @@ broadcast forward or backward fill across multiple columns of a DataFrame.
 """
 
 import pandas as pd
-from sklearn.base import BaseEstimator, TransformerMixin
+from sklearn.base import BaseEstimator
 from sklearn.utils.validation import check_is_fitted
 from autoimpute.imputations import method_names
 methods = method_names
@@ -17,7 +17,7 @@ methods = method_names
 # pylint:disable=unnecessary-pass
 # pylint:disable=unused-argument
 
-class LOCFImputer(BaseEstimator, TransformerMixin):
+class LOCFImputer(BaseEstimator):
     """Techniques to carry last observation forward to impute missing data.
 
     More complex autoimpute Imputers delegate work to the LOCFImputer if locf
@@ -65,7 +65,7 @@ class LOCFImputer(BaseEstimator, TransformerMixin):
         self.statistics_ = {"param": None, "strategy": self.strategy}
         return self
 
-    def transform(self, X):
+    def impute(self, X):
         """Perform imputations using the statistics generated from fit.
 
         The transform method handles the actual imputation. Missing values
@@ -84,10 +84,13 @@ class LOCFImputer(BaseEstimator, TransformerMixin):
         # handle start...
         if pd.isnull(X.iloc[0]):
             X.iloc[0] = self._handle_start(self.start, X)
-        X.fillna(method="ffill", inplace=True)
-        return X
+        return X.fillna(method="ffill", inplace=False).values
 
-class NOCBImputer(BaseEstimator, TransformerMixin):
+    def fit_impute(self, X):
+        """Helper method to perform fit and imputation in one go."""
+        return self.fit(X).impute(X)
+
+class NOCBImputer(BaseEstimator):
     """Techniques to carry next observation backward to impute missing data.
 
     More complex autoimpute Imputers delegate work to the NOCBImputer if nocb
@@ -135,7 +138,7 @@ class NOCBImputer(BaseEstimator, TransformerMixin):
         self.statistics_ = {"param": None, "strategy": self.strategy}
         return self
 
-    def transform(self, X):
+    def impute(self, X):
         """Perform imputations using the statistics generated from fit.
 
         The transform method handles the actual imputation. Missing values
@@ -154,5 +157,8 @@ class NOCBImputer(BaseEstimator, TransformerMixin):
         # handle end...
         if pd.isnull(X.iloc[-1]):
             X.iloc[-1] = self._handle_end(self.end, X)
-        X.fillna(method="bfill", inplace=True)
-        return X
+        return X.fillna(method="ffill", inplace=False).values
+
+    def fit_impute(self, X):
+        """Helper method to perform fit and imputation in one go."""
+        return self.fit(X).impute(X)

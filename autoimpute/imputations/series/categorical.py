@@ -8,8 +8,7 @@ across multiple columns of a DataFrame.
 """
 
 import numpy as np
-import pandas as pd
-from sklearn.base import BaseEstimator, TransformerMixin
+from sklearn.base import BaseEstimator
 from sklearn.utils.validation import check_is_fitted
 from autoimpute.imputations import method_names
 from autoimpute.imputations.errors import _not_cat_series
@@ -17,7 +16,7 @@ methods = method_names
 # pylint:disable=attribute-defined-outside-init
 # pylint:disable=unnecessary-pass
 
-class CategoricalImputer(BaseEstimator, TransformerMixin):
+class CategoricalImputer(BaseEstimator):
     """Techniques to impute w/ draw from dataset's categorical distribution.
 
     More complex autoimpute Imputers delegate work to the CategoricalImputer
@@ -50,7 +49,7 @@ class CategoricalImputer(BaseEstimator, TransformerMixin):
         self.statistics_ = {"param": proportions, "strategy": self.strategy}
         return self
 
-    def transform(self, X):
+    def impute(self, X):
         """Perform imputations using the statistics generated from fit.
 
         The transform method handles the actual imputation. Transform
@@ -70,12 +69,12 @@ class CategoricalImputer(BaseEstimator, TransformerMixin):
         ind = X[X.isnull()].index
 
         # get observed weighted by count of total and sample
-        imp = self.statistics_["param"]
-        cats = imp.index
-        proportions = imp.tolist()
-        samples = np.random.choice(cats, size=len(ind), p=proportions)
-        imp = pd.Series(samples, index=ind)
+        param = self.statistics_["param"]
+        cats = param.index
+        proportions = param.tolist()
+        imp = np.random.choice(cats, size=len(ind), p=proportions)
+        return imp
 
-        # fill missing values in X with samples from distribution
-        X.fillna(imp, inplace=True)
-        return X
+    def fit_impute(self, X):
+        """Helper method to perform fit and imputation in one go."""
+        return self.fit(X).impute(X)

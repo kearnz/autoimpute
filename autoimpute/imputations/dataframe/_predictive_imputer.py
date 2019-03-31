@@ -15,7 +15,9 @@ from autoimpute.utils import check_nan_columns
 from autoimpute.imputations import method_names
 from .base_imputer import BaseImputer
 from .single_imputer import SingleImputer
-from ..series import LeastSquaresImputer
+from ..series import LeastSquaresImputer, StochasticImputer
+from ..series import BinaryLogisticImputer, MultiLogisticImputer
+from ..series import BayesLeastSquaresImputer
 methods = method_names
 
 # pylint:disable=attribute-defined-outside-init
@@ -57,7 +59,11 @@ class PredictiveImputer(BaseImputer, BaseEstimator, TransformerMixin):
     """
 
     strategies = {
-        methods.LS: LeastSquaresImputer
+        methods.LS: LeastSquaresImputer,
+        methods.STOCHASTIC: StochasticImputer,
+        methods.BINARY_LOGISTIC: BinaryLogisticImputer,
+        methods.MULTI_LOGISTIC: MultiLogisticImputer,
+        methods.BAYESIAN_LS: BayesLeastSquaresImputer
     }
 
     def __init__(self, strategy="least squares", predictors="all",
@@ -268,25 +274,25 @@ class PredictiveImputer(BaseImputer, BaseEstimator, TransformerMixin):
             # continue if there are no imputations to make
             if imp_ix.empty:
                 continue
-            x, _ = self._prep_predictor_cols(column, self._preds)
+            x_, _ = self._prep_predictor_cols(column, self._preds)
 
             # if dealing with new data, need to reset the index to missing
             if new_data:
-                x.index = self._X_idx
-            x = x.loc[imp_ix, :]
+                x_.index = self._X_idx
+            x_ = x_.loc[imp_ix, :]
 
             # may abstract SingleImputer in future for flexibility
-            mis_cov = pd.isnull(x).sum()
+            mis_cov = pd.isnull(x_).sum()
             if any(mis_cov):
                 if self.verbose:
                     print(f"Missing Covariates:\n{mis_cov}\n")
                     print("Using single imputer for missing covariates...")
-                x = SingleImputer(
+                x_ = SingleImputer(
                     verbose=self.verbose, copy=False
-                ).fit_transform(x)
+                ).fit_transform(x_)
 
             # perform imputation given the specified imputer
-            X.loc[imp_ix, column] = imputer.impute(x)
+            X.loc[imp_ix, column] = imputer.impute(x_)
         return X
 
     def fit_transform(self, X):

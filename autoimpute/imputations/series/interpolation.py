@@ -11,7 +11,7 @@ Note that most interpolation strategies are valid for SingleImputer as well.
 """
 
 import pandas as pd
-from sklearn.base import BaseEstimator, TransformerMixin
+from sklearn.base import BaseEstimator
 from sklearn.utils.validation import check_is_fitted
 from autoimpute.imputations import method_names
 methods = method_names
@@ -19,7 +19,7 @@ methods = method_names
 # pylint:disable=unnecessary-pass
 # pylint:disable=unused-argument
 
-class InterpolateImputer(BaseEstimator, TransformerMixin):
+class InterpolateImputer(BaseEstimator):
     """Techniques to impute missing values using interpolation techniques.
 
     More complex autoimpute Imputers delegate work to the InterpolateImputer
@@ -111,7 +111,7 @@ class InterpolateImputer(BaseEstimator, TransformerMixin):
                             "strategy": self.strategy}
         return self
 
-    def transform(self, X):
+    def impute(self, X):
         """Perform imputations using the statistics generated from fit.
 
         The transform method handles the actual imputation. Missing values
@@ -144,9 +144,12 @@ class InterpolateImputer(BaseEstimator, TransformerMixin):
                 raise ValueError(err)
 
         # finally, perform interpolation
-        X.interpolate(method=imp,
-                      limit=None,
-                      limit_direction="both",
-                      inplace=True,
-                      order=self.order)
-        return X
+        return X.interpolate(method=imp,
+                             limit=None,
+                             limit_direction="both",
+                             inplace=False,
+                             order=self.order)
+
+    def fit_impute(self, X):
+        """Helper method to perform fit and imputation in one go."""
+        return self.fit(X).impute(X)

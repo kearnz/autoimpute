@@ -6,7 +6,7 @@ supports imputation on Series only. Use SingleImputer(strategy="mean") to
 broadcast the imputation strategy across multiple columns of a DataFrame.
 """
 
-from sklearn.base import BaseEstimator, TransformerMixin
+from sklearn.base import BaseEstimator
 from sklearn.utils.validation import check_is_fitted
 from autoimpute.imputations import method_names
 from autoimpute.imputations.errors import _not_num_series
@@ -14,7 +14,7 @@ methods = method_names
 # pylint:disable=attribute-defined-outside-init
 # pylint:disable=unnecessary-pass
 
-class MeanImputer(BaseEstimator, TransformerMixin):
+class MeanImputer(BaseEstimator):
     """Techniques to impute the mean for missing values within a dataset.
 
     More complex autoimpute Imputers delegate work to the MeanImputer if mean
@@ -46,7 +46,7 @@ class MeanImputer(BaseEstimator, TransformerMixin):
         self.statistics_ = {"param": mu, "strategy": self.strategy}
         return self
 
-    def transform(self, X):
+    def impute(self, X):
         """Perform imputations using the statistics generated from fit.
 
         The transform method handles the actual imputation. Missing values
@@ -62,5 +62,8 @@ class MeanImputer(BaseEstimator, TransformerMixin):
         check_is_fitted(self, "statistics_")
         _not_num_series(self.strategy, X)
         imp = self.statistics_["param"]
-        X.fillna(imp, inplace=True)
-        return X
+        return imp
+
+    def fit_impute(self, X):
+        """Helper method to perform fit and imputation in one go."""
+        return self.fit(X).impute(X)

@@ -7,15 +7,14 @@ strategy across multiple columns of a DataFrame.
 """
 
 import numpy as np
-import pandas as pd
-from sklearn.base import BaseEstimator, TransformerMixin
+from sklearn.base import BaseEstimator
 from sklearn.utils.validation import check_is_fitted
 from autoimpute.imputations import method_names
 methods = method_names
 # pylint:disable=attribute-defined-outside-init
 # pylint:disable=unnecessary-pass
 
-class RandomImputer(BaseEstimator, TransformerMixin):
+class RandomImputer(BaseEstimator):
     """Techniques to impute missing data using random draws from observed.
 
     More complex autoimpute Imputers delegate work to the RandomImputer if
@@ -48,7 +47,7 @@ class RandomImputer(BaseEstimator, TransformerMixin):
         self.statistics_ = {"param": random, "strategy": self.strategy}
         return self
 
-    def transform(self, X):
+    def impute(self, X):
         """Perform imputations using the statistics generated from fit.
 
         The transform method handles the actual imputation. Missing values
@@ -66,10 +65,10 @@ class RandomImputer(BaseEstimator, TransformerMixin):
         ind = X[X.isnull()].index
 
         # get the observed values and sample from them
-        imp = self.statistics_["param"]
-        samples = np.random.choice(imp, len(ind))
-        fills = pd.Series(samples, index=ind)
+        param = self.statistics_["param"]
+        imp = np.random.choice(param, len(ind))
+        return imp
 
-        # fill missing X with random samples from observed
-        X.fillna(fills, inplace=True)
-        return X
+    def fit_impute(self, X):
+        """Helper method to perform fit and imputation in one go."""
+        return self.fit(X).impute(X)

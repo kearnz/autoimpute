@@ -7,7 +7,7 @@ SingleImputer(strategy="median") to broadcast the imputation strategy across
 multiple columns of a DataFrame.
 """
 
-from sklearn.base import BaseEstimator, TransformerMixin
+from sklearn.base import BaseEstimator
 from sklearn.utils.validation import check_is_fitted
 from autoimpute.imputations import method_names
 from autoimpute.imputations.errors import _not_num_series
@@ -15,7 +15,7 @@ methods = method_names
 # pylint:disable=attribute-defined-outside-init
 # pylint:disable=unnecessary-pass
 
-class MedianImputer(BaseEstimator, TransformerMixin):
+class MedianImputer(BaseEstimator):
     """Techniques to impute the median for missing values within a dataset.
 
     More complex autoimpute Imputers delegate work to the MedianImputer if
@@ -47,7 +47,7 @@ class MedianImputer(BaseEstimator, TransformerMixin):
         self.statistics_ = {"param": median, "strategy": self.strategy}
         return self
 
-    def transform(self, X):
+    def impute(self, X):
         """Perform imputations using the statistics generated from fit.
 
         The transform method handles the actual imputation. Missing values
@@ -63,5 +63,8 @@ class MedianImputer(BaseEstimator, TransformerMixin):
         check_is_fitted(self, "statistics_")
         _not_num_series(self.strategy, X)
         imp = self.statistics_["param"]
-        X.fillna(imp, inplace=True)
-        return X
+        return imp
+
+    def fit_impute(self, X):
+        """Helper method to perform fit and imputation in one go."""
+        return self.fit(X).impute(X)

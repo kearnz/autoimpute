@@ -283,5 +283,7 @@ class TimeSeriesImputer(BaseImputer, BaseEstimator, TransformerMixin):
                 strat = imputer.statistics_["strategy"]
                 print(f"Transforming {column} with strategy '{strat}'")
                 print(f"Numer of imputations to perform: {len(imp_ix)}")
-            imputer.transform(X[column])
+
+            # perform imputation given the specified imputer
+            X.loc[imp_ix, column] = imputer.impute(X[column])
         return X

@@ -30,7 +30,9 @@ from .norm import NormImputer
 from .categorical import CategoricalImputer
 from .ffill import NOCBImputer, LOCFImputer
 from .interpolation import InterpolateImputer
-from .linear_regression import LeastSquaresImputer
+from .linear_regression import LeastSquaresImputer, StochasticImputer
+from .logistic_regression import BinaryLogisticImputer, MultiLogisticImputer
+from .bayesian_regression import BayesLeastSquaresImputer
 
 __all__ = [
     "DefaultSingleImputer",
@@ -44,5 +46,9 @@ __all__ = [
     "NOCBImputer",
     "LOCFImputer",
     "InterpolateImputer",
-    "LeastSquaresImputer"
+    "LeastSquaresImputer",
+    "StochasticImputer",
+    "BinaryLogisticImputer",
+    "MultiLogisticImputer",
+    "BayesLeastSquaresImputer"
 ]

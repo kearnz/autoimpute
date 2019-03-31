@@ -10,7 +10,7 @@ the DefaultBaseImputer.
 
 from pandas.api.types import is_string_dtype
 from pandas.api.types import is_numeric_dtype
-from sklearn.base import BaseEstimator, TransformerMixin
+from sklearn.base import BaseEstimator
 from sklearn.utils.validation import check_is_fitted
 from autoimpute.imputations import method_names
 from .mean import MeanImputer
@@ -95,7 +95,7 @@ class DefaultBaseImputer:
 
         Raises:
             ValueError: any Imputer class must end in Imputer
-            ValueError: Imputer must implement fit_transform
+            ValueError: Imputer must implement fit_impute
             ValueError: argument not an instance of an Imputer
         """
         # try necessary because imp may not have __base__ attribute
@@ -105,7 +105,7 @@ class DefaultBaseImputer:
             if not cls_:
                 err = f"{imp} must be a class ending in Imputer"
                 raise ValueError(err)
-            m = "fit_transform"
+            m = "fit_impute"
             if not hasattr(imp, m):
                 err = f"Imputer must implement {m} method."
                 raise ValueError(err)
@@ -129,7 +129,7 @@ class DefaultBaseImputer:
 
         Raises:
             ValueError: any imputer class must end in Imputer
-            ValueError: imputer must implement fit_transform
+            ValueError: imputer must implement fit_impute
             ValueError: argument not an instance of an Imputer
         """
         # try necessary because imp could initially be anything
@@ -139,7 +139,7 @@ class DefaultBaseImputer:
             if not cls_:
                 err = f"{imp} must be an Imputer class from autoimpute"
                 raise ValueError(err)
-            m = "fit_transform"
+            m = "fit_impute"
             if not hasattr(imp, m):
                 err = f"Imputer must implement {m} method."
                 raise ValueError(err)
@@ -176,7 +176,7 @@ class DefaultBaseImputer:
         self.statistics_ = stats
         return self
 
-    def transform(self, X):
+    def impute(self, X):
         """Perform imputations using the statistics generated from fit.
 
         The transform method handles the actual imputation. Missing values
@@ -194,11 +194,14 @@ class DefaultBaseImputer:
 
         # ensure that param is not none, which indicates time series column
         if imp:
-            imp.transform(X)
-        return X
+            X_ = imp.impute(X)
+            return X_
 
-class DefaultSingleImputer(DefaultBaseImputer, BaseEstimator,
-                           TransformerMixin):
+    def fit_impute(self, X):
+        """Helper method to perform fit and imputation in one go."""
+        return self.fit(X).impute(X)
+
+class DefaultSingleImputer(DefaultBaseImputer, BaseEstimator):
     """Techniques to impute cross sectional dataset when no strategy given.
 
     More complex autoimpute Imputers delegate work to the DefaultSingleImputer
@@ -256,14 +259,12 @@ class DefaultSingleImputer(DefaultBaseImputer, BaseEstimator,
         super().fit(X)
         return self
 
-    def transform(self, X):
+    def impute(self, X):
         """Defer transform to the DefaultBaseImputer."""
-        super().transform(X)
-        return X
+        X_ = super().impute(X)
+        return X_
 
-
-class DefaultTimeSeriesImputer(DefaultBaseImputer, BaseEstimator,
-                               TransformerMixin):
+class DefaultTimeSeriesImputer(DefaultBaseImputer, BaseEstimator):
     """Techniques to impute time-based dataset when no strategy given.
 
     More complex autoimpute Imputers delegate work to DefaultTimeSeriesImputer
@@ -321,7 +322,7 @@ class DefaultTimeSeriesImputer(DefaultBaseImputer, BaseEstimator,
         super().fit(X)
         return self
 
-    def transform(self, X):
+    def impute(self, X):
         """Defer transform to the DefaultBaseImputer."""
-        super().transform(X)
-        return X
+        X_ = super().impute(X)
+        return X_
