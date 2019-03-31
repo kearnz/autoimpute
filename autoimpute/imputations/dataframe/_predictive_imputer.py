@@ -269,6 +269,8 @@ class PredictiveImputer(BaseImputer, BaseEstimator, TransformerMixin):
             if imp_ix.empty:
                 continue
             x, _ = self._prep_predictor_cols(column, self._preds)
+
+            # if dealing with new data, need to reset the index to missing
             if new_data:
                 x.index = self._X_idx
             x = x.loc[imp_ix, :]
@@ -284,7 +286,7 @@ class PredictiveImputer(BaseImputer, BaseEstimator, TransformerMixin):
                 ).fit_transform(x)
 
             # perform imputation given the specified imputer
-            imputer.transform(X[column], x)
+            X.loc[imp_ix, column] = imputer.impute(x)
         return X
 
     def fit_transform(self, X):
