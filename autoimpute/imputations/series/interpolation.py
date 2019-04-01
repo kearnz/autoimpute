@@ -2,12 +2,9 @@
 
 InterpolateImputer imputes missing data using some interpolation strategies
 suppoted by pd.Series.interpolate. Linear is the default strategy, although a
-number of additional strategies exist. Interpolation is transductive, so the
-fit method simply returns the interpolation method but no fit statistic. All
-interpolation is performed in transform. Right now, this imputer
-supports imputation on Series only. Use TimeSeriesImputer with specified
-strategy to broadcast interpolation across multiple columns of a DataFrame.
-Note that most interpolation strategies are valid for SingleImputer as well.
+number of additional strategies exist. Right now, this imputer supports
+imputation on Series only. Use the TimeSeriesImputer (or SingleImputer), with
+strategy="interpolate" to broadcast across multiple columns of a DataFrame.
 """
 
 import pandas as pd
@@ -20,16 +17,14 @@ methods = method_names
 # pylint:disable=unused-argument
 
 class InterpolateImputer(BaseEstimator):
-    """Techniques to impute missing values using interpolation techniques.
+    """Impute missing values using interpolation techniques.
 
-    More complex autoimpute Imputers delegate work to the InterpolateImputer
-    if an intepolation is a specified strategy for a given Series. That being
-    said, InterpolateImputer is a stand-alone class and valid sklearn
-    transformer. It can be used directly, but such behavior is discouraged
-    because this imputer supports Series only. InterpolateImputer does not
-    have the flexibility or robustness of more complex imputers, nor is its
-    behavior identical. Instead, use TimeSeriesImputer or SingleImputer
-    depending on use case.
+    The InterpolateImputer imputes missing values uses a valid pd.Series
+    interpolation strategy. See __init__ method docs for supported strategies.
+    The imputer can be used directly, but such behavior is discouraged because
+    the imputer supports Series only. InterpolateImputer does not have the
+    flexibility or robustness of more complex imputers, nor is its behavior
+    identical. Instead, use TimeSeriesImputer or SingleImputer.
     """
     # class variables
     strategy = methods.INTERPOLATE
@@ -44,18 +39,20 @@ class InterpolateImputer(BaseEstimator):
 
         Args:
             fill_strategy (str, Optional): type of interpolation to perform
-                Default is linear. check fill_strategies are supported.
+                Default is linear. Other strategies supported include:
+                `time`, `quadratic`, `cubic`, `spline`, `barycentric`,
+                `polynomial`.
             start (int, Optional): value to impute if first number in
                 Series is missing. Default is None, but first valid used
-                when required for quadratic, cubic, polynomial
+                when required for quadratic, cubic, polynomial.
             end (int, Optional): value to impute if last number in
                 Series is missing. Default is None, but last valid used
-                when required for quadratic, cubic, polynomial
+                when required for quadratic, cubic, polynomial.
             order (int, Optional): if strategy is spline or polynomial,
                 order must be number. Otherwise not considered.
 
         Returns:
-            self. Instance of the class
+            self. Instance of the class.
         """
         self.fill_strategy = fill_strategy
         self.start = start
@@ -102,7 +99,7 @@ class InterpolateImputer(BaseEstimator):
         """Fit the Imputer to the dataset. Nothing to calculate.
 
         Args:
-            X (pd.Series): Dataset to fit the imputer
+            X (pd.Series): Dataset to fit the imputer.
 
         Returns:
             self. Instance of the class.
@@ -114,14 +111,14 @@ class InterpolateImputer(BaseEstimator):
     def impute(self, X):
         """Perform imputations using the statistics generated from fit.
 
-        The transform method handles the actual imputation. Missing values
+        The impute method handles the actual imputation. Missing values
         in a given dataset are replaced with results from interpolation.
 
         Args:
-            X (pd.Series): Dataset to fit the imputer
+            X (pd.Series): Dataset to impute missing data from fit.
 
         Returns:
-            pd.Series -- imputed dataset
+            np.array -- imputed dataset.
         """
         # check if fitted then impute with interpolation strategy
         check_is_fitted(self, "statistics_")
@@ -151,5 +148,5 @@ class InterpolateImputer(BaseEstimator):
                              order=self.order)
 
     def fit_impute(self, X):
-        """Helper method to perform fit and imputation in one go."""
+        """Convenience method to perform fit and imputation in one go."""
         return self.fit(X).impute(X)

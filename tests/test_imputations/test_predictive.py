@@ -7,7 +7,7 @@ dfs = dataframes
 
 def test_new_predictive_imputer():
     """Test the new imputer."""
-    strategy = {"gender": "binary logistic",
+    strategy = {"gender": "bayesian binary logistic",
                 "age": "bayesian least squares",
                 "amm": "least squares"}
     imp = _PI(strategy=strategy)

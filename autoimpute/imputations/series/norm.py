@@ -1,10 +1,9 @@
 """This module implements norm imputation via the NormImputer.
 
-The NormImputer constructs a normal distribution with mean and variance
-determined from observed values. Missing values are imputed with random draws
-from the resulting normal distribution. Right now, this imputer supports
-imputation on Series only. Use SingleImputer(strategy="norm") to broadcast
-the imputation strategy across multiple columns of a DataFrame.
+The NormImputer imputes missing data with random draws from a construted
+normal distribution. Right now, this imputer supports imputation on Series
+only. Use SingleImputer(strategy="norm") to broadcast the imputation
+strategy across multiple columns of a DataFrame.
 """
 
 from scipy.stats import norm
@@ -17,15 +16,15 @@ methods = method_names
 # pylint:disable=unnecessary-pass
 
 class NormImputer(BaseEstimator):
-    """Techniques to impute with draw from a dataset's normal distribution.
+    """Impute missing data with draws from normal distribution.
 
-    More complex autoimpute Imputers delegate work to the NormImputer if
-    norm is a specified strategy. That being said, NormImputer is a
-    stand-alone class and valid sklearn transformer. It can be used directly,
-    but such behavior is discouraged, because this imputer
-    supports Series only. NormImputer does not have the flexibility or
-    robustness of more complex imputers, nor is its behavior identical.
-    Instead, use SingleImputer(strategy="norm").
+    The NormImputer constructs a normal distribution using the sample mean and
+    variance of the observed data. The imputer then randomly samples from this
+    distribution to impute missing data. The imputer can be used directly, but
+    such behavior is discouraged because the imputer supports Series only.
+    NormImputer does not have the flexibility or robustness of more complex
+    imputers, nor is its behavior identical. Instead, use
+    SingleImputer(strategy="norm").
     """
     # class variables
     strategy = methods.NORM
@@ -38,7 +37,7 @@ class NormImputer(BaseEstimator):
         """Fit Imputer to dataset and calculate mean and sample variance.
 
         Args:
-            X (pd.Series): Dataset to fit the imputer
+            X (pd.Series): Dataset to fit the imputer.
 
         Returns:
             self. Instance of the class.
@@ -53,17 +52,18 @@ class NormImputer(BaseEstimator):
     def impute(self, X):
         """Perform imputations using the statistics generated from fit.
 
-        The transform method handles the actual imputation. Transform
-        constructs a normal distribution for each feature using the mean
-        and sample variance from fit. It then imputes missing values with a
-        random draw from the respective distribution.
+        The transform method handles the actual imputation. It constructs a
+        normal distribution using the sample mean and variance from fit.
+        It then imputes missing values with a random draw from the respective
+        distribution.
 
         Args:
-            X (pd.Series): Dataset to fit the imputer
+            X (pd.Series): Dataset to impute missing data from fit.
 
         Returns:
-            pd.Series -- imputed dataset
+            np.array -- imputed dataset.
         """
+
         # check if fitted and identify location of missingness
         check_is_fitted(self, "statistics_")
         _not_num_series(self.strategy, X)
@@ -75,5 +75,5 @@ class NormImputer(BaseEstimator):
         return imp
 
     def fit_impute(self, X):
-        """Helper method to perform fit and imputation in one go."""
+        """Convenience method to perform fit and imputation in one go."""
         return self.fit(X).impute(X)

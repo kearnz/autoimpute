@@ -1,6 +1,6 @@
-"""This module implements default imputers used for multiple Imputer classes.
+"""This module implements default imputers used for specific Imputer classes.
 
-The default imputers serve as defaults within more advanced imputers. They
+These Imputer classes serve as defaults within more advanced imputers. They
 are flexible, and they allow users to quickly run imputations without getting
 a runtime error as they would in sklearn if the data types in a dataset are
 mixed. There are three default imputers at the moment: DefaultSingleImputer,
@@ -105,6 +105,7 @@ class DefaultBaseImputer:
             if not cls_:
                 err = f"{imp} must be a class ending in Imputer"
                 raise ValueError(err)
+            # valid imputers must have `fit_impute` method
             m = "fit_impute"
             if not hasattr(imp, m):
                 err = f"Imputer must implement {m} method."
@@ -139,6 +140,7 @@ class DefaultBaseImputer:
             if not cls_:
                 err = f"{imp} must be an Imputer class from autoimpute"
                 raise ValueError(err)
+            # valid imputers must have `fit_impute` method
             m = "fit_impute"
             if not hasattr(imp, m):
                 err = f"Imputer must implement {m} method."
@@ -179,14 +181,14 @@ class DefaultBaseImputer:
     def impute(self, X):
         """Perform imputations using the statistics generated from fit.
 
-        The transform method handles the actual imputation. Missing values
+        The impute method handles the actual imputation. Missing values
         in a given dataset are replaced with the respective mean from fit.
 
         Args:
-            X (pd.Series): Dataset to fit the imputer
+            X (pd.Series): Dataset to impute missing data from fit.
 
         Returns:
-            pd.Series -- imputed dataset
+            pd.Series -- imputed dataset.
         """
         # check is fitted and delegate transformation to respective imputer
         check_is_fitted(self, "statistics_")
@@ -202,15 +204,14 @@ class DefaultBaseImputer:
         return self.fit(X).impute(X)
 
 class DefaultSingleImputer(DefaultBaseImputer, BaseEstimator):
-    """Techniques to impute cross sectional dataset when no strategy given.
+    """Impute missing data using default methods for SingleImputer.
 
-    More complex autoimpute Imputers delegate work to the DefaultSingleImputer
-    if no strategy is specified from the SingleImputer. The imputer picks a
-    basic strategy appropriate for the data type of the column it's imputing.
-    That being said, it is a stand-alone class and valid sklearn transformer.
-    It can be used directly, but such behavior is discouraged because it
-    supports Series only. It does not have the flexibility or robustness of
-    more complex imputers, nor is its behavior identical.
+    This imputer is the default imputer for the SingleImputer class. When an
+    end-user does not supply a strategy, the default imputer determines how to
+    impute based on the column type of each column in a dataframe. The imputer
+    can be used directly, but such behavior is discouraged because the imputer
+    supports Series only. DefaultSingleImputer does not have the flexibility
+    or robustness of more complex imputers, nor is its behavior identical.
     Instead, use SingleImputer(strategy="default").
     """
     # class variables
@@ -243,7 +244,7 @@ class DefaultSingleImputer(DefaultBaseImputer, BaseEstimator):
                 Default is {"fill_strategy": "random"}.
 
         Returns:
-            self. Instance of class
+            self. Instance of class.
         """
         # delegate to DefaultBaseImputer
         DefaultBaseImputer.__init__(
@@ -265,16 +266,15 @@ class DefaultSingleImputer(DefaultBaseImputer, BaseEstimator):
         return X_
 
 class DefaultTimeSeriesImputer(DefaultBaseImputer, BaseEstimator):
-    """Techniques to impute time-based dataset when no strategy given.
+    """Impute missing data using default methods for TimeSeriesImputer.
 
-    More complex autoimpute Imputers delegate work to DefaultTimeSeriesImputer
-    if no strategy is specified from the TimeSeriesImputer. The imputer picks a
-    basic strategy appropriate for the data type of the column it's imputing.
-    That being said, it is a stand-alone class and valid sklearn transformer.
-    It can be used directly, but such behavior is discouraged because it
-    supports Series only. It does not have the flexibility or robustness of
-    more complex imputers, nor is its behavior identical.
-    Instead, use TimeSeriesImputer(strategy="default").
+    This imputer is the default imputer for the TimeSeriesImputer class. When
+    an end-user does not supply a strategy, the default imputer determines how
+    to impute based on the column type of each column in a dataframe. The
+    imputer can be used directly, but such behavior is discouraged because the
+    imputer supports Series only. DefaultTimeSeriesImputer does not have the
+    flexibility or robustness of more complex imputers, nor is its behavior
+    identical. Instead, use TimeSeriesImputer(strategy="default").
     """
     # class variables
     strategy = methods.DEFAULT
@@ -307,7 +307,7 @@ class DefaultTimeSeriesImputer(DefaultBaseImputer, BaseEstimator):
                 Default is {"fill_strategy": "random"}.
 
         Returns:
-            self. Instance of class
+            self. Instance of class.
         """
         DefaultBaseImputer.__init__(
             self,

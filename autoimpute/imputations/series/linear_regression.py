@@ -1,4 +1,12 @@
-"""This module implements least squares imputation."""
+"""This module implements least squares and stochastic imputation.
+
+This module contains the LeastSquaresImputer and the StochasticImputer. Both
+use least squares to find a line of best fit and fill imputations with the
+predictions from the line. Stochastic adds random error to each prediction.
+Right now, each imputer supports imputation on Series only. Use the
+PredictiveImputer with strategy = "least squares" or "stochastic" to broadcast
+the strategies across all the columns in a dataframe.
+"""
 
 from numpy import sqrt
 from scipy.stats import norm
@@ -14,18 +22,16 @@ methods = method_names
 # pylint:
 
 class LeastSquaresImputer(BaseEstimator):
-    """Class to impute missing values using least squares regression.
+    """Impute missing values using predictions from least squares regression.
 
-    The LeastSquaresImputer produces imputations using the least squares
-    methodology. The PredictiveImputer delegates work to this class when
-    the specified imputation strategy is 'least squares'. To implement least
-    squares, the imputer wraps the sklearn LinearRegression class. The
-    LeastSquaresImputer is a stand-alone class that will generate imputations
-    for missing values in a series, but its direct use is discouraged.
-    Instead, use PredictiveImputer with strategy = 'least squares'. The
-    Predictive imputer performs a number of important checks and error
-    handling procedures to ensure the data the LeastSquaresImputer
-    receives is formatted correctly for proper imputation.
+    The LeastSquaresImputer produces predictions using the least squares
+    methodology. The prediction from the line of best fit given a set of
+    predictors become the imputations. To implement least squares, the imputer
+    wraps the sklearn LinearRegression class. The imputer can be used
+    directly, but such behavior is discouraged because the imputer supports
+    Series only. LeastSquaresImptuer does not have the flexibility or
+    robustness of more complex imputers, nor is its behavior identical.
+    Instead, use PredictiveImputer(strategy="least squares").
     """
     # class variables
     strategy = methods.LS
@@ -45,8 +51,8 @@ class LeastSquaresImputer(BaseEstimator):
         """Fit the Imputer to the dataset by fitting linear model.
 
         Args:
-            X (pd.Dataframe): dataset to fit the imputer
-            y (pd.Series): response, which is eventually imputed
+            X (pd.Dataframe): dataset to fit the imputer.
+            y (pd.Series): response, which is eventually imputed.
 
         Returns:
             self. Instance of the class.
@@ -63,16 +69,16 @@ class LeastSquaresImputer(BaseEstimator):
     def impute(self, X):
         """Generate imputations using predictions from the fit linear model.
 
-        The transform method returns the values for imputation. Missing values
+        The impute method returns the values for imputation. Missing values
         in a given dataset are replaced with the predictions from the least
         squares regression line of best fit. This transform method returns
         those predictions.
 
         Args:
-            X (pd.DataFrame): predictors to determine imputed values
+            X (pd.DataFrame): predictors to determine imputed values.
 
         Returns:
-            np.array: imputations from transformation
+            np.array: imputed dataset.
         """
         # check if fitted then predict with least squares
         check_is_fitted(self, "statistics_")
@@ -80,42 +86,40 @@ class LeastSquaresImputer(BaseEstimator):
         return imp
 
     def fit_impute(self, X, y):
-        """Fit transform method to generate imputations where y is missing.
+        """Fit impute method to generate imputations where y is missing.
 
         Args:
             X (pd.Dataframe): predictors in the dataset.
-            y (pd.Series): response w/ missing values to impute
+            y (pd.Series): response w/ missing values to impute.
 
         Returns:
-            np.array: imputations from transformation
+            np.array: imputed dataset.
         """
         # transform occurs with records from X where y is missing
         miss_y_ix = y[y.isnull()].index
         return self.fit(X, y).impute(X.loc[miss_y_ix])
 
 class StochasticImputer(BaseEstimator):
-    """Class to impute missing values using least squares regression.
+    """Impute missing values adding error to least squares regression preds.
 
-    The LeastSquaresImputer produces imputations using the least squares
-    methodology. The PredictiveImputer delegates work to this class when
-    the specified imputation strategy is 'least squares'. To implement least
-    squares, the imputer wraps the sklearn LinearRegression class. The
-    LeastSquaresImputer is a stand-alone class that will generate imputations
-    for missing values in a series, but its direct use is discouraged.
-    Instead, use PredictiveImputer with strategy = 'least squares'. The
-    Predictive imputer performs a number of important checks and error
-    handling procedures to ensure the data the LeastSquaresImputer
-    receives is formatted correctly for proper imputation.
+    The StochasticImputer produces predictions using the least squares
+    methodology. The imputer then samples from the regression's error
+    distribution and adds the random draw to the prediction. This draw adds
+    the stochastic element to the imputations. The imputer can be used
+    directly, but such behavior is discouraged because the imputer supports
+    Series only. StochasticImputer does not have the flexibility or
+    robustness of more complex imputers, nor is its behavior identical.
+    Instead, use PredictiveImputer(strategy="stochastic").
     """
     # class variables
     strategy = methods.STOCHASTIC
 
     def __init__(self, verbose, **kwargs):
-        """Create an instance of the LeastSquaresImputer class.
+        """Create an instance of the StochasticImputer class.
 
         Args:
-            verbose (bool): print information to the console
-            **kwargs: keyword arguments passed to LinearRegression
+            verbose (bool): print information to the console.
+            **kwargs: keyword arguments passed to LinearRegression.
 
         """
         self.verbose = verbose
@@ -124,9 +128,14 @@ class StochasticImputer(BaseEstimator):
     def fit(self, X, y):
         """Fit the Imputer to the dataset by fitting linear model.
 
+        The fit step also generates predictions on the observed data. These
+        predictions are necessary to derive the mean_squared_error, which is
+        passed as a parameter to the impute phase. The MSE is used to create
+        the normal error distribution from which the imptuer draws.
+
         Args:
-            X (pd.Dataframe): dataset to fit the imputer
-            y (pd.Series): response, which is eventually imputed
+            X (pd.Dataframe): dataset to fit the imputer.
+            y (pd.Series): response, which is eventually imputed.
 
         Returns:
             self. Instance of the class.
@@ -145,16 +154,16 @@ class StochasticImputer(BaseEstimator):
     def impute(self, X):
         """Generate imputations using predictions from the fit linear model.
 
-        The transform method returns the values for imputation. Missing values
+        The impute method returns the values for imputation. Missing values
         in a given dataset are replaced with the predictions from the least
-        squares regression line of best fit. This transform method returns
-        those predictions.
+        squares regression line of best fit plus a random draw from the normal
+        error distribution.
 
         Args:
-            X (pd.DataFrame): predictors to determine imputed values
+            X (pd.DataFrame): predictors to determine imputed values.
 
         Returns:
-            np.array: imputations from transformation
+            np.array: imputed dataset.
         """
         # check if fitted then predict with least squares
         check_is_fitted(self, "statistics_")
@@ -168,14 +177,14 @@ class StochasticImputer(BaseEstimator):
         return imp
 
     def fit_impute(self, X, y):
-        """Fit transform method to generate imputations where y is missing.
+        """Fit impute method to generate imputations where y is missing.
 
         Args:
             X (pd.Dataframe): predictors in the dataset.
             y (pd.Series): response w/ missing values to impute
 
         Returns:
-            np.array: imputations from transformation
+            np.array: imputated dataset.
         """
         # transform occurs with records from X where y is missing
         miss_y_ix = y[y.isnull()].index

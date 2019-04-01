@@ -18,15 +18,13 @@ methods = method_names
 # pylint:disable=unused-argument
 
 class LOCFImputer(BaseEstimator):
-    """Techniques to carry last observation forward to impute missing data.
+    """Impute missing values by carrying the last observation forward.
 
-    More complex autoimpute Imputers delegate work to the LOCFImputer if locf
-    is a specified strategy for a given Series. That being said, LOCFImputer
-    is a stand-alone class and valid sklearn transformer. It can be used
-    directly, but such behavior is discouraged because this imputer
-    supports Series only. LOCFImputer does not have the flexibility or
-    robustness of more complex imputers, nor is its behavior identical.
-    Instead, use TimeSeriesImputer(strategy="locf").
+    LOCFImputer carries the last observation forward to impute missing data.
+    The imputer can be used directly, but such behavior is discouraged because
+    the imputer supports Series only. LOCFImputer does not have the
+    flexibility or robustness of more complex imputers, nor is its behavior
+    identical. Instead, use TimeSeriesImputer(strategy="locf").
     """
     # class variables
     strategy = methods.LOCF
@@ -37,8 +35,8 @@ class LOCFImputer(BaseEstimator):
         Args:
             start (any, optional): can be any value to impute first if first
                 is missing. Default is None, which ends up taking first
-                observed value found. Can also use "mean" to start with
-                mean of the series.
+                observed value found. Can also use "mean" to start with mean
+                of the series.
 
         Returns:
             self. Instance of class.
@@ -57,7 +55,7 @@ class LOCFImputer(BaseEstimator):
         """Fit the Imputer to the dataset.
 
         Args:
-            X (pd.Series): Dataset to fit the imputer
+            X (pd.Series): Dataset to fit the imputer.
 
         Returns:
             self. Instance of the class.
@@ -68,14 +66,15 @@ class LOCFImputer(BaseEstimator):
     def impute(self, X):
         """Perform imputations using the statistics generated from fit.
 
-        The transform method handles the actual imputation. Missing values
-        in a given dataset are replaced with the respective mean from fit.
+        The impute method handles the actual imputation. Missing values
+        in a given dataset are replaced with the last observation carried
+        forward.
 
         Args:
-            X (pd.Series): Dataset to fit the imputer
+            X (pd.Series): Dataset to impute missing data from fit.
 
         Returns:
-            pd.Series -- imputed dataset
+            np.array -- imputed dataset.
         """
         # check if fitted then impute with mean if first value
         # or impute with observation carried forward otherwise
@@ -87,19 +86,17 @@ class LOCFImputer(BaseEstimator):
         return X.fillna(method="ffill", inplace=False).values
 
     def fit_impute(self, X):
-        """Helper method to perform fit and imputation in one go."""
+        """Convenience method to perform fit and imputation in one go."""
         return self.fit(X).impute(X)
 
 class NOCBImputer(BaseEstimator):
-    """Techniques to carry next observation backward to impute missing data.
+    """Impute missing data by carrying the next observation backward.
 
-    More complex autoimpute Imputers delegate work to the NOCBImputer if nocb
-    is a specified strategy for a given Series. That being said, NOCBImputer
-    is a stand-alone class and valid sklearn transformer. It can be used
-    directly, but such behavior is discouraged because this imputer
-    supports Series only. NOCBImputer does not have the flexibility or
-    robustness of more complex imputers, nor is its behavior identical.
-    Instead, use TimeSeriesImputer(strategy="nocb").
+    NOCBImputer carries the next observation backward to impute missing data.
+    The imputer can be used directly, but such behavior is discouraged because
+    the imputer supports Series only. NOCBImputer does not have the
+    flexibility or robustness of more complex imputers, nor is its behavior
+    identical. Instead, use TimeSeriesImputer(strategy="nocb").
     """
     # class variables
     strategy = methods.NOCB
@@ -141,14 +138,15 @@ class NOCBImputer(BaseEstimator):
     def impute(self, X):
         """Perform imputations using the statistics generated from fit.
 
-        The transform method handles the actual imputation. Missing values
-        in a given dataset are replaced with the respective mean from fit.
+        The impute method handles the actual imputation. Missing values
+        in a given dataset are replaced with the next observation carried
+        backward.
 
         Args:
-            X (pd.Series): Dataset to fit the imputer
+            X (pd.Series): Dataset to impute missing data from fit.
 
         Returns:
-            pd.Series -- imputed dataset
+            np.array -- imputed dataset.
         """
         # check if fitted then impute with mean if first value
         # or impute with observation carried backward otherwise
@@ -160,5 +158,5 @@ class NOCBImputer(BaseEstimator):
         return X.fillna(method="ffill", inplace=False).values
 
     def fit_impute(self, X):
-        """Helper method to perform fit and imputation in one go."""
+        """Convenience method to perform fit and imputation in one go."""
         return self.fit(X).impute(X)

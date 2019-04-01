@@ -17,13 +17,13 @@ methods = method_names
 # pylint:disable=unnecessary-pass
 
 class CategoricalImputer(BaseEstimator):
-    """Techniques to impute w/ draw from dataset's categorical distribution.
+    """Impute missing data w/ draw from dataset's categorical distribution.
 
-    More complex autoimpute Imputers delegate work to the CategoricalImputer
-    if categorical is a specified strategy. That being said,
-    CategoricalImputer is a stand-alone class and valid sklearn transformer.
-    It can be used directly, but such behavior is discouraged, because this
-    imputer supports Series only. CategoricalImputer does not have the
+    The categorical imputer computes the proportion of observed values for
+    each category within a discrete dataset. The imputer then samples the
+    distribution to impute missing values with a respective random draw. The
+    imputer can be used directly, but such behavior is discouraged because
+    the imputer supports Series only. CategoricalImputer does not have the
     flexibility or robustness of more complex imputers, nor is its behavior
     identical. Instead, use SingleImputer(strategy="categorical").
     """
@@ -38,7 +38,7 @@ class CategoricalImputer(BaseEstimator):
         """Fit the Imputer to the dataset and calculate proportions.
 
         Args:
-            X (pd.Series): Dataset to fit the imputer
+            X (pd.Series): Dataset to fit the imputer.
 
         Returns:
             self. Instance of the class.
@@ -52,16 +52,16 @@ class CategoricalImputer(BaseEstimator):
     def impute(self, X):
         """Perform imputations using the statistics generated from fit.
 
-        The transform method handles the actual imputation. Transform
-        constructs a categoricalal distribution for each feature using the mean
-        and variance from fit. It then imputes missing values with a
-        random draw from the respective distribution
+        The impute method handles the actual imputation. Transform
+        constructs a categorical distribution for each feature using the
+        proportions of observed values from fit. It then imputes missing
+        values with a random draw from the respective distribution.
 
         Args:
-            X (pd.Series): Dataset to fit the imputer
+            X (pd.Series): Dataset to impute missing data from fit.
 
         Returns:
-            pd.Series -- imputed dataset
+            np.array -- imputed dataset.
         """
         # check if fitted and identify location of missingness
         check_is_fitted(self, "statistics_")
@@ -76,5 +76,5 @@ class CategoricalImputer(BaseEstimator):
         return imp
 
     def fit_impute(self, X):
-        """Helper method to perform fit and imputation in one go."""
+        """Convenience method to perform fit and imputation in one go."""
         return self.fit(X).impute(X)

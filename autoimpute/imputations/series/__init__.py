@@ -1,20 +1,10 @@
 """Manage the series imputations folder from the autoimpute package.
 
 This module handles imports from the series imputations folder that should be
-accessible whenever someone imports autoimpute.imputations.series. The list
-below specifies the methods and classes that are available on import.
-
-Imported:
-    DefaultSingleImputer
-    DefaultTimeSeriesImputer
-    MeanImputer
-    MedianImputer
-    RandomImputer
-    NormImputer
-    CategoricalImputer
-    NOCBImputer
-    LOCFImputer
-    InterpolateImputer
+accessible whenever someone imports autoimpute.imputations.series. Although
+these imputers are stand-alone classes, their direct use is discouraged.
+More robust imputers from the dataframe folder delegate work to these imputers
+whenever their respective strategies are specified.
 
 This module handles `from autoimpute.imputations.series import *` with the
 __all__ variable below. This command imports the main public classes and
@@ -33,6 +23,7 @@ from .interpolation import InterpolateImputer
 from .linear_regression import LeastSquaresImputer, StochasticImputer
 from .logistic_regression import BinaryLogisticImputer, MultiLogisticImputer
 from .bayesian_regression import BayesLeastSquaresImputer
+from .bayesian_regression import BayesBinaryLogisticImputer
 
 __all__ = [
     "DefaultSingleImputer",
@@ -50,5 +41,6 @@ __all__ = [
     "StochasticImputer",
     "BinaryLogisticImputer",
     "MultiLogisticImputer",
-    "BayesLeastSquaresImputer"
+    "BayesLeastSquaresImputer",
+    "BayesBinaryLogisticImputer"
 ]

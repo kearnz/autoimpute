@@ -1,8 +1,7 @@
 """This module implements mode imputation via the ModeImputer.
 
-The ModeImputer computes the mode of observed values then imputes missing
-data with the computed mode. Mode imputation is univariate. Right now,
-this imputer supports imputation on Series only. Use
+The ModeImputer uses the mode of observed data to impute missing values.
+Right now, the imputer supports imputation on Series only. Use
 SingleImputer(strategy="mode") to broadcast the imputation strategy across
 multiple columns of a DataFrame.
 """
@@ -16,15 +15,15 @@ methods = method_names
 # pylint:disable=attribute-defined-outside-init
 
 class ModeImputer(BaseEstimator):
-    """Techniques to impute the mode for missing values within a dataset.
+    """Impute missing values with the mode of the observed data.
 
-    More complex autoimpute Imputers delegate work to the ModeImputer if
-    mode is a specified strategy for a given Series. That being said,
-    ModeImputer is a stand-alone class and valid sklearn transformer. It can
-    be used directly, but such behavior is discouraged because this imputer
-    supports Series only. ModeImputer does not have the flexibility or
-    robustness of more complex imputers, nor is its behavior identical.
-    Instead, use SingleImputer(strategy="mode").
+    The mode imputer calculates the mode of the observed dataset and uses
+    it to impute missing observations. In the case where there are more than
+    one mode, the user can supply a `fill_strategy` to choose the mode.
+    The imputer can be used directly, but such behavior is discouraged because
+    the imputer supports Series only. ModeImputer does not have the
+    flexibility or robustness of more complex imputers, nor is its behavior
+    identical. Instead, use SingleImputer(strategy="mode").
     """
     # class variables
     strategy = methods.MODE
@@ -36,6 +35,10 @@ class ModeImputer(BaseEstimator):
         Args:
             fill_strategy (str, Optional): strategy to pick mode, if multiple.
                 Default is None, which means first mode taken.
+                Options include None, first, last, random.
+                First, None -> select first of modes.
+                Last -> select the last of modes.
+                Random -> randomly sample from modes with replacement.
         """
         self.fill_strategy = fill_strategy
 
@@ -52,7 +55,7 @@ class ModeImputer(BaseEstimator):
             fs (str, None): if None, use first mode.
 
         Raises:
-            ValueError: not a valid fill strategy for ModeImputer
+            ValueError: not a valid fill strategy for ModeImputer.
         """
         if fs not in self.fill_strategies:
             err = f"{fs} not a valid fill strategy for ModeImputer"
@@ -63,7 +66,7 @@ class ModeImputer(BaseEstimator):
         """Fit the Imputer to the dataset and calculate the mode.
 
         Args:
-            X (pd.Series): Dataset to fit the imputer
+            X (pd.Series): Dataset to fit the imputer.
 
         Returns:
             self. Instance of the class.
@@ -75,22 +78,16 @@ class ModeImputer(BaseEstimator):
     def impute(self, X):
         """Perform imputations using the statistics generated from fit.
 
-        The transform method handles the actual imputation. Missing values
-        in a given dataset are replaced with the mode observed from fit.
-        Note that there can be more than one mode. If this is the case, there
-        are multiple possibilities based on the "fill_strategy" parameter. If
-        fill_strategy=None or "first", use the first mode. This is default.
-        If fill_strategy="last", use the last mode. If fill_strategy="random",
-        randomly sample from the modes and impute.
+        This method handles the actual imputation. Missing values in a given
+        dataset are replaced with the mode observed from fit. Note that there
+        can be more than one mode. If more than one mode, use the
+        fill_strategy to determine how to use the modes.
 
         Args:
-            X (pd.Series): Dataset to fit the imputer
+            X (pd.Series): Dataset to impute missing data from fit.
 
         Returns:
-            pd.Series -- imputed dataset
-
-        Raises:
-            ValueError: fill_strategy not valid.
+            float or np.array -- imputed dataset.
         """
         # check is fitted and identify locations of missingness
         check_is_fitted(self, "statistics_")
@@ -119,12 +116,11 @@ class ModeImputer(BaseEstimator):
                 imp = imp[0]
             else:
                 samples = np.random.choice(imp, len(ind))
-                imp = pd.Series(samples, index=ind)
+                imp = pd.Series(samples, index=ind).values
 
         # finally, fill in the right fill values for missing X
-        X.fillna(imp, inplace=True)
-        return X
+        return imp
 
     def fit_impute(self, X):
-        """Helper method to perform fit and imputation in one go."""
+        """Convenience method to perform fit and imputation in one go."""
         return self.fit(X).impute(X)

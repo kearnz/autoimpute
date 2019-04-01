@@ -17,7 +17,7 @@ from .base_imputer import BaseImputer
 from .single_imputer import SingleImputer
 from ..series import LeastSquaresImputer, StochasticImputer
 from ..series import BinaryLogisticImputer, MultiLogisticImputer
-from ..series import BayesLeastSquaresImputer
+from ..series import BayesLeastSquaresImputer, BayesBinaryLogisticImputer
 methods = method_names
 
 # pylint:disable=attribute-defined-outside-init
@@ -63,7 +63,8 @@ class PredictiveImputer(BaseImputer, BaseEstimator, TransformerMixin):
         methods.STOCHASTIC: StochasticImputer,
         methods.BINARY_LOGISTIC: BinaryLogisticImputer,
         methods.MULTI_LOGISTIC: MultiLogisticImputer,
-        methods.BAYESIAN_LS: BayesLeastSquaresImputer
+        methods.BAYESIAN_LS: BayesLeastSquaresImputer,
+        methods.BAYESIAN_BINARY_LOGISTIC: BayesBinaryLogisticImputer
     }
 
     def __init__(self, strategy="least squares", predictors="all",

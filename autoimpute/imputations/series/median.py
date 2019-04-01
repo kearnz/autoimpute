@@ -1,8 +1,7 @@
 """This module implements median imputation via the MedianImputer.
 
-The MedianImputer computes the median of observed values then imputes missing
-data with the computed median. Median imputation is univariate. Right now,
-this imputer supports imputation on Series only. Use
+The MedianImputer imputes missing data with the median of observed data.
+Right now, this imputer supports imputation on Series only. Use
 SingleImputer(strategy="median") to broadcast the imputation strategy across
 multiple columns of a DataFrame.
 """
@@ -16,15 +15,13 @@ methods = method_names
 # pylint:disable=unnecessary-pass
 
 class MedianImputer(BaseEstimator):
-    """Techniques to impute the median for missing values within a dataset.
+    """Impute missing values with the median of the observed data.
 
-    More complex autoimpute Imputers delegate work to the MedianImputer if
-    median is a specified strategy for a given Series. That being said,
-    MedianImputer is a stand-alone class and valid sklearn transformer. It can
-    be used directly, but such behavior is discouraged because this imputer
-    supports Series only. MedianImputer does not have the flexibility or
-    robustness of more complex imputers, nor is its behavior identical.
-    Instead, use SingleImputer(strategy="median").
+    This imputer imputes missing values with the median of observed data.
+    The imputer can be used directly, but such behavior is discouraged because
+    the imputer supports Series only. MedianImputer does not have the
+    flexibility or robustness of more complex imputers, nor is its behavior
+    identical. Instead, use SingleImputer(strategy="median").
     """
     # class variables
     strategy = methods.MEDIAN
@@ -37,7 +34,7 @@ class MedianImputer(BaseEstimator):
         """Fit the Imputer to the dataset and calculate the median.
 
         Args:
-            X (pd.Series): Dataset to fit the imputer
+            X (pd.Series): Dataset to fit the imputer.
 
         Returns:
             self. Instance of the class.
@@ -50,14 +47,14 @@ class MedianImputer(BaseEstimator):
     def impute(self, X):
         """Perform imputations using the statistics generated from fit.
 
-        The transform method handles the actual imputation. Missing values
+        The impute method handles the actual imputation. Missing values
         in a given dataset are replaced with the respective median from fit.
 
         Args:
-            X (pd.Series): Dataset to fit the imputer
+            X (pd.Series): Dataset to impute missing data from fit.
 
         Returns:
-            pd.Series -- imputed dataset
+            float -- imputed dataset.
         """
         # check is fitted then impute with median
         check_is_fitted(self, "statistics_")
@@ -66,5 +63,5 @@ class MedianImputer(BaseEstimator):
         return imp
 
     def fit_impute(self, X):
-        """Helper method to perform fit and imputation in one go."""
+        """Convenience method to perform fit and imputation in one go."""
         return self.fit(X).impute(X)

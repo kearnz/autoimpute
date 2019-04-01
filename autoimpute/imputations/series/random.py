@@ -15,12 +15,10 @@ methods = method_names
 # pylint:disable=unnecessary-pass
 
 class RandomImputer(BaseEstimator):
-    """Techniques to impute missing data using random draws from observed.
+    """Impute missing data using random draws from observed data.
 
-    More complex autoimpute Imputers delegate work to the RandomImputer if
-    random is a specified strategy for a given Series. That being said,
-    RandomImputer is a stand-alone class and valid sklearn transformer. It can
-    be used directly, but such behavior is discouraged because this imputer
+    The RandomImputer samples with replacement from observed data. The imputer
+    can be used directly, but such behavior is discouraged because the imputer
     supports Series only. RandomImputer does not have the flexibility or
     robustness of more complex imputers, nor is its behavior identical.
     Instead, use SingleImputer(strategy="random").
@@ -36,7 +34,7 @@ class RandomImputer(BaseEstimator):
         """Fit the Imputer to the dataset and get unique observed to sample.
 
         Args:
-            X (pd.Series): Dataset to fit the imputer
+            X (pd.Series): Dataset to fit the imputer.
 
         Returns:
             self. Instance of the class.
@@ -50,15 +48,15 @@ class RandomImputer(BaseEstimator):
     def impute(self, X):
         """Perform imputations using the statistics generated from fit.
 
-        The transform method handles the actual imputation. Missing values
-        in a given dataset are replaced with a random draw from unique set
-        of observed values fit.
+        The transform method handles the actual imputation. Each missing value
+        in a given dataset is replaced with a random draw from unique set of
+        observed values determined during the fit stage.
 
         Args:
-            X (pd.Series): Dataset to fit the imputer
+            X (pd.Series): Dataset to impute missing data from fit.
 
         Returns:
-            pd.Series -- imputed dataset
+            np.array -- imputed dataset
         """
         # check if fitted and identify location of missingness
         check_is_fitted(self, "statistics_")
@@ -70,5 +68,5 @@ class RandomImputer(BaseEstimator):
         return imp
 
     def fit_impute(self, X):
-        """Helper method to perform fit and imputation in one go."""
+        """Convenience method to perform fit and imputation in one go."""
         return self.fit(X).impute(X)
