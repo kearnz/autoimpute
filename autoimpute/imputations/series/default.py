@@ -16,6 +16,8 @@ from autoimpute.imputations import method_names
 from .mean import MeanImputer
 from .mode import ModeImputer
 from .interpolation import InterpolateImputer
+from .linear_regression import LeastSquaresImputer
+from .logistic_regression import MultiLogisticImputer
 methods = method_names
 # pylint:disable=attribute-defined-outside-init
 # pylint:disable=unnecessary-pass
@@ -155,7 +157,7 @@ class DefaultBaseImputer:
             err = f"{imp} is not a valid Imputer"
             raise ValueError(err) from ae
 
-    def fit(self, X):
+    def fit(self, X, y):
         """Fit the Imputer to the dataset and determine the right approach.
 
         Args:
@@ -166,12 +168,20 @@ class DefaultBaseImputer:
         """
         # delegate numeric features to the num imputer
         if is_numeric_dtype(X):
-            stats = {"param": self.num_imputer.fit(X),
-                     "strategy": self.num_imputer.strategy}
+            if y is None:
+                stats = {"param": self.num_imputer.fit(X),
+                         "strategy": self.num_imputer.strategy}
+            else:
+                stats = {"param": self.num_imputer.fit(X, y),
+                         "strategy": self.num_imputer.strategy}
         # delegate categorical features to the cat imputer
         elif is_string_dtype(X):
-            stats = {"param": self.cat_imputer.fit(X),
-                     "strategy": self.cat_imputer.strategy}
+            if y is None:
+                stats = {"param": self.cat_imputer.fit(X),
+                         "strategy": self.cat_imputer.strategy}
+            else:
+                stats = {"param": self.cat_imputer.fit(X, y),
+                         "strategy": self.cat_imputer.strategy}
         # time series does not need imputation, as we require it full
         else:
             stats = {"param": None, "strategy": None}
@@ -199,9 +209,9 @@ class DefaultBaseImputer:
             X_ = imp.impute(X)
             return X_
 
-    def fit_impute(self, X):
-        """Helper method to perform fit and imputation in one go."""
-        return self.fit(X).impute(X)
+    def fit_impute(self, X, y):
+        """Convenience method to perform fit and imputation in one go."""
+        return self.fit(X, y).impute(X)
 
 class DefaultSingleImputer(DefaultBaseImputer, BaseEstimator):
     """Impute missing data using default methods for SingleImputer.
@@ -255,9 +265,9 @@ class DefaultSingleImputer(DefaultBaseImputer, BaseEstimator):
             cat_kwgs=cat_kwgs
         )
 
-    def fit(self, X):
+    def fit(self, X, y=None):
         """Defer fit to the DefaultBaseImputer."""
-        super().fit(X)
+        super().fit(X, y)
         return self
 
     def impute(self, X):
@@ -317,9 +327,71 @@ class DefaultTimeSeriesImputer(DefaultBaseImputer, BaseEstimator):
             cat_kwgs=cat_kwgs
         )
 
-    def fit(self, X):
+    def fit(self, X, y=None):
         """Defer fit to the DefaultBaseImputer."""
-        super().fit(X)
+        super().fit(X, y)
+        return self
+
+    def impute(self, X):
+        """Defer transform to the DefaultBaseImputer."""
+        X_ = super().impute(X)
+        return X_
+
+class DefaultPredictiveImputer(DefaultBaseImputer, BaseEstimator):
+    """Impute missing data using default methods for PredictiveImputer.
+
+    This imputer is the default imputer for the PredictiveImputer class. When
+    an end-user does not supply a strategy, the default imputer determines how
+    to impute based on the column type of each column in a dataframe. The
+    imputer can be used directly, but such behavior is discouraged because the
+    imputer supports Series only. DefaultPredictiveImputer does not have the
+    flexibility or robustness of more complex imputers, nor is its behavior
+    identical. Instead, use PredictiveImputer(strategy="default").
+    """
+    # class variables
+    strategy = methods.DEFAULT
+
+    def __init__(
+            self,
+            num_imputer=LeastSquaresImputer,
+            cat_imputer=MultiLogisticImputer,
+            num_kwgs=None,
+            cat_kwgs=None
+        ):
+        """Create an instance of the DefaultSingleImputer class.
+
+        The SingleImputer delegates work to the DefaultSingleImputer if
+        strategy="default" or no strategy is given when SingleImputer is
+        instantiated. The DefaultSingleImputer then determines how to impute
+        numerical and categorical columns by default. It does so by passing
+        its arguments to the DefaultBaseImputer, which handles validation and
+        instantiation of default numerical and categorical imputers.
+
+        Args:
+            num_imputer (Imputer, Optional): valid Imputer for numerical data.
+                Default is MeanImputer.
+            cat_imputer (Imputer, Optional): valid Imputer for categorical
+                data. Default is ModeImputer.
+            num_kwgs (dict, optional): Keyword args for numerical imputer.
+                Default is None.
+            cat_kwgs (dict, optional): keyword args for categorical imputer.
+                Default is {"fill_strategy": "random"}.
+
+        Returns:
+            self. Instance of class.
+        """
+        # delegate to DefaultBaseImputer
+        DefaultBaseImputer.__init__(
+            self,
+            num_imputer=num_imputer,
+            cat_imputer=cat_imputer,
+            num_kwgs=num_kwgs,
+            cat_kwgs=cat_kwgs
+        )
+
+    def fit(self, X, y):
+        """Defer fit to the DefaultBaseImputer."""
+        super().fit(X, y)
         return self
 
     def impute(self, X):

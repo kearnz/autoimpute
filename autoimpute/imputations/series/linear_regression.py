@@ -16,7 +16,6 @@ from sklearn.linear_model import LinearRegression
 from sklearn.metrics import mean_squared_error
 from autoimpute.imputations import method_names
 from autoimpute.imputations.errors import _not_num_series
-from autoimpute.utils.helpers import _get_observed
 methods = method_names
 # pylint:disable=attribute-defined-outside-init
 # pylint:
@@ -36,15 +35,13 @@ class LeastSquaresImputer(BaseEstimator):
     # class variables
     strategy = methods.LS
 
-    def __init__(self, verbose, **kwargs):
+    def __init__(self, **kwargs):
         """Create an instance of the LeastSquaresImputer class.
 
         Args:
-            verbose (bool): print information to the console
             **kwargs: keyword arguments passed to LinearRegression
 
         """
-        self.verbose = verbose
         self.lm = LinearRegression(**kwargs)
 
     def fit(self, X, y):
@@ -57,12 +54,8 @@ class LeastSquaresImputer(BaseEstimator):
         Returns:
             self. Instance of the class.
         """
-        # linear model fit on observed values only
         _not_num_series(self.strategy, y)
-        X_, y_ = _get_observed(
-            self.strategy, X, y, self.verbose
-        )
-        self.lm.fit(X_, y_)
+        self.lm.fit(X, y)
         self.statistics_ = {"strategy": self.strategy}
         return self
 
@@ -114,15 +107,13 @@ class StochasticImputer(BaseEstimator):
     # class variables
     strategy = methods.STOCHASTIC
 
-    def __init__(self, verbose, **kwargs):
+    def __init__(self, **kwargs):
         """Create an instance of the StochasticImputer class.
 
         Args:
-            verbose (bool): print information to the console.
             **kwargs: keyword arguments passed to LinearRegression.
 
         """
-        self.verbose = verbose
         self.lm = LinearRegression(**kwargs)
 
     def fit(self, X, y):
@@ -140,14 +131,10 @@ class StochasticImputer(BaseEstimator):
         Returns:
             self. Instance of the class.
         """
-        # linear model fit on observed values only
         _not_num_series(self.strategy, y)
-        X_, y_ = _get_observed(
-            self.strategy, X, y, self.verbose
-        )
-        self.lm.fit(X_, y_)
-        preds = self.lm.predict(X_)
-        mse = mean_squared_error(y_, preds)
+        self.lm.fit(X, y)
+        preds = self.lm.predict(X)
+        mse = mean_squared_error(y, preds)
         self.statistics_ = {"param": mse, "strategy": self.strategy}
         return self
 

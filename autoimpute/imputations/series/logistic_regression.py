@@ -15,7 +15,6 @@ from sklearn.base import BaseEstimator
 from sklearn.utils.validation import check_is_fitted
 from sklearn.linear_model import LogisticRegression
 from autoimpute.imputations import method_names
-from autoimpute.utils.helpers import _get_observed
 methods = method_names
 # pylint:disable=attribute-defined-outside-init
 # pylint:
@@ -35,7 +34,7 @@ class BinaryLogisticImputer(BaseEstimator):
     # class variables
     strategy = methods.BINARY_LOGISTIC
 
-    def __init__(self, verbose, **kwargs):
+    def __init__(self, **kwargs):
         """Create an instance of the BinaryLogisticImputer class.
 
         Args:
@@ -43,7 +42,6 @@ class BinaryLogisticImputer(BaseEstimator):
             **kwargs: keyword arguments passed to LogisticRegresion.
 
         """
-        self.verbose = verbose
         self.solver = kwargs.pop("solver", "liblinear")
         self.glm = LogisticRegression(solver=self.solver, **kwargs)
 
@@ -57,17 +55,13 @@ class BinaryLogisticImputer(BaseEstimator):
         Returns:
             self. Instance of the class.
         """
-        # logistic model fit on observed values only
-        X_, y_ = _get_observed(
-            self.strategy, X, y, self.verbose
-        )
-        y_ = y_.astype("category").cat
-        y_cat_l = len(y_.codes.unique())
+        y = y.astype("category").cat
+        y_cat_l = len(y.codes.unique())
         if y_cat_l > 2:
             err = "Binary requires 2 categories. Use multinomial instead."
             raise ValueError(err)
-        self.glm.fit(X_, y_.codes)
-        self.statistics_ = {"param": y_.categories, "strategy": self.strategy}
+        self.glm.fit(X, y.codes)
+        self.statistics_ = {"param": y.categories, "strategy": self.strategy}
         return self
 
     def impute(self, X):
@@ -124,15 +118,13 @@ class MultiLogisticImputer(BaseEstimator):
     # class variables
     strategy = methods.MULTI_LOGISTIC
 
-    def __init__(self, verbose, **kwargs):
+    def __init__(self, **kwargs):
         """Create an instance of the MultiLogisticImputer class.
 
         Args:
-            verbose (bool): print information to the console.
             **kwargs: keyword arguments passed to LogisticRegression.
 
         """
-        self.verbose = verbose
         self.solver = kwargs.pop("solver", "saga")
         self.multiclass = kwargs.pop("multi_class", "multinomial")
         self.glm = LogisticRegression(
@@ -151,17 +143,13 @@ class MultiLogisticImputer(BaseEstimator):
         Returns:
             self. Instance of the class.
         """
-        # logistic model fit on observed values only
-        X_, y_ = _get_observed(
-            self.strategy, X, y, self.verbose
-        )
-        y_ = y_.astype("category").cat
-        y_cat_l = len(y_.codes.unique())
+        y = y.astype("category").cat
+        y_cat_l = len(y.codes.unique())
         if y_cat_l == 2:
             w = "Multiple categories (c) expected. Use binary instead if c=2."
             warnings.warn(w)
-        self.glm.fit(X_, y_.codes)
-        self.statistics_ = {"param": y_.categories, "strategy": self.strategy}
+        self.glm.fit(X, y.codes)
+        self.statistics_ = {"param": y.categories, "strategy": self.strategy}
         return self
 
     def impute(self, X):

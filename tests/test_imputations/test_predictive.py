@@ -7,6 +7,11 @@ dfs = dataframes
 
 def test_new_predictive_imputer():
     """Test the new imputer."""
+    # test the default imputer
+    imp = _PI()
+    imp.fit_transform(dfs.df_mix)
+
+    # test specific strategies
     strategy = {"gender": "bayesian binary logistic",
                 "age": "bayesian least squares",
                 "amm": "least squares"}

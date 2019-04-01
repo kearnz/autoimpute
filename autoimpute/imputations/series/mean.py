@@ -26,9 +26,9 @@ class MeanImputer(BaseEstimator):
     # class variables
     strategy = methods.MEAN
 
-    def __init__(self):
+    def __init__(self, verbose):
         """Create an instance of the MeanImputer class."""
-        pass
+        self.verbose = verbose
 
     def fit(self, X):
         """Fit the Imputer to the dataset and calculate the mean.

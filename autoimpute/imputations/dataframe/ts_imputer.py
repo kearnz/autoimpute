@@ -236,17 +236,25 @@ class TimeSeriesImputer(BaseImputer, BaseEstimator, TransformerMixin):
         for column, method in self._strats.items():
             imp = self.strategies[method]
             imp_params = self._fit_init_params(column, method, self.imp_kwgs)
+
+            # try to create an instance of the imputer, given the args
             try:
-                imputer = imp() if imp_params is None else imp(**imp_params)
-                imputer.fit(X[column])
-                self.statistics_[column] = imputer
-                # print strategies if verbose
-                if self.verbose:
-                    print(f"Column: {column}, Strategy: {method}")
+                if imp_params is None:
+                    imputer = imp()
+                else:
+                    imputer = imp(**imp_params)
             except TypeError as te:
                 name = imp.__name__
                 err = f"Invalid arguments passed to {name} __init__ method."
                 raise ValueError(err) from te
+
+            # if succeeds, fit the method to the column of interest
+            imputer.fit(X[column])
+            self.statistics_[column] = imputer
+
+            # print strategies if verbose
+            if self.verbose:
+                print(f"Column: {column}, Strategy: {method}")
         return self
 
     @check_nan_columns

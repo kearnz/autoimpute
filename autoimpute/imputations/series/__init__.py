@@ -12,6 +12,7 @@ methods from autoimpute.imputations.series.
 """
 
 from .default import DefaultSingleImputer, DefaultTimeSeriesImputer
+from .default import DefaultPredictiveImputer
 from .mean import MeanImputer
 from .median import MedianImputer
 from .mode import ModeImputer
@@ -28,6 +29,7 @@ from .bayesian_regression import BayesBinaryLogisticImputer
 __all__ = [
     "DefaultSingleImputer",
     "DefaultTimeSeriesImputer",
+    "DefaultPredictiveImputer",
     "MeanImputer",
     "MedianImputer",
     "ModeImputer",

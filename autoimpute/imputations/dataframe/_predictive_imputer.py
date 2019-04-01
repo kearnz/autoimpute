@@ -12,9 +12,11 @@ import pandas as pd
 from sklearn.base import BaseEstimator, TransformerMixin
 from sklearn.utils.validation import check_is_fitted
 from autoimpute.utils import check_nan_columns
+from autoimpute.utils.helpers import _get_observed
 from autoimpute.imputations import method_names
 from .base_imputer import BaseImputer
 from .single_imputer import SingleImputer
+from ..series import DefaultPredictiveImputer
 from ..series import LeastSquaresImputer, StochasticImputer
 from ..series import BinaryLogisticImputer, MultiLogisticImputer
 from ..series import BayesLeastSquaresImputer, BayesBinaryLogisticImputer
@@ -59,6 +61,7 @@ class PredictiveImputer(BaseImputer, BaseEstimator, TransformerMixin):
     """
 
     strategies = {
+        methods.DEFAULT: DefaultPredictiveImputer,
         methods.LS: LeastSquaresImputer,
         methods.STOCHASTIC: StochasticImputer,
         methods.BINARY_LOGISTIC: BinaryLogisticImputer,
@@ -67,8 +70,8 @@ class PredictiveImputer(BaseImputer, BaseEstimator, TransformerMixin):
         methods.BAYESIAN_BINARY_LOGISTIC: BayesBinaryLogisticImputer
     }
 
-    def __init__(self, strategy="least squares", predictors="all",
-                 imp_kwgs=None, copy=True, scaler=None, verbose=None):
+    def __init__(self, strategy="default", predictors="all",
+                 imp_kwgs=None, copy=True, scaler=None, verbose=False):
         """Create an instance of the PredictiveImputer class.
 
         As with sklearn classes, all arguments take default values. Therefore,
@@ -211,9 +214,9 @@ class PredictiveImputer(BaseImputer, BaseEstimator, TransformerMixin):
             # try to create an instance of the imputer, given the args
             try:
                 if imp_params is None:
-                    imputer = imp(self.verbose)
+                    imputer = imp()
                 else:
-                    imputer = imp(self.verbose, **imp_params)
+                    imputer = imp(**imp_params)
             except TypeError as te:
                 name = imp.__name__
                 err = f"Invalid arguments passed to {name} __init__ method."
@@ -222,8 +225,14 @@ class PredictiveImputer(BaseImputer, BaseEstimator, TransformerMixin):
             # if instantiation succeeds, fit the imputer to the dataset.
             x, _ = self._prep_predictor_cols(column, self._preds)
             y = X[column]
-            imputer.fit(x, y)
+
+            # fit the data on observed values only.
+            x_, y_ = _get_observed(
+                self.strategy, x, y, self.verbose
+            )
+            imputer.fit(x_, y_)
             self.statistics_[column] = imputer
+
             # print strategies if verbose
             if self.verbose:
                 print(f"Column: {column}, Strategy: {method}")

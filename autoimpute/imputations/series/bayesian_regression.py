@@ -16,7 +16,6 @@ from sklearn.base import BaseEstimator
 from sklearn.utils.validation import check_is_fitted
 from autoimpute.imputations import method_names
 from autoimpute.imputations.errors import _not_num_series
-from autoimpute.utils.helpers import _get_observed, _pymc3_logger
 methods = method_names
 # pylint:disable=attribute-defined-outside-init
 # pylint:disable=no-member
@@ -39,8 +38,8 @@ class BayesLeastSquaresImputer(BaseEstimator):
     # class variables
     strategy = methods.BAYESIAN_LS
 
-    def __init__(self, verbose, am=0, asd=10, bm=0, bsd=10, sig=1,
-                 sample=1000, tune=1000, init="auto", fill_value=None):
+    def __init__(self, am=0, asd=10, bm=0, bsd=10, sig=1, sample=1000,
+                 tune=1000, init="auto", fill_value=None):
         """Create an instance of the BayesLeastSquaresImputer class.
 
         The class requires multiple arguments necessary to create priors for
@@ -51,7 +50,7 @@ class BayesLeastSquaresImputer(BaseEstimator):
         include arguments used to sample the posterior distributions.
 
         Args:
-            verbose (bool): print information to the console.
+            verbose (bool, Optional): print to console. Default is False.
             am (float, Optional): mean of alpha prior. Default 0.
             asd (float, Optional): std. deviation of alpha prior. Default 10.
             bm (float, Optional): mean of beta priors. Default 0.
@@ -68,7 +67,6 @@ class BayesLeastSquaresImputer(BaseEstimator):
                 create imputations. Default is None. 'random' and 'mean'
                 supported for explicit options.
         """
-        self.verbose = verbose
         self.am = am
         self.asd = asd
         self.bm = bm
@@ -89,12 +87,8 @@ class BayesLeastSquaresImputer(BaseEstimator):
         Returns:
             self. Instance of the class.
         """
-        # linear model fit on observed values only
         _not_num_series(self.strategy, y)
-        X_, y_ = _get_observed(
-            self.strategy, X, y, self.verbose
-        )
-        nc = len(X_.columns)
+        nc = len(X.columns)
 
         # initialize model for bayesian linear reg. Default vals for priors
         # assume data is scaled and centered. Convergence can struggle or fail
@@ -105,8 +99,8 @@ class BayesLeastSquaresImputer(BaseEstimator):
             alpha = pm.Normal("alpha", self.am, sd=self.asd)
             beta = pm.Normal("beta", self.bm, sd=self.bsd, shape=nc)
             sigma = pm.HalfCauchy("σ", self.sig)
-            mu = alpha+beta.dot(X_.T)
-            score = pm.Normal("score", mu, sd=sigma, observed=y_)
+            mu = alpha+beta.dot(X.T)
+            score = pm.Normal("score", mu, sd=sigma, observed=y)
         self.statistics_ = {"param": fit_model, "strategy": self.strategy}
         return self
 
@@ -125,7 +119,6 @@ class BayesLeastSquaresImputer(BaseEstimator):
         """
         # check if fitted then predict with least squares
         check_is_fitted(self, "statistics_")
-        progress = _pymc3_logger(self.verbose)
         model = self.statistics_["param"]
 
         # add a Deterministic node for each missing value
@@ -138,8 +131,7 @@ class BayesLeastSquaresImputer(BaseEstimator):
             tr = pm.sample(
                 sample=self.sample,
                 tune=self.tune,
-                init=self.init,
-                progress_bar=progress
+                init=self.init
             )
         self.trace_ = tr
 
@@ -185,8 +177,8 @@ class BayesBinaryLogisticImputer(BaseEstimator):
     # class variables
     strategy = methods.BAYESIAN_BINARY_LOGISTIC
 
-    def __init__(self, verbose, am=0, asd=10, bm=0, bsd=10, thresh=0.5,
-                 sample=1000, tune=1000, init="auto", fill_value=None):
+    def __init__(self, am=0, asd=10, bm=0, bsd=10, thresh=0.5, sample=1000,
+                 tune=1000, init="auto", fill_value=None):
         """Create an instance of the BayesLeastSquaresImputer class.
 
         The class requires multiple arguments necessary to create priors for
@@ -198,7 +190,6 @@ class BayesBinaryLogisticImputer(BaseEstimator):
         include arguments used to sample the posterior distributions.
 
         Args:
-            verbose (bool): print information to the console.
             am (float, Optional): mean of alpha prior. Default 0.
             asd (float, Optional): std. deviation of alpha prior. Default 10.
             bm (float, Optional): mean of beta priors. Default 0.
@@ -217,7 +208,6 @@ class BayesBinaryLogisticImputer(BaseEstimator):
                 create imputations. Default is None. 'random' and 'mean'
                 supported for explicit options.
         """
-        self.verbose = verbose
         self.am = am
         self.asd = asd
         self.bm = bm
@@ -238,18 +228,14 @@ class BayesBinaryLogisticImputer(BaseEstimator):
         Returns:
             self. Instance of the class.
         """
-        # linear model fit on observed values only
-        X_, y_ = _get_observed(
-            self.strategy, X, y, self.verbose
-        )
-        y_ = y_.astype("category").cat
-        y_cat_l = len(y_.codes.unique())
+        y = y.astype("category").cat
+        y_cat_l = len(y.codes.unique())
 
         # bayesian logistic regression. Mutliple categories not supported yet
         if y_cat_l != 2:
             err = "Only two categories supported. Multinomial coming soon."
             raise ValueError(err)
-        nc = len(X_.columns)
+        nc = len(X.columns)
 
         # initialize model for bayesian logistic reg. Default vals for priors
         # assume data is scaled and centered. Convergence can struggle or fail
@@ -259,10 +245,10 @@ class BayesBinaryLogisticImputer(BaseEstimator):
         with pm.Model() as fit_model:
             alpha = pm.Normal("alpha", self.am, sd=self.asd)
             beta = pm.Normal("beta", self.bm, sd=self.bsd, shape=nc)
-            p = pm.invlogit(alpha + beta.dot(X_.T))
-            score = pm.Bernoulli("score", p, observed=y_.codes)
+            p = pm.invlogit(alpha + beta.dot(X.T))
+            score = pm.Bernoulli("score", p, observed=y.codes)
 
-        params = {"model": fit_model, "labels": y_.categories}
+        params = {"model": fit_model, "labels": y.categories}
         self.statistics_ = {"param": params, "strategy": self.strategy}
         return self
 
@@ -281,7 +267,6 @@ class BayesBinaryLogisticImputer(BaseEstimator):
         """
         # check if fitted then predict with least squares
         check_is_fitted(self, "statistics_")
-        progress = _pymc3_logger(self.verbose)
         model = self.statistics_["param"]["model"]
         labels = self.statistics_["param"]["labels"]
 
@@ -296,7 +281,6 @@ class BayesBinaryLogisticImputer(BaseEstimator):
                 sample=self.sample,
                 tune=self.tune,
                 init=self.init,
-                progress_bar=progress
             )
         self.trace_ = tr
 
