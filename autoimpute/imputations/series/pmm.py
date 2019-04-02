@@ -37,7 +37,7 @@ class PMMImputer(BaseEstimator):
     behavior identical. Instead, use PredictiveImputer(strategy="pmm").
     """
     # class variables
-    strategy = methods.BAYESIAN_LS
+    strategy = methods.PMM
 
     def __init__(self, am=None, asd=10, bm=None, bsd=10, sig=1, sample=1000,
                  tune=1000, init="auto", fill_value="random", neighbors=5,

@@ -83,7 +83,7 @@ class LOCFImputer(BaseEstimator):
         # handle start...
         if pd.isnull(X.iloc[0]):
             X.iloc[0] = self._handle_start(self.start, X)
-        return X.fillna(method="ffill", inplace=False).values
+        return X.fillna(method="ffill", inplace=False)
 
     def fit_impute(self, X):
         """Convenience method to perform fit and imputation in one go."""
@@ -155,7 +155,7 @@ class NOCBImputer(BaseEstimator):
         # handle end...
         if pd.isnull(X.iloc[-1]):
             X.iloc[-1] = self._handle_end(self.end, X)
-        return X.fillna(method="ffill", inplace=False).values
+        return X.fillna(method="ffill", inplace=False)
 
     def fit_impute(self, X):
         """Convenience method to perform fit and imputation in one go."""

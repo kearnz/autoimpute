@@ -197,13 +197,17 @@ class SingleImputer(BaseImputer, BaseEstimator, TransformerMixin):
                 err = f"Invalid arguments passed to {name} __init__ method."
                 raise ValueError(err) from te
 
-            # if succeeds, fit the method to the column of interest
-            imputer.fit(X[column])
-            self.statistics_[column] = imputer
-
             # print strategies if verbose
             if self.verbose:
                 print(f"Column: {column}, Strategy: {method}")
+
+            # if succeeds, fit the method to the column of interest
+            # note - have to fit X regardless of whether any data missing
+            # transform step may have missing data
+            # so fit each column that appears in the given strategies
+            imputer.fit(X[column])
+            self.statistics_[column] = imputer
+
         return self
 
     @check_nan_columns
@@ -237,11 +241,18 @@ class SingleImputer(BaseImputer, BaseEstimator, TransformerMixin):
         for column, imputer in self.statistics_.items():
             imp_ix = X[column][X[column].isnull()].index
             self.imputed_[column] = imp_ix.tolist()
+
+            # print to console for transformation if self.verbose
             if self.verbose:
                 strat = imputer.statistics_["strategy"]
                 print(f"Transforming {column} with strategy '{strat}'")
-                print(f"Numer of imputations to perform: {len(imp_ix)}")
+                if not imp_ix.empty:
+                    print(f"Numer of imputations to perform: {imp_ix.size}")
+                else:
+                    print(f"No imputations, moving to next column...")
 
-            # perform imputation given the specified imputer
+            # move onto next column if no imputations to make
+            if imp_ix.empty:
+                continue
             X.loc[imp_ix, column] = imputer.impute(X[column])
         return X

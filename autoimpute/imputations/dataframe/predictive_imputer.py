@@ -223,7 +223,12 @@ class PredictiveImputer(BaseImputer, BaseEstimator, TransformerMixin):
                 err = f"Invalid arguments passed to {name} __init__ method."
                 raise ValueError(err) from te
 
+            # print strategies if verbose
+            if self.verbose:
+                print(f"Column: {column}, Strategy: {method}")
+
             # if instantiation succeeds, fit the imputer to the dataset.
+            # if self.verbose, _prep_predictor_cols will print to console.
             x, _ = self._prep_predictor_cols(column, self._preds)
             y = X[column]
 
@@ -231,12 +236,12 @@ class PredictiveImputer(BaseImputer, BaseEstimator, TransformerMixin):
             x_, y_ = _get_observed(
                 self.strategy, x, y, self.verbose
             )
+
+            # note - have to fit X regardless of whether any data missing
+            # transform step may have missing data
+            # so fit each column that appears in the given strategies
             imputer.fit(x_, y_)
             self.statistics_[column] = imputer
-
-            # print strategies if verbose
-            if self.verbose:
-                print(f"Column: {column}, Strategy: {method}")
         return self
 
     @check_nan_columns
@@ -272,12 +277,13 @@ class PredictiveImputer(BaseImputer, BaseEstimator, TransformerMixin):
         for column, imputer in self.statistics_.items():
             imp_ix = X[column][X[column].isnull()].index
             self.imputed_[column] = imp_ix.tolist()
+
+            # print to console for transformation if self.verbose
             if self.verbose:
                 strat = imputer.statistics_["strategy"]
-                nimp = len(imp_ix)
-                print(f"Numer of imputations to perform: {nimp}")
-                if nimp > 0:
-                    print(f"Transforming {column} with strategy '{strat}'")
+                print(f"Transforming {column} with strategy '{strat}'")
+                if not imp_ix.empty:
+                    print(f"Numer of imputations to perform: {imp_ix.size}")
                 else:
                     print(f"No imputations, moving to next column...")
 
