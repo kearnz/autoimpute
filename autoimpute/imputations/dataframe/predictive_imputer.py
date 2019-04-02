@@ -12,12 +12,15 @@ import pandas as pd
 from sklearn.base import BaseEstimator, TransformerMixin
 from sklearn.utils.validation import check_is_fitted
 from autoimpute.utils import check_nan_columns
+from autoimpute.utils.helpers import _get_observed
 from autoimpute.imputations import method_names
-from autoimpute.imputations.dataframe import predictive_methods
 from .base_imputer import BaseImputer
 from .single_imputer import SingleImputer
+from ..series import DefaultPredictiveImputer, PMMImputer
+from ..series import LeastSquaresImputer, StochasticImputer
+from ..series import BinaryLogisticImputer, MultiLogisticImputer
+from ..series import BayesLeastSquaresImputer, BayesBinaryLogisticImputer
 methods = method_names
-pm = predictive_methods
 
 # pylint:disable=attribute-defined-outside-init
 # pylint:disable=arguments-differ
@@ -58,18 +61,18 @@ class PredictiveImputer(BaseImputer, BaseEstimator, TransformerMixin):
     """
 
     strategies = {
-        methods.DEFAULT: pm._predictive_default,
-        methods.LS: pm._fit_least_squares_reg,
-        methods.BINARY_LOGISTIC: pm._fit_binary_logistic_reg,
-        methods.MULTI_LOGISTIC: pm._fit_multi_logistic_reg,
-        methods.STOCHASTIC: pm._fit_stochastic_reg,
-        methods.BAYESIAN_LS: pm._fit_bayes_least_squares_reg,
-        methods.BAYESIAN_BINARY_LOGISTIC: pm._fit_bayes_binary_logistic_reg,
-        methods.PMM: pm._fit_pmm_reg
+        methods.DEFAULT: DefaultPredictiveImputer,
+        methods.LS: LeastSquaresImputer,
+        methods.STOCHASTIC: StochasticImputer,
+        methods.BINARY_LOGISTIC: BinaryLogisticImputer,
+        methods.MULTI_LOGISTIC: MultiLogisticImputer,
+        methods.BAYESIAN_LS: BayesLeastSquaresImputer,
+        methods.BAYESIAN_BINARY_LOGISTIC: BayesBinaryLogisticImputer,
+        methods.PMM: PMMImputer
     }
 
     def __init__(self, strategy="default", predictors="all",
-                 fill_value=None, copy=True, scaler=None, verbose=None):
+                 imp_kwgs=None, copy=True, scaler=None, verbose=False):
         """Create an instance of the PredictiveImputer class.
 
         As with sklearn classes, all arguments take default values. Therefore,
@@ -104,13 +107,12 @@ class PredictiveImputer(BaseImputer, BaseEstimator, TransformerMixin):
 
         BaseImputer.__init__(
             self,
-            imp_kwgs=None,
+            imp_kwgs=imp_kwgs,
             scaler=scaler,
             verbose=verbose
         )
         self.strategy = strategy
         self.predictors = predictors
-        self.fill_value = fill_value
         self.copy = copy
 
     @property
@@ -205,20 +207,36 @@ class PredictiveImputer(BaseImputer, BaseEstimator, TransformerMixin):
             print(f"{ft}\n{st}\n{'-'*len(st)}")
 
         # perform fit on each column, depending on that column's strategy
-        # note - because we use predictors, logic more involved than single
-        for col_name, func_name in self._strats.items():
-            f = self.strategies[func_name]
-            x, _ = self._prep_predictor_cols(col_name, self._preds)
-            y = X[col_name]
-            fit_param, fit_name = f(x, y, self.verbose)
-            self.statistics_[col_name] = {"param": fit_param,
-                                          "strategy": fit_name}
+        # note that right now, operations are COLUMN-by-COLUMN, iteratively
+        for column, method in self._strats.items():
+            imp = self.strategies[method]
+            imp_params = self._fit_init_params(column, method, self.imp_kwgs)
+
+            # try to create an instance of the imputer, given the args
+            try:
+                if imp_params is None:
+                    imputer = imp()
+                else:
+                    imputer = imp(**imp_params)
+            except TypeError as te:
+                name = imp.__name__
+                err = f"Invalid arguments passed to {name} __init__ method."
+                raise ValueError(err) from te
+
+            # if instantiation succeeds, fit the imputer to the dataset.
+            x, _ = self._prep_predictor_cols(column, self._preds)
+            y = X[column]
+
+            # fit the data on observed values only.
+            x_, y_ = _get_observed(
+                self.strategy, x, y, self.verbose
+            )
+            imputer.fit(x_, y_)
+            self.statistics_[column] = imputer
+
             # print strategies if verbose
             if self.verbose:
-                resp = f"Response: {col_name}"
-                preds = f"Predictors: {self._preds[col_name]}"
-                strat = f"Strategy {fit_name}"
-                print(f"{resp}\n{preds}\n{strat}\n{'-'*len(st)}")
+                print(f"Column: {column}, Strategy: {method}")
         return self
 
     @check_nan_columns
@@ -252,64 +270,40 @@ class PredictiveImputer(BaseImputer, BaseEstimator, TransformerMixin):
         # transformation logic
         self.imputed_ = {}
         self.traces_ = {}
-        for col_name, fit_data in self.statistics_.items():
-            strat = fit_data["strategy"]
-            fill = fit_data["param"]
-            imp_ix = X[col_name][X[col_name].isnull()].index
-            self.imputed_[col_name] = imp_ix.tolist()
+        for column, imputer in self.statistics_.items():
+            imp_ix = X[column][X[column].isnull()].index
+            self.imputed_[column] = imp_ix.tolist()
             if self.verbose:
+                strat = imputer.statistics_["strategy"]
                 nimp = len(imp_ix)
                 print(f"Numer of imputations to perform: {nimp}")
                 if nimp > 0:
-                    print(f"Transforming {col_name} with strategy '{strat}'")
+                    print(f"Transforming {column} with strategy '{strat}'")
                 else:
                     print(f"No imputations, moving to next column...")
 
             # continue if there are no imputations to make
             if imp_ix.empty:
                 continue
-            x, _ = self._prep_predictor_cols(col_name, self._preds)
+            x_, _ = self._prep_predictor_cols(column, self._preds)
+
+            # if dealing with new data, need to reset the index to missing
             if new_data:
-                x.index = self._X_idx
-            x = x.loc[imp_ix, :]
+                x_.index = self._X_idx
+            x_ = x_.loc[imp_ix, :]
 
             # may abstract SingleImputer in future for flexibility
-            mis_cov = pd.isnull(x).sum()
+            mis_cov = pd.isnull(x_).sum()
             if any(mis_cov):
                 if self.verbose:
                     print(f"Missing Covariates:\n{mis_cov}\n")
                     print("Using single imputer for missing covariates...")
-                x = SingleImputer(
+                x_ = SingleImputer(
                     verbose=self.verbose, copy=False
-                ).fit_transform(x)
+                ).fit_transform(x_)
 
-            # fill missing values based on the method selected
-            # note that default picks a method below depending on col
-            # -------------------------------------------------------
-            # linear regression imputation
-            if strat == methods.LS:
-                pm._imp_least_squares_reg(X, col_name, x, fill, imp_ix)
-            if strat in (methods.BINARY_LOGISTIC, methods.MULTI_LOGISTIC):
-                pm._imp_logistic_reg(X, col_name, x, fill, imp_ix)
-            if strat == methods.STOCHASTIC:
-                pm._imp_stochastic_reg(X, col_name, x, fill, imp_ix)
-            if strat == methods.BAYESIAN_LS:
-                tr = pm._imp_bayes_least_squares_reg(
-                    X, col_name, x, fill, imp_ix, self.fill_value, self.verbose
-                )
-                self.traces_[col_name] = tr
-            if strat == methods.BAYESIAN_BINARY_LOGISTIC:
-                tr = pm._imp_bayes_logistic_reg(
-                    X, col_name, x, fill, imp_ix, self.fill_value, self.verbose
-                )
-                self.traces_[col_name] = tr
-            if strat == methods.PMM:
-                tr = pm._imp_pmm_reg(
-                    X, col_name, x, fill, imp_ix, self.fill_value, self.verbose
-                )
-                self.traces_[col_name] = tr
-            if strat == methods.NONE:
-                pass
+            # perform imputation given the specified imputer
+            X.loc[imp_ix, column] = imputer.impute(x_)
         return X
 
     def fit_transform(self, X):

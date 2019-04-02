@@ -16,7 +16,7 @@ from autoimpute.imputations import method_names
 from .mean import MeanImputer
 from .mode import ModeImputer
 from .interpolation import InterpolateImputer
-from .linear_regression import LeastSquaresImputer
+from .pmm import PMMImputer
 from .logistic_regression import MultiLogisticImputer
 methods = method_names
 # pylint:disable=attribute-defined-outside-init
@@ -353,7 +353,7 @@ class DefaultPredictiveImputer(DefaultBaseImputer, BaseEstimator):
 
     def __init__(
             self,
-            num_imputer=LeastSquaresImputer,
+            num_imputer=PMMImputer,
             cat_imputer=MultiLogisticImputer,
             num_kwgs=None,
             cat_kwgs=None

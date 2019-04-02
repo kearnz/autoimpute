@@ -14,11 +14,13 @@ Methods:
     _index_output(data, index)
     _nan_col_dropper(data)
     _get_observed(method, predictors, series, verbose)
+    _neighbors(x, n, df, choose)
     _pymc3_logger(verbose)
 """
 
 import warnings
 import logging
+import numpy as np
 import pandas as pd
 from autoimpute.imputations.deletion import listwise_delete
 from autoimpute.imputations.errors import _not_num_matrix
@@ -66,6 +68,15 @@ def _get_observed(method, predictors, series, verbose):
     predictors = listwise_delete(conc, verbose=verbose)
     series = predictors.pop(series.name)
     return predictors, series
+
+def _neighbors(x, n, df, choose):
+    al = len(df.index)
+    if n > al:
+        err = "# neighbors greater than # predictions. Reduce neighbor count."
+        raise ValueError(err)
+    indexarr = np.argpartition(abs(df["y_pred"] - x), n)[:n]
+    neighbs = df.loc[indexarr, "y"].values
+    return choose(neighbs)
 
 def _pymc3_logger(verbose):
     """Private method to handle pymc3 logging."""

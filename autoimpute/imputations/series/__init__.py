@@ -25,6 +25,7 @@ from .linear_regression import LeastSquaresImputer, StochasticImputer
 from .logistic_regression import BinaryLogisticImputer, MultiLogisticImputer
 from .bayesian_regression import BayesLeastSquaresImputer
 from .bayesian_regression import BayesBinaryLogisticImputer
+from .pmm import PMMImputer
 
 __all__ = [
     "DefaultSingleImputer",
@@ -44,5 +45,6 @@ __all__ = [
     "BinaryLogisticImputer",
     "MultiLogisticImputer",
     "BayesLeastSquaresImputer",
-    "BayesBinaryLogisticImputer"
+    "BayesBinaryLogisticImputer",
+    "PMMImputer"
 ]
