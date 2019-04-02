@@ -161,30 +161,34 @@ class DefaultBaseImputer:
         """Fit the Imputer to the dataset and determine the right approach.
 
         Args:
-            X (pd.Series): Dataset to fit the imputer
+            X (pd.Series): Dataset to fit the imputer, or predictors
+            y (pd.Series): None, or dataset to fit predictors
 
         Returns:
             self. Instance of the class.
         """
-        # delegate numeric features to the num imputer
-        if is_numeric_dtype(X):
-            if y is None:
+        # start off with stats blank
+        stats = {"param": None, "strategy": None}
+
+        # if y is None, fitting simply X. univariate method.
+        if y is None:
+            if is_numeric_dtype(X):
                 stats = {"param": self.num_imputer.fit(X),
                          "strategy": self.num_imputer.strategy}
-            else:
-                stats = {"param": self.num_imputer.fit(X, y),
-                         "strategy": self.num_imputer.strategy}
-        # delegate categorical features to the cat imputer
-        elif is_string_dtype(X):
-            if y is None:
+            if is_string_dtype(X):
                 stats = {"param": self.cat_imputer.fit(X),
                          "strategy": self.cat_imputer.strategy}
-            else:
+
+        # if y is not None, fitting X to y. predictive method.
+        if not y is None:
+            if is_numeric_dtype(y):
+                stats = {"param": self.num_imputer.fit(X, y),
+                         "strategy": self.num_imputer.strategy}
+            if is_string_dtype(y):
                 stats = {"param": self.cat_imputer.fit(X, y),
                          "strategy": self.cat_imputer.strategy}
-        # time series does not need imputation, as we require it full
-        else:
-            stats = {"param": None, "strategy": None}
+
+        # return final stats
         self.statistics_ = stats
         return self
 

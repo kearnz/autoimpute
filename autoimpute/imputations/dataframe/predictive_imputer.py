@@ -269,7 +269,6 @@ class PredictiveImputer(BaseImputer, BaseEstimator, TransformerMixin):
 
         # transformation logic
         self.imputed_ = {}
-        self.traces_ = {}
         for column, imputer in self.statistics_.items():
             imp_ix = X[column][X[column].isnull()].index
             self.imputed_[column] = imp_ix.tolist()

@@ -67,8 +67,8 @@ from sklearn.preprocessing import MinMaxScaler
 imp = PredictiveImputer(
     strategy={"x1": "pmm", "x2": "stochastic", "y": "norm"},
     predictors={"x1": "x2", "y": "all"},
+    imp_kwgs={"pmm": {"fill_value": "random"}},
     scaler=MinMaxScaler(),
-    fill_value="random",
     verbose=True
 )
 imp.fit_transform(data)
