@@ -45,7 +45,7 @@ class NormImputer(BaseEstimator):
 
         # get the moments for the normal distribution of feature X
         _not_num_series(self.strategy, X)
-        moments = (X.mean(), X.var()/(len(X.index)-1))
+        moments = (X.mean(), X.std())
         self.statistics_ = {"param": moments, "strategy": self.strategy}
         return self
 
@@ -70,8 +70,8 @@ class NormImputer(BaseEstimator):
         ind = X[X.isnull()].index
 
         # create normal distribution and sample from it
-        imp_mean, imp_var = self.statistics_["param"]
-        imp = norm(imp_mean, imp_var).rvs(size=len(ind))
+        imp_mean, imp_std = self.statistics_["param"]
+        imp = norm(imp_mean, imp_std).rvs(size=len(ind))
         return imp
 
     def fit_impute(self, X):
