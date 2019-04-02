@@ -14,8 +14,8 @@ from scipy.stats import multivariate_normal
 from sklearn.base import BaseEstimator
 from sklearn.linear_model import LinearRegression
 from sklearn.utils.validation import check_is_fitted
-from autoimpute.utils.helpers import _neighbors
 from autoimpute.imputations import method_names
+from autoimpute.imputations.helpers import _neighbors
 from autoimpute.imputations.errors import _not_num_series
 methods = method_names
 # pylint:disable=attribute-defined-outside-init
@@ -40,7 +40,7 @@ class PMMImputer(BaseEstimator):
     strategy = methods.BAYESIAN_LS
 
     def __init__(self, am=None, asd=10, bm=None, bsd=10, sig=1, sample=1000,
-                 tune=1000, init="auto", fill_value=None, neighbors=5,
+                 tune=1000, init="auto", fill_value="random", neighbors=5,
                  **kwargs):
         """Create an instance of the PMMImputer class.
 
@@ -64,7 +64,7 @@ class PMMImputer(BaseEstimator):
             init (str, Optional): MCMC algo to use for posterior sampling.
                 Default = 'auto'. See pymc3 docs for more info on choices.
             fill_value (str, Optional): How to draw from the posterior to
-                create imputations. Default is None. 'random' and 'mean'
+                create imputations. Default is "random". 'random' and 'mean'
                 supported for explicit options.
             neighbors (int, Optional): number of neighbors. Default is 5.
                 Value should be greater than 0 and less than # observed,
@@ -173,7 +173,7 @@ class PMMImputer(BaseEstimator):
         n_ = self.neighbors
         if X.columns.size == 1:
             y_pred_bayes = y_pred_bayes[0]
-        if not self.fill_value or self.fill_value == "mean":
+        if self.fill_value == "mean":
             imp = [_neighbors(x, n_, df, np.mean) for x in y_pred_bayes]
         elif self.fill_value == "random":
             choice = np.random.choice

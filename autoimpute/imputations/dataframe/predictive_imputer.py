@@ -12,7 +12,7 @@ import pandas as pd
 from sklearn.base import BaseEstimator, TransformerMixin
 from sklearn.utils.validation import check_is_fitted
 from autoimpute.utils import check_nan_columns
-from autoimpute.utils.helpers import _get_observed
+from autoimpute.imputations.helpers import _get_observed
 from autoimpute.imputations import method_names
 from .base_imputer import BaseImputer
 from .single_imputer import SingleImputer

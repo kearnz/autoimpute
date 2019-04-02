@@ -1,31 +1,13 @@
 """Tests for the PredictiveImputer Class."""
 
 from autoimpute.imputations import PredictiveImputer
-from autoimpute.imputations.dataframe._predictive_imputer import PredictiveImputer as _PI
 from autoimpute.utils import dataframes
 dfs = dataframes
-
-def test_new_predictive_imputer():
-    """Test the new imputer."""
-    # test the default imputer
-    imp = _PI()
-    imp.fit_transform(dfs.df_mix)
-
-    # test specific strategies
-    strategy = {"gender": "bayesian binary logistic",
-                "age": "bayesian least squares",
-                "amm": "least squares"}
-    imp = _PI(strategy=strategy)
-    imp.fit_transform(dfs.df_mix)
 
 def test_default_predictive_imputer():
     """Test the _default method and results for PredictiveImputer()."""
     imp = PredictiveImputer()
     imp.fit_transform(dfs.df_mix)
-    assert imp.statistics_["gender"]["strategy"] == "binary logistic"
-    assert imp.statistics_["salary"]["strategy"] == "pmm"
-    assert imp.statistics_["age"]["strategy"] == "pmm"
-    assert imp.statistics_["amm"]["strategy"] == "pmm"
 
 def test_stochastic_predictive_imputer():
     """Test stochastic works for numerical columns of PredictiveImputer."""
@@ -49,5 +31,5 @@ def test_bayesian_reg_imputer():
 def test_bayesian_logistic_imputer():
     """Test bayesian works for binary column of PredictiveImputer."""
     imp_b = PredictiveImputer(strategy={"y":"bayesian binary logistic"},
-                              fill_value="random")
+                              imp_kwgs={"y":{"fill_value": "random"}})
     imp_b.fit_transform(dfs.df_bayes_log)
