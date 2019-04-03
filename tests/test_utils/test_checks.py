@@ -1,7 +1,7 @@
 """Tests written to ensure the decorators in the utils package work correctly.
 
 Tests use the pytest library. The tests in this module ensure the following:
-- `check_data_structure` requires pandas DataFrame/Series.
+- `check_data_structure` requires pandas DataFrame.
 - `check_data_structure` raises errors for any other type of data structure.
 - `check_missingness` enforces datasets have observed and missing values.
 - `check_missingness` raises errors for fully missing datasets.
@@ -50,7 +50,8 @@ def data_structures_not_allowed():
     list_ = [str_, int_, float_]
     tuple_ = tuple(list_)
     arr_ = np.array([1, 2, 3, 4])
-    return [str_, int_, float_, set_, dict_, list_, tuple_, arr_]
+    ser_ = pd.Series({"a": arr_})
+    return [str_, int_, float_, set_, dict_, list_, tuple_, arr_, ser_]
 
 def data_stuctures_allowed():
     """Types that should not throw an error and should return a valid array."""
@@ -58,8 +59,7 @@ def data_stuctures_allowed():
         "A": [1, 2, 3, 4],
         "B": ["a", "b", "c", "d"]
     })
-    ser_ = pd.Series({"a": df_["A"]})
-    return [df_, ser_]
+    return [df_]
 
 def missingness_not_allowed():
     """Can't impute datasets that are fully complete or incomplete."""
@@ -115,8 +115,7 @@ def test_data_structures_allowed(ds):
     Returns:
         None: asserts that the appropriate type has been passed.
     """
-    types = (pd.DataFrame, pd.Series)
-    assert isinstance(ds, types)
+    assert isinstance(ds, pd.DataFrame)
 
 @pytest.mark.parametrize("ds", missingness_not_allowed())
 def test_missingness_not_allowed(ds):

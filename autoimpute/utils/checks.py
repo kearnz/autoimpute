@@ -17,14 +17,14 @@ import numpy as np
 import pandas as pd
 
 def check_data_structure(func):
-    """Check if the data input to a function is a pandas DataFrame or Series.
+    """Check if the data input to a function is a pandas DataFrame.
 
     This method acts as a decorator. It takes a function that takes data
-    as its first argument and verifies that the data is a pandas DataFrame or
-    Series. Because this package has many functions which require a DataFrame
-    or Seris as the first argument, the decorator makes it easy to verify this
-    requirement regardless of what the rest of the function does. It
-    utilizes the `functools.wrap` decorator to keep function names in tact.
+    as its first argument and verifies that the data is a pandas DataFrame.
+    Because this package has many functions which require a DataFrame as the
+    first argument, the decorator makes it easy to verify this requirement
+    regardless of what the rest of the function does. It utilizes the
+    `functools.wrap` decorator to keep function names in tact.
 
     Args:
         func (function): The function that will be decorated
@@ -34,20 +34,19 @@ def check_data_structure(func):
     """
     @functools.wraps(func)
     def wrapper(d, *args, **kwargs):
-        """Wrapper function for pandas DataFrame or Series verification.
+        """Wrapper function for pandas DataFrame verification.
 
         The wrapper within the decorator does the actual verification. It
-        checks whether the first argument, d, is a pandas DataFrame or Series.
-        If it's not, it checks whether the second arg (which would be the
-        first arg of *args) is a DataFrame or Series. This flexible checking
-        means this decorator can validate methods in a class. Class methods
-        using the decorator must take a DataFrame or Series as the first arg
-        after self.
+        checks whether the first argument, d, is a pandas DataFrame. If it's
+        not, it checks whether the second arg (which would be the first arg of
+        *args) is a DataFrame. This flexible checking means this decorator can
+        validate methods in a class. Class methods using the decorator must
+        take a DataFrame as the first arg after self.
 
         Args:
-            d (self, pd.DataFrame, pd.Series): data to check. should be a
-                DataFrame or Series (or self if an instance of a class).
-            *args: Any number of arguments. If d is not a DataFrame or Series,
+            d (self, pd.DataFrame): data to check. should be a DataFrame
+                (or self if an instance of a class).
+            *args: Any number of arguments. If d is not a DataFrame,
                 first arg must be or error raised.
             **kwargs: Keyword arguments for original function.
 
@@ -55,11 +54,10 @@ def check_data_structure(func):
             function: Returns original function being decorated.
 
         Raises:
-            TypeError: If one of d, args[0] not DataFrame or Series.
+            TypeError: If one of d, args[0] not DataFrame.
         """
-        types = (pd.DataFrame, pd.Series)
-        d_df = isinstance(d, types)
-        a_df = isinstance(args[0], types) if args else False
+        d_df = isinstance(d, pd.DataFrame)
+        a_df = isinstance(args[0], pd.DataFrame) if args else False
         if not any([d_df, a_df]):
             d_err = d.__class__.__name__
             a_err = args[0].__class__.__name__ if args else "first args"
@@ -74,8 +72,8 @@ def check_missingness(func):
     This method acts as a decorator. It takes a function that takes data
     as its first argument and checks whether that data contains any
     missing or real values. This method leverages the check_data_structure
-    decorator to verify that the data is a DataFrame or Series and then verify
-    that the data contains observed and missing values. This method utilizes
+    decorator to verify that the data is a DataFrame and then verify that
+    the data contains observed and missing values. This method utilizes
     the `functools.wrap` decorator to keep function names in tact.
 
     Args:
@@ -90,14 +88,14 @@ def check_missingness(func):
         """Wrap function that checks accepted data's level of missingness.
 
         This wrapper within the decorator does the actual verification. It
-        checks that a DataFrame or Series has both missing and real values. If
-        the data is fully incomplete, an error is raised. If the data has
-        datetime columns that are not fully complete, an error is raised.
+        checks that a DataFrame has both missing and real values. If the data
+        is fully incomplete, an error is raised. If the data has datetime
+        columns that are not fully complete, an error is raised.
 
         Args:
-            d (self, pd.DataFrame, pd.Series): data to check. should be a
-                DataFrame or Series (or self if an instance of a class).
-            *args: Any number of arguments. If d is not a DataFrame or Series,
+            d (self, pd.DataFrame): data to check. should be a DataFrame
+                (or self if an instance of a class).
+            *args: Any number of arguments. If d is not a DataFrame,
                 first arg must be or error raised.
             **kwargs: Keyword arguments for original function.
 
@@ -108,9 +106,8 @@ def check_missingness(func):
             ValueError: If all values in data are missing.
             ValueError: If any timeseries values in data are missing.
         """
-        # b/c of check_data_structure, we know 1 of (d, a) is DataFrame/Series
-        types = (pd.DataFrame, pd.Series)
-        if isinstance(d, types):
+        # b/c of check_data_structure, we know 1 of (d, a) is DataFrame
+        if isinstance(d, pd.DataFrame):
             n_ts = d.select_dtypes(include=(np.number, np.object))
             ts = d.select_dtypes(include=(np.datetime64,))
         else:
@@ -160,9 +157,9 @@ def check_nan_columns(func):
         nor analysis.
 
         Args:
-            d (self, pd.DataFrame, pd.Series): data to check. should be a
-                DataFrame or Series (or self if an instance of a class).
-            *args: Any number of arguments. If d is not a DataFrame or Series,
+            d (self, pd.DataFrame): data to check. should be a DataFrame
+                (or self if an instance of a class).
+            *args: Any number of arguments. If d is not a DataFrame,
                 first arg must be or error raised.
             **kwargs: Keyword arguments for original function.
 
@@ -170,8 +167,7 @@ def check_nan_columns(func):
             ValueError: If all values in any column are missing.
         """
         # previous decorators ensure we are working with an accepted type
-        types = (pd.DataFrame, pd.Series)
-        if isinstance(d, types):
+        if isinstance(d, pd.DataFrame):
             ndf = pd.isnull(d)
         else:
             ndf = pd.isnull(args[0])
