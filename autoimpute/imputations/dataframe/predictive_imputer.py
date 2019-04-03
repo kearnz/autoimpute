@@ -28,6 +28,7 @@ methods = method_names
 # pylint:disable=too-many-arguments
 # pylint:disable=too-many-locals
 # pylint:disable=too-many-instance-attributes
+# pylint:disable=unused-argument
 
 class PredictiveImputer(BaseImputer, BaseEstimator, TransformerMixin):
     """Techniques to impute Series with missing values through learning.
@@ -182,7 +183,7 @@ class PredictiveImputer(BaseImputer, BaseEstimator, TransformerMixin):
                 self._scaler_transform()
 
     @check_nan_columns
-    def fit(self, X):
+    def fit(self, X, y=None):
         """Fit imputation methods to each column within a DataFrame.
 
         The fit method calclulates the `statistics` necessary to later
@@ -228,13 +229,12 @@ class PredictiveImputer(BaseImputer, BaseEstimator, TransformerMixin):
                 print(f"Column: {column}, Strategy: {method}")
 
             # if instantiation succeeds, fit the imputer to the dataset.
-            # if self.verbose, _prep_predictor_cols will print to console.
-            x, _ = self._prep_predictor_cols(column, self._preds)
-            y = X[column]
+            xs, _ = self._prep_predictor_cols(column, self._preds)
+            ys = X[column]
 
             # fit the data on observed values only.
             x_, y_ = _get_observed(
-                self.strategy, x, y, self.verbose
+                self.strategy, xs, ys, self.verbose
             )
 
             # note - have to fit X regardless of whether any data missing
@@ -311,6 +311,6 @@ class PredictiveImputer(BaseImputer, BaseEstimator, TransformerMixin):
             X.loc[imp_ix, column] = imputer.impute(x_)
         return X
 
-    def fit_transform(self, X):
+    def fit_transform(self, X, y=None):
         """Convenience method to fit then transform the same dataset."""
-        return self.fit(X).transform(X, False)
+        return self.fit(X, y).transform(X, False)

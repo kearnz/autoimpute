@@ -22,6 +22,7 @@ methods = method_names
 # pylint:disable=protected-access
 # pylint:disable=too-many-arguments
 # pylint:disable=too-many-instance-attributes
+# pylint:disable=unused-argument
 
 class SingleImputer(BaseImputer, BaseEstimator, TransformerMixin):
     """Techniques to impute Series with missing values one time.
@@ -153,7 +154,7 @@ class SingleImputer(BaseImputer, BaseEstimator, TransformerMixin):
             raise ValueError(err)
 
     @check_nan_columns
-    def fit(self, X):
+    def fit(self, X, y=None):
         """Fit imputation methods to each column within a DataFrame.
 
         The fit method calclulates the `statistics` necessary to later

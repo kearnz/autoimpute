@@ -1,11 +1,11 @@
 """Tests written to ensure the decorators in the utils package work correctly.
 
 Tests use the pytest library. The tests in this module ensure the following:
-- `check_data_structure` requires pandas DataFrame.
+- `check_data_structure` requires pandas DataFrame/Series.
 - `check_data_structure` raises errors for any other type of data structure.
-- `check_missingness` enforces DataFrames have observed and missing values.
-- `check_missingness` raises errors for fully missing DataFrames.
-- `check_missingness` raises errors for time series missing in DataFrames.
+- `check_missingness` enforces datasets have observed and missing values.
+- `check_missingness` raises errors for fully missing datasets.
+- `check_missingness` raises errors for time series missing in datasets.
 - `remove_nan_columns` removes columns if the entire column is missing.
 
 Tests:
@@ -50,9 +50,7 @@ def data_structures_not_allowed():
     list_ = [str_, int_, float_]
     tuple_ = tuple(list_)
     arr_ = np.array([1, 2, 3, 4])
-    ser_ = pd.Series({"a": arr_})
-    return [str_, int_, float_, set_, dict_,
-            list_, tuple_, arr_, ser_]
+    return [str_, int_, float_, set_, dict_, list_, tuple_, arr_]
 
 def data_stuctures_allowed():
     """Types that should not throw an error and should return a valid array."""
@@ -60,7 +58,8 @@ def data_stuctures_allowed():
         "A": [1, 2, 3, 4],
         "B": ["a", "b", "c", "d"]
     })
-    return [df_]
+    ser_ = pd.Series({"a": df_["A"]})
+    return [df_, ser_]
 
 def missingness_not_allowed():
     """Can't impute datasets that are fully complete or incomplete."""
@@ -107,7 +106,7 @@ def test_data_structures_allowed(ds):
 
     Utilizes the pytest.mark.parametize method to run test on numerous data
     structures. Those data structures are returned from the helper method
-    `data_structures_allowed()`, which right now returns a DataFrame only.
+    `data_structures_allowed()`, which right now returns a DataFrame/Series.
 
     Args:
         ds (any -> iterator): any data structure within an iterator. `ds` is
@@ -116,7 +115,8 @@ def test_data_structures_allowed(ds):
     Returns:
         None: asserts that the appropriate type has been passed.
     """
-    assert isinstance(ds, pd.DataFrame)
+    types = (pd.DataFrame, pd.Series)
+    assert isinstance(ds, types)
 
 @pytest.mark.parametrize("ds", missingness_not_allowed())
 def test_missingness_not_allowed(ds):

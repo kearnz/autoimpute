@@ -24,6 +24,7 @@ methods = method_names
 # pylint:disable=protected-access
 # pylint:disable=too-many-arguments
 # pylint:disable=too-many-instance-attributes
+# pylint:disable=unused-argument
 
 class TimeSeriesImputer(BaseImputer, BaseEstimator, TransformerMixin):
     """Techniques to impute Series with a logical ordering and time component.
@@ -206,7 +207,7 @@ class TimeSeriesImputer(BaseImputer, BaseEstimator, TransformerMixin):
         return X
 
     @check_nan_columns
-    def fit(self, X):
+    def fit(self, X, y=None):
         """Fit imputation methods to each column within a DataFrame.
 
         The fit method calclulates the `statistics` necessary to later
