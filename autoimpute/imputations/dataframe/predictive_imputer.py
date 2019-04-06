@@ -77,8 +77,8 @@ class PredictiveImputer(BaseImputer, BaseEstimator, TransformerMixin):
         """Create an instance of the PredictiveImputer class.
 
         As with sklearn classes, all arguments take default values. Therefore,
-        PredictiveImputer creates a valid class instance. The instance is used
-        to set up an imputer and perform checks on arguments.
+        PredictiveImputer() creates a valid class instance. The instance is
+        used to set up an imputer and perform checks on arguments.
 
         Args:
             strategy (str, iter, dict; optional): strategies for imputation.
@@ -90,14 +90,17 @@ class PredictiveImputer(BaseImputer, BaseEstimator, TransformerMixin):
                 Dict the most flexible and PREFERRED way to create custom
                 imputation strategies if not using the default. Dict does not
                 require method for every column; just those specified as keys.
-            predictors (str, iter, dict, optiona): defaults to all, i.e.
+            predictors (str, iter, dict, optional): defaults to all, i.e.
                 use all predictors. If all, every column will be used for
                 every class prediction. If a list, subset of columns used for
                 all predictions. If a dict, specify which columns to use as
                 predictors for each imputation. Columns not specified in dict
                 but present in `strategy` receive `all` other cols as preds.
-            fill_value (str, optional): fill val when strategy needs more info.
-                See details of individual strategies for more info.
+            imp_kwgs (dict, optional): keyword arguments for each imputer.
+                Default is None, which means default imputer created to match
+                specific strategy. imp_kwgs keys can be either columns or
+                strategies. If strategies, each column given that strategy is
+                instantiated with same arguments.
             copy (bool, optional): create copy of DataFrame or operate inplace.
                 Default value is True. Copy created.
             scaler (scaler, optional): scale variables before transformation.
