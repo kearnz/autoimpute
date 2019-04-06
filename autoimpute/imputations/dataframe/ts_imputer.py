@@ -79,7 +79,7 @@ class TimeSeriesImputer(BaseImputer, BaseEstimator, TransformerMixin):
     }
 
     def __init__(self, strategy="default", imp_kwgs=None,
-                 index_column=None, verbose=False):
+                 index_column=None, verbose=False, seed=None):
         """Create an instance of the TimeSeriesImputer class.
 
         As with sklearn classes, all arguments take default values. Therefore,
@@ -106,6 +106,8 @@ class TimeSeriesImputer(BaseImputer, BaseEstimator, TransformerMixin):
                 selected as the index.
             verbose (bool, optional): print more information to console.
                 Default value is False.
+            seed (int, optional): seed setting for reproducible results.
+                Defualt is None. No validation, but values should be integer.
         """
         BaseImputer.__init__(
             self,
@@ -116,6 +118,7 @@ class TimeSeriesImputer(BaseImputer, BaseEstimator, TransformerMixin):
         self.strategy = strategy
         self.imp_kwgs = imp_kwgs
         self.index_column = index_column
+        self.seed = seed
 
     @property
     def strategy(self):
@@ -234,6 +237,8 @@ class TimeSeriesImputer(BaseImputer, BaseEstimator, TransformerMixin):
         # perform fit on each column, depending on that column's strategy
         # note that right now, operations are COLUMN-by-COLUMN, iteratively
         # in the future, we should handle univar methods in parallel
+        if self.seed is not None:
+            np.random.seed(self.seed)
         for column, method in self._strats.items():
             imp = self.strategies[method]
             imp_params = self._fit_init_params(column, method, self.imp_kwgs)
@@ -288,6 +293,8 @@ class TimeSeriesImputer(BaseImputer, BaseEstimator, TransformerMixin):
         # transformation logic
         # same applies, should be able to handle in parallel
         self.imputed_ = {}
+        if self.seed is not None:
+            np.random.seed(self.seed)
         for column, imputer in self.statistics_.items():
             imp_ix = X[column][X[column].isnull()].index
             self.imputed_[column] = imp_ix.tolist()

@@ -8,6 +8,7 @@ are multivariate - they use more than just the series itself to determine the
 best estimated values for imputaiton.
 """
 
+import numpy as np
 import pandas as pd
 from sklearn.base import BaseEstimator, TransformerMixin
 from sklearn.utils.validation import check_is_fitted
@@ -73,7 +74,8 @@ class PredictiveImputer(BaseImputer, BaseEstimator, TransformerMixin):
     }
 
     def __init__(self, strategy="default", predictors="all",
-                 imp_kwgs=None, copy=True, scaler=None, verbose=False):
+                 imp_kwgs=None, copy=True, scaler=None, verbose=False,
+                 seed=None):
         """Create an instance of the PredictiveImputer class.
 
         As with sklearn classes, all arguments take default values. Therefore,
@@ -107,6 +109,8 @@ class PredictiveImputer(BaseImputer, BaseEstimator, TransformerMixin):
                 Default is None, although StandardScaler recommended.
             verbose (bool, optional): print more information to console.
                 Default value is False.
+            seed (int, optional): seed setting for reproducible results.
+                Defualt is None. No validation, but values should be integer.
         """
 
         BaseImputer.__init__(
@@ -118,6 +122,7 @@ class PredictiveImputer(BaseImputer, BaseEstimator, TransformerMixin):
         self.strategy = strategy
         self.predictors = predictors
         self.copy = copy
+        self.seed = seed
 
     @property
     def strategy(self):
@@ -212,6 +217,8 @@ class PredictiveImputer(BaseImputer, BaseEstimator, TransformerMixin):
 
         # perform fit on each column, depending on that column's strategy
         # note that right now, operations are COLUMN-by-COLUMN, iteratively
+        if self.seed is not None:
+            np.random.seed(self.seed)
         for column, method in self._strats.items():
             imp = self.strategies[method]
             imp_params = self._fit_init_params(column, method, self.imp_kwgs)
@@ -277,6 +284,8 @@ class PredictiveImputer(BaseImputer, BaseEstimator, TransformerMixin):
 
         # transformation logic
         self.imputed_ = {}
+        if self.seed is not None:
+            np.random.seed(self.seed)
         for column, imputer in self.statistics_.items():
             imp_ix = X[column][X[column].isnull()].index
             self.imputed_[column] = imp_ix.tolist()

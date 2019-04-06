@@ -8,7 +8,19 @@ imputation. More details about the options appear in the class itself.
 """
 
 from sklearn.base import BaseEstimator, TransformerMixin
-from . import BaseImputer
+from autoimpute.imputations import BaseImputer
+from autoimpute.imputations import method_names
+from ..series import DefaultPredictiveImputer
+from ..series import MeanImputer, MedianImputer, ModeImputer, RandomImputer
+from ..series import NormImputer, CategoricalImputer, InterpolateImputer
+from ..series import LeastSquaresImputer, StochasticImputer, PMMImputer
+from ..series import BinaryLogisticImputer, MultiLogisticImputer
+from ..series import BayesLeastSquaresImputer, BayesBinaryLogisticImputer
+methods = method_names
+# pylint:disable=attribute-defined-outside-init
+# pylint:disable=protected-access
+# pylint:disable=too-many-arguments
+# pylint:disable=unused-argument
 
 class MultipleImputer(BaseImputer, BaseEstimator, TransformerMixin):
     """Techniques to impute Series with missing values multiple times.
@@ -18,10 +30,33 @@ class MultipleImputer(BaseImputer, BaseEstimator, TransformerMixin):
     passes all imputation work to the Single and Predictive imputer, but it
     controls the arguments each imputer receives, which are flexible depending
     on what the user specifies for each imputation.
+
+    Note that the imputer allows for one imputation method per column only.
+    Therefore, the behavior of `strategy` is the exact same as other classes.
+    But the predictors and the seed are allowed to change for each imputation.
     """
 
+    strategies = {
+        methods.DEFAULT: DefaultPredictiveImputer,
+        methods.MEAN: MeanImputer,
+        methods.MEDIAN: MedianImputer,
+        methods.MODE:  ModeImputer,
+        methods.RANDOM: RandomImputer,
+        methods.NORM: NormImputer,
+        methods.CATEGORICAL: CategoricalImputer,
+        methods.INTERPOLATE: InterpolateImputer,
+        methods.LS: LeastSquaresImputer,
+        methods.STOCHASTIC: StochasticImputer,
+        methods.BINARY_LOGISTIC: BinaryLogisticImputer,
+        methods.MULTI_LOGISTIC: MultiLogisticImputer,
+        methods.BAYESIAN_LS: BayesLeastSquaresImputer,
+        methods.BAYESIAN_BINARY_LOGISTIC: BayesBinaryLogisticImputer,
+        methods.PMM: PMMImputer
+    }
+
     def __init__(self, n=5, strategy="default", predictors="all",
-                 imp_kwgs=None, copy=True, scaler=None, verbose=False):
+                 imp_kwgs=None, copy=True, scaler=None, verbose=False,
+                 seed=None, visit="default", parallel=False):
         """Create an instance of the MultipleImputer class.
 
         As with sklearn classes, all arguments take default values. Therefore,
@@ -57,6 +92,8 @@ class MultipleImputer(BaseImputer, BaseEstimator, TransformerMixin):
                 Default is None, although StandardScaler recommended.
             verbose (bool, optional): print more information to console.
                 Default value is False.
+            seed (int, optional): seed setting for reproducible results.
+                Defualt is None. No validation, but values should be integer.
         """
         BaseImputer.__init__(
             self,
@@ -71,3 +108,78 @@ class MultipleImputer(BaseImputer, BaseEstimator, TransformerMixin):
         self.copy = copy
         self.scaler = scaler
         self.verbose = verbose
+        self.seed = seed
+
+    @property
+    def n(self):
+        """Property getter to return the value of the n property."""
+        return self._n
+
+    @n.setter
+    def n(self, n_):
+        """Validate the n property to ensure it's Type and Value.
+
+        Args:
+            n_ (int): n passed as arg to class instance.
+
+        Raises:
+            TypeError: n must be an integer.
+            ValueError: n must be greater than zero.
+        """
+        # deal with type first
+        if not isinstance(n_, int):
+            err = "n must be an integer specifying number of imputations."
+            raise TypeError(err)
+
+        # then check the value is greater than zero
+        if n_ < 1:
+            err = "n > 0. Cannot perform fewer than 1 imputation."
+            raise ValueError(err)
+
+        # otherwise set the property value for n
+        self._n = n_
+
+    @property
+    def strategy(self):
+        """Property getter to return the value of the strategy property."""
+        return self._strategy
+
+    @strategy.setter
+    def strategy(self, s):
+        """Validate the strategy property to ensure it's Type and Value.
+
+        Class instance only possible if strategy is proper type, as outlined
+        in the init method. Passes supported strategies and user arg to
+        helper method, which performs strategy checks.
+
+        Args:
+            s (str, iter, dict): Strategy passed as arg to class instance.
+
+        Raises:
+            ValueError: Strategies not valid (not in allowed strategies).
+            TypeError: Strategy must be a string, tuple, list, or dict.
+            Both errors raised through helper method `check_strategy_allowed`.
+        """
+        strat_names = self.strategies.keys()
+        self._strategy = self.check_strategy_allowed(strat_names, s)
+
+    def _fit_strategy_validator(self, X):
+        """Internal helper method to validate strategies appropriate for fit.
+
+        Checks whether strategies match with type of column they are applied
+        to. If not, error is raised through `check_strategy_fit` method.
+        """
+        # remove nan columns and store colnames
+        cols = X.columns.tolist()
+        self._strats = self.check_strategy_fit(self.strategy, cols)
+        self._preds = self.check_predictors_fit(self.predictors, cols)
+
+        # next, prep the categorical / numerical split
+        # only necessary for classes that use other features during imputation
+        # wont see this requirement in the single imputer
+        self._prep_fit_dataframe(X)
+
+        # if scaler passed, need scaler to fit AND transform
+        # we want to fit predictive imputer on correctly scaled dataset
+        if self.scaler:
+            self._scaler_fit_transform()
