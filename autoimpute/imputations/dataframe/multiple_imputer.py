@@ -54,6 +54,14 @@ class MultipleImputer(BaseImputer, BaseEstimator, TransformerMixin):
         methods.PMM: PMMImputer
     }
 
+    visit_sequences = (
+        "default",
+        "left-to-right",
+        "random",
+        "most missing",
+        "least missing"
+    )
+
     def __init__(self, n=5, strategy="default", predictors="all",
                  imp_kwgs=None, copy=True, scaler=None, verbose=False,
                  seed=None, visit="default", parallel=False):
@@ -94,6 +102,14 @@ class MultipleImputer(BaseImputer, BaseEstimator, TransformerMixin):
                 Default value is False.
             seed (int, optional): seed setting for reproducible results.
                 Defualt is None. No validation, but values should be integer.
+            visit (str, optional): order to visit columns for imputation.
+                Default is "default", which is left-to-right. Options include:
+                - "default", "left-to-right" -> visit in order of columns.
+                - "random" -> shulffe columns and visit.
+                - "most missing" -> in order of most missing to least.
+                - "least missing" -> in order of least missing to most.
+            parallel (bool, optional): run n imputations in parallel or
+                sequentially. Default is False to start, but will be True.
         """
         BaseImputer.__init__(
             self,
@@ -104,11 +120,10 @@ class MultipleImputer(BaseImputer, BaseEstimator, TransformerMixin):
         self.n = n
         self.strategy = strategy
         self.predictors = predictors
-        self.imp_kwgs = imp_kwgs
         self.copy = copy
-        self.scaler = scaler
-        self.verbose = verbose
         self.seed = seed
+        self.visit = visit
+        self.parallel = parallel
 
     @property
     def n(self):
@@ -162,6 +177,39 @@ class MultipleImputer(BaseImputer, BaseEstimator, TransformerMixin):
         """
         strat_names = self.strategies.keys()
         self._strategy = self.check_strategy_allowed(strat_names, s)
+
+    @property
+    def visit(self):
+        """Property getter to return the value of the visit property."""
+        return self._visit
+
+    @visit.setter
+    def visit(self, v):
+        """Validate the visit property to ensure it's Type and Value.
+
+        Class instance only possible if visit is proper type, as outlined in
+        the init method. Visit property must be one of valid sequences in the
+        `visit_sequences` variable.
+
+        Args:
+            v (str): Visit sequence passed as arg to class instance.
+
+        Raises:
+            TypeError: visit sequence must be a string.
+            ValueError: visit sequenece not in `visit_sequences`.
+        """
+        # deal with type first
+        if not isinstance(v, str):
+            err = "visit must be a string specifying visit sequence to use."
+            raise TypeError(err)
+
+        # deal with value next
+        if v not in self.visit_sequences:
+            err = f"visit not valid. Must be one of {self.visit_sequences}"
+            raise ValueError(err)
+
+        # otherwise, set property for visit
+        self._visit = v
 
     def _fit_strategy_validator(self, X):
         """Internal helper method to validate strategies appropriate for fit.
