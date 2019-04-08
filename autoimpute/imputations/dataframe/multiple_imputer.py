@@ -56,10 +56,7 @@ class MultipleImputer(BaseImputer, BaseEstimator, TransformerMixin):
 
     visit_sequences = (
         "default",
-        "left-to-right",
-        "random",
-        "most missing",
-        "least missing"
+        "left-to-right"
     )
 
     def __init__(self, n=5, strategy="default", predictors="all",
@@ -105,9 +102,9 @@ class MultipleImputer(BaseImputer, BaseEstimator, TransformerMixin):
             visit (str, optional): order to visit columns for imputation.
                 Default is "default", which is left-to-right. Options include:
                 - "default", "left-to-right" -> visit in order of columns.
-                - "random" -> shulffe columns and visit.
-                - "most missing" -> in order of most missing to least.
-                - "least missing" -> in order of least missing to most.
+                - TBD: "random" -> shulffe columns and visit.
+                - TBD: "most missing" -> in order of most missing to least.
+                - TBD: "least missing" -> in order of least missing to most.
             parallel (bool, optional): run n imputations in parallel or
                 sequentially. Default is False to start, but will be True.
         """

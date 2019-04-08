@@ -282,14 +282,8 @@ class BaseImputer:
             cons = f"Consider removing {col} from dataset."
             warnings.warn(f"{msg} {cons}")
 
-    def _prep_fit_dataframe(self, X):
-        """Private method to process numeric & categorical data for fit."""
-        self._X_idx = X.index
-        self.data_mi = pd.isnull(X)*1
-        if self.verbose:
-            prep = "PREPPING DATAFRAME FOR IMPUTATION ANALYSIS..."
-            print(f"{prep}\n{'-'*len(prep)}")
-
+    def _update_dataframes(self, X):
+        """Private method to update processed dataframes."""
         # numerical columns first
         self._data_num = X.select_dtypes(include=(np.number,))
         self._cols_num = self._data_num.columns.tolist()
@@ -323,6 +317,17 @@ class BaseImputer:
                 self._data_dum = pd.concat(dummies, axis=1)
         self._cols_dum = self._data_dum.columns.tolist()
         self._len_dum = len(self._cols_dum)
+
+    def _prep_fit_dataframe(self, X):
+        """Private method to process numeric & categorical data for fit."""
+        self._X_idx = X.index
+        self.data_mi = pd.isnull(X)*1
+        if self.verbose:
+            prep = "PREPPING DATAFRAME FOR IMPUTATION ANALYSIS..."
+            print(f"{prep}\n{'-'*len(prep)}")
+
+        # call the update, which sets initial columns for fitting
+        self._update_dataframes(X)
 
         # print categorical and numeric columns if verbose true
         if self.verbose:

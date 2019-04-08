@@ -75,10 +75,7 @@ class PredictiveImputer(BaseImputer, BaseEstimator, TransformerMixin):
 
     visit_sequences = (
         "default",
-        "left-to-right",
-        "random",
-        "most missing",
-        "least missing"
+        "left-to-right"
     )
 
     def __init__(self, strategy="default", predictors="all",
@@ -122,9 +119,9 @@ class PredictiveImputer(BaseImputer, BaseEstimator, TransformerMixin):
             visit (str, None): order to visit columns for imputation.
                 Default is "default", which is left-to-right. Options include:
                 - "default", "left-to-right" -> visit in order of columns.
-                - "random" -> shulffe columns and visit.
-                - "most missing" -> in order of most missing to least.
-                - "least missing" -> in order of least missing to most.
+                - TBD: "random" -> shulffe columns and visit.
+                - TBD: "most missing" -> in order of most missing to least.
+                - TBD: "least missing" -> in order of least missing to most.
         """
 
         BaseImputer.__init__(
@@ -369,6 +366,8 @@ class PredictiveImputer(BaseImputer, BaseEstimator, TransformerMixin):
 
             # perform imputation given the specified imputer
             X.loc[imp_ix, column] = imputer.impute(x_)
+            # update the columns used for fitting with new imputed values
+            self._update_dataframes(X)
         return X
 
     def fit_transform(self, X, y=None):
