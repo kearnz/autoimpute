@@ -312,7 +312,8 @@ class MultipleImputer(BaseImputer, BaseEstimator, TransformerMixin):
         # right now, return a list with imputations
         # sequential only for now, and memory intensive
         # may want to give option to store internally or return generator
-        imputed = [i.transform(X, new_data) for i in self.statistics_]
+        imputed = [(i[0], i[1].transform(X, new_data))
+                   for i in self.statistics_.items()]
         return imputed
 
     def fit_transform(self, X, y=None):
