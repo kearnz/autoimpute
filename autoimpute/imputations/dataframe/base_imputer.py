@@ -284,6 +284,7 @@ class BaseImputer:
 
     def _update_dataframes(self, X):
         """Private method to update processed dataframes."""
+        # note that this method can be further optimized
         # numerical columns first
         self._data_num = X.select_dtypes(include=(np.number,))
         self._cols_num = self._data_num.columns.tolist()

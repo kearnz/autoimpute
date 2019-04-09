@@ -7,12 +7,12 @@ imputation as its own dataset. It allows for flexible logic between each
 imputation. More details about the options appear in the class itself.
 """
 
+# pylint:disable=unused-import
 from sklearn.base import BaseEstimator, TransformerMixin
-from autoimpute.imputations import BaseImputer
 from autoimpute.imputations import method_names
+from autoimpute.utils import check_nan_columns
+from .base_imputer import BaseImputer
 from ..series import DefaultPredictiveImputer
-from ..series import MeanImputer, MedianImputer, ModeImputer, RandomImputer
-from ..series import NormImputer, CategoricalImputer, InterpolateImputer
 from ..series import LeastSquaresImputer, StochasticImputer, PMMImputer
 from ..series import BinaryLogisticImputer, MultiLogisticImputer
 from ..series import BayesLeastSquaresImputer, BayesBinaryLogisticImputer
@@ -26,10 +26,10 @@ class MultipleImputer(BaseImputer, BaseEstimator, TransformerMixin):
     """Techniques to impute Series with missing values multiple times.
 
     The MultipleImputer class implements multiple imputation. It leverages the
-    methods found in the SingleImputers and PredictiveImputers. This imputer
-    passes all imputation work to the Single and Predictive imputer, but it
-    controls the arguments each imputer receives, which are flexible depending
-    on what the user specifies for each imputation.
+    methods found in the PredictiveImputer. This imputer passes all imputation
+    work to the PredictiveImputer, but it controls the arguments each imputer
+    receives, which are flexible depending on what the user specifies for each
+    imputation.
 
     Note that the imputer allows for one imputation method per column only.
     Therefore, the behavior of `strategy` is the exact same as other classes.
@@ -38,13 +38,6 @@ class MultipleImputer(BaseImputer, BaseEstimator, TransformerMixin):
 
     strategies = {
         methods.DEFAULT: DefaultPredictiveImputer,
-        methods.MEAN: MeanImputer,
-        methods.MEDIAN: MedianImputer,
-        methods.MODE:  ModeImputer,
-        methods.RANDOM: RandomImputer,
-        methods.NORM: NormImputer,
-        methods.CATEGORICAL: CategoricalImputer,
-        methods.INTERPOLATE: InterpolateImputer,
         methods.LS: LeastSquaresImputer,
         methods.STOCHASTIC: StochasticImputer,
         methods.BINARY_LOGISTIC: BinaryLogisticImputer,
@@ -217,14 +210,47 @@ class MultipleImputer(BaseImputer, BaseEstimator, TransformerMixin):
         # remove nan columns and store colnames
         cols = X.columns.tolist()
         self._strats = self.check_strategy_fit(self.strategy, cols)
-        self._preds = self.check_predictors_fit(self.predictors, cols)
 
-        # next, prep the categorical / numerical split
-        # only necessary for classes that use other features during imputation
-        # wont see this requirement in the single imputer
-        self._prep_fit_dataframe(X)
+        # if predictors is a list...
+        if isinstance(self.predictors, (tuple, list)):
+            # and it is not the same list of predictors for every iteration...
+            if not all([isinstance(x, str) for x in self.predictors]):
+                len_pred = len(self.predictors)
+                # raise error if not the correct length
+                if len_pred != self.n:
+                    err = f"Predictors has {len_pred} items. Need {self.n}"
+                    raise ValueError(err)
+                # check predictors for each in list
+                self._preds = [
+                    self.check_predictors_fit(p, cols)
+                    for p in self.predictors
+                ]
+            # if it is a list, but not a list of objects...
+            else:
+                # broadcast predictors
+                self._preds = self.check_predictors_fit(self.predictors, cols)
+                self._preds = [self._preds]*self.n
+        # if string or dictionary...
+        else:
+            # broadcast predictors
+            self._preds = self.check_predictors_fit(self.predictors, cols)
+            self._preds = [self._preds]*self.n
 
-        # if scaler passed, need scaler to fit AND transform
-        # we want to fit predictive imputer on correctly scaled dataset
-        if self.scaler:
-            self._scaler_fit_transform()
+    @check_nan_columns
+    def fit(self, X, y=None):
+        """Fit imputation methods to each column within a DataFrame.
+
+        The fit method calclulates the `statistics` necessary to later
+        transform a dataset (i.e. perform actual imputatations). Inductive
+        methods calculate statistic on the fit data, then impute new missing
+        data with that value. All currently supported methods are inductive.
+
+        Args:
+            X (pd.DataFrame): pandas DataFrame on which imputer is fit.
+
+        Returns:
+            self: instance of the PredictiveImputer class.
+        """
+        # first, prep columns we plan to use and make sure they are valid
+        self._fit_strategy_validator(X)
+        self.statistics_ = {}
