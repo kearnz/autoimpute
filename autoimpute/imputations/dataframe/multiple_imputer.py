@@ -7,8 +7,8 @@ imputation as its own dataset. It allows for flexible logic between each
 imputation. More details about the options appear in the class itself.
 """
 
-# pylint:disable=unused-import
 from sklearn.base import BaseEstimator, TransformerMixin
+from sklearn.utils.validation import check_is_fitted
 from autoimpute.imputations import method_names
 from autoimpute.utils import check_nan_columns
 from .base_imputer import BaseImputer
@@ -22,6 +22,7 @@ methods = method_names
 # pylint:disable=protected-access
 # pylint:disable=too-many-arguments
 # pylint:disable=unused-argument
+# pylint:disable=arguments-differ
 
 class MultipleImputer(BaseImputer, BaseEstimator, TransformerMixin):
     """Techniques to impute Series with missing values multiple times.
@@ -54,7 +55,7 @@ class MultipleImputer(BaseImputer, BaseEstimator, TransformerMixin):
     )
 
     def __init__(self, n=5, strategy="default", predictors="all",
-                 imp_kwgs=None, copy=True, scaler=None, verbose=False,
+                 imp_kwgs=None, scaler=None, verbose=False,
                  seed=None, visit="default", parallel=False):
         """Create an instance of the MultipleImputer class.
 
@@ -84,9 +85,8 @@ class MultipleImputer(BaseImputer, BaseEstimator, TransformerMixin):
                 Default is None, which means default imputer created to match
                 specific strategy. imp_kwgs keys can be either columns or
                 strategies. If strategies, each column given that strategy is
-                instantiated with same arguments.
-            copy (bool, optional): create copy of DataFrame or operate inplace.
-                Default value is True. Copy created.
+                instantiated with same arguments. When strategy is `default`,
+                imp_kwgs is ignored.
             scaler (scaler, optional): scale variables before transformation.
                 Default is None, although StandardScaler recommended.
             verbose (bool, optional): print more information to console.
@@ -111,10 +111,10 @@ class MultipleImputer(BaseImputer, BaseEstimator, TransformerMixin):
         self.n = n
         self.strategy = strategy
         self.predictors = predictors
-        self.copy = copy
         self.seed = seed
         self.visit = visit
         self.parallel = parallel
+        self.copy = True
 
     @property
     def n(self):
@@ -237,6 +237,13 @@ class MultipleImputer(BaseImputer, BaseEstimator, TransformerMixin):
             self._preds = self.check_predictors_fit(self.predictors, cols)
             self._preds = [self._preds]*self.n
 
+    def _transform_strategy_validator(self):
+        """Private method to prep for prediction."""
+        # initial checks before transformation
+        # as of now, don't need to do anything else
+        # predictive imputer will handle transform strategy validator
+        check_is_fitted(self, "statistics_")
+
     @check_nan_columns
     def fit(self, X, y=None):
         """Fit imputation methods to each column within a DataFrame.
@@ -263,18 +270,51 @@ class MultipleImputer(BaseImputer, BaseEstimator, TransformerMixin):
             self._seeds = [None]*self.n
 
         # create PredictiveImputers. sequentially only right now
-        for e in range(1, self.n+1):
+        for i in range(1, self.n+1):
             imputer = PredictiveImputer(
                 strategy=self.strategy,
-                predictors=self._preds[e],
+                predictors=self._preds[i-1],
                 imp_kwgs=self.imp_kwgs,
                 copy=self.copy,
                 scaler=self.scaler,
                 verbose=self.verbose,
-                seed=self._seeds[e],
+                seed=self._seeds[i-1],
                 visit=self.visit
             )
             imputer.fit(X)
-            self.statistics_[e] = imputer
+            self.statistics_[i] = imputer
 
         return self
+
+    @check_nan_columns
+    def transform(self, X, new_data=True):
+        """Impute each column within a DataFrame using fit imputation methods.
+
+        The transform step performs the actual imputations. Given a dataset
+        previously fit, `transform` imputes each column with it's respective
+        imputed values from fit (in the case of inductive) or performs new fit
+        and transform in one sweep (in the case of transductive).
+
+        Args:
+            X (pd.DataFrame): fit DataFrame to impute.
+            new_data (bool, Optional): whether or not new data is used.
+                Default is True.
+
+        Returns:
+            X (pd.DataFrame): imputed in place or copy of original.
+
+        Raises:
+            ValueError: same columns must appear in fit and transform.
+        """
+        # call transform strategy validator before applying transform
+        self._transform_strategy_validator()
+
+        # right now, return a list with imputations
+        # sequential only for now, and memory intensive
+        # may want to give option to store internally or return generator
+        imputed = [i.transform(X, new_data) for i in self.statistics_]
+        return imputed
+
+    def fit_transform(self, X, y=None):
+        """Convenience method to fit then transform the same dataset."""
+        return self.fit(X, y).transform(X, False)

@@ -184,7 +184,7 @@ class MissingnessClassifier(BaseImputer, BaseEstimator, ClassifierMixin):
         Args:
             X (pd.DataFrame): DataFrame used to create predictions.
             new_data (bool, optional): whether or not new data is used.
-                Default is False.
+                Default is True.
             kwargs: kewword arguments. Used by the classifer.
 
         Returns:
@@ -226,7 +226,7 @@ class MissingnessClassifier(BaseImputer, BaseEstimator, ClassifierMixin):
         Args:
             X (pd.DataFrame): DataFrame used to create probabilities.
             new_data (bool, Optional): whether or not new data is used.
-                Default is False.
+                Default is True.
 
         Returns:
             pd.DataFrame: DataFrame with probability of missing class for

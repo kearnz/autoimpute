@@ -107,7 +107,8 @@ class PredictiveImputer(BaseImputer, BaseEstimator, TransformerMixin):
                 Default is None, which means default imputer created to match
                 specific strategy. imp_kwgs keys can be either columns or
                 strategies. If strategies, each column given that strategy is
-                instantiated with same arguments.
+                instantiated with same arguments. When strategy is `default`,
+                imp_kwgs is ignored.
             copy (bool, optional): create copy of DataFrame or operate inplace.
                 Default value is True. Copy created.
             scaler (scaler, optional): scale variables before transformation.
@@ -311,7 +312,7 @@ class PredictiveImputer(BaseImputer, BaseEstimator, TransformerMixin):
         Args:
             X (pd.DataFrame): fit DataFrame to impute.
             new_data (bool, Optional): whether or not new data is used.
-                Default is False.
+                Default is True.
 
         Returns:
             X (pd.DataFrame): imputed in place or copy of original.
