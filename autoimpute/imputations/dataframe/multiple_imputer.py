@@ -12,6 +12,7 @@ from sklearn.base import BaseEstimator, TransformerMixin
 from autoimpute.imputations import method_names
 from autoimpute.utils import check_nan_columns
 from .base_imputer import BaseImputer
+from .predictive_imputer import PredictiveImputer
 from ..series import DefaultPredictiveImputer
 from ..series import LeastSquaresImputer, StochasticImputer, PMMImputer
 from ..series import BinaryLogisticImputer, MultiLogisticImputer
@@ -251,6 +252,29 @@ class MultipleImputer(BaseImputer, BaseEstimator, TransformerMixin):
         Returns:
             self: instance of the PredictiveImputer class.
         """
-        # first, prep columns we plan to use and make sure they are valid
+        # first, run the fit strategy validator, then create statistics
         self._fit_strategy_validator(X)
         self.statistics_ = {}
+
+        # deal with potentially setting seed for each individual predictor
+        if self.seed is not None:
+            self._seeds = [self.seed + i for i in range(1, self.n*13, 13)]
+        else:
+            self._seeds = [None]*self.n
+
+        # create PredictiveImputers. sequentially only right now
+        for e in range(1, self.n+1):
+            imputer = PredictiveImputer(
+                strategy=self.strategy,
+                predictors=self._preds[e],
+                imp_kwgs=self.imp_kwgs,
+                copy=self.copy,
+                scaler=self.scaler,
+                verbose=self.verbose,
+                seed=self._seeds[e],
+                visit=self.visit
+            )
+            imputer.fit(X)
+            self.statistics_[e] = imputer
+
+        return self
