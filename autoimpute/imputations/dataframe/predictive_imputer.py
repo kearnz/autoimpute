@@ -12,7 +12,8 @@ import numpy as np
 import pandas as pd
 from sklearn.base import BaseEstimator, TransformerMixin
 from sklearn.utils.validation import check_is_fitted
-from autoimpute.utils import check_nan_columns
+from autoimpute.utils import check_nan_columns, check_predictors_fit
+from autoimpute.utils import check_strategy_allowed, check_strategy_fit
 from autoimpute.imputations.helpers import _get_observed
 from autoimpute.imputations import method_names
 from .base_imputer import BaseImputer
@@ -159,7 +160,7 @@ class PredictiveImputer(BaseImputer, BaseEstimator, TransformerMixin):
             Both errors raised through helper method `check_strategy_allowed`.
         """
         strat_names = self.strategies.keys()
-        self._strategy = self.check_strategy_allowed(strat_names, s)
+        self._strategy = check_strategy_allowed(strat_names, s)
 
     @property
     def visit(self):
@@ -202,8 +203,8 @@ class PredictiveImputer(BaseImputer, BaseEstimator, TransformerMixin):
         """
         # remove nan columns and store colnames
         cols = X.columns.tolist()
-        self._strats = self.check_strategy_fit(self.strategy, cols)
-        self._preds = self.check_predictors_fit(self.predictors, cols)
+        self._strats = check_strategy_fit(self.strategy, cols)
+        self._preds = check_predictors_fit(self.predictors, cols)
 
         # next, prep the categorical / numerical split
         # only necessary for classes that use other features during imputation

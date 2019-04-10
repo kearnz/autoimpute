@@ -10,7 +10,7 @@ import pandas as pd
 from xgboost import XGBClassifier
 from sklearn.base import clone, BaseEstimator, ClassifierMixin
 from sklearn.utils.validation import check_is_fitted
-from autoimpute.utils import check_nan_columns
+from autoimpute.utils import check_nan_columns, check_predictors_fit
 from autoimpute.imputations import BaseImputer
 
 # pylint:disable=attribute-defined-outside-init
@@ -99,7 +99,7 @@ class MissingnessClassifier(BaseImputer, BaseEstimator, ClassifierMixin):
         """Internal helper method to validate behavior appropriate for fit."""
         # remove nan columns and store colnames
         cols = X.columns.tolist()
-        self._preds = self.check_predictors_fit(self.predictors, cols)
+        self._preds = check_predictors_fit(self.predictors, cols)
 
         # next, prep the categorical / numerical split
         # only necessary for classes that use other features

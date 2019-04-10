@@ -10,7 +10,8 @@ imputation. More details about the options appear in the class itself.
 from sklearn.base import BaseEstimator, TransformerMixin
 from sklearn.utils.validation import check_is_fitted
 from autoimpute.imputations import method_names
-from autoimpute.utils import check_nan_columns
+from autoimpute.utils import check_nan_columns, check_predictors_fit
+from autoimpute.utils import check_strategy_allowed, check_strategy_fit
 from .base_imputer import BaseImputer
 from .predictive_imputer import PredictiveImputer
 from ..series import DefaultPredictiveImputer
@@ -167,7 +168,7 @@ class MultipleImputer(BaseImputer, BaseEstimator, TransformerMixin):
             Both errors raised through helper method `check_strategy_allowed`.
         """
         strat_names = self.strategies.keys()
-        self._strategy = self.check_strategy_allowed(strat_names, s)
+        self._strategy = check_strategy_allowed(strat_names, s)
 
     @property
     def visit(self):
@@ -210,7 +211,7 @@ class MultipleImputer(BaseImputer, BaseEstimator, TransformerMixin):
         """
         # remove nan columns and store colnames
         cols = X.columns.tolist()
-        self._strats = self.check_strategy_fit(self.strategy, cols)
+        self._strats = check_strategy_fit(self.strategy, cols)
 
         # if predictors is a list...
         if isinstance(self.predictors, (tuple, list)):
@@ -223,18 +224,18 @@ class MultipleImputer(BaseImputer, BaseEstimator, TransformerMixin):
                     raise ValueError(err)
                 # check predictors for each in list
                 self._preds = [
-                    self.check_predictors_fit(p, cols)
+                    check_predictors_fit(p, cols)
                     for p in self.predictors
                 ]
             # if it is a list, but not a list of objects...
             else:
                 # broadcast predictors
-                self._preds = self.check_predictors_fit(self.predictors, cols)
+                self._preds = check_predictors_fit(self.predictors, cols)
                 self._preds = [self._preds]*self.n
         # if string or dictionary...
         else:
             # broadcast predictors
-            self._preds = self.check_predictors_fit(self.predictors, cols)
+            self._preds = check_predictors_fit(self.predictors, cols)
             self._preds = [self._preds]*self.n
 
     def _transform_strategy_validator(self):

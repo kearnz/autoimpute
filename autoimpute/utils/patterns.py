@@ -2,20 +2,10 @@
 
 This module is a collection of methods to explore missing data and its
 patterns. The module's methods are heavily influenced by those found in
-section 4.1 of Flexible Imputation of Missing Data (Van Buuren).
-
-Methods:
-    md_locations(data, both=False)
-    md_pairs(data)
-    md_pattern(data)
-    feature_corr(data)
-    feature_cov(data)
-    inbound(data)
-    outbound(data)
-    influx(data)
-    outflux(data)
-    proportions(data)
-    flux(data)
+section 4.1 of Flexible Imputation of Missing Data (Van Buuren). Their main
+purpose is to identify trends and patterns in missing data that can help
+inform what type of imputation method may apply or what cautions to take
+when performing imputations in general.
 """
 
 import numpy as np
