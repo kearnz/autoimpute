@@ -9,6 +9,15 @@ import itertools
 import numpy as np
 import pandas as pd
 from sklearn.base import clone
+from autoimpute.imputations import method_names
+from ..series import DefaultSingleImputer, DefaultPredictiveImputer
+from ..series import MeanImputer, MedianImputer, ModeImputer
+from ..series import NormImputer, CategoricalImputer
+from ..series import RandomImputer, InterpolateImputer
+from ..series import LeastSquaresImputer, StochasticImputer, PMMImputer
+from ..series import BinaryLogisticImputer, MultiLogisticImputer
+from ..series import BayesLeastSquaresImputer, BayesBinaryLogisticImputer
+methods = method_names
 # pylint:disable=attribute-defined-outside-init
 # pylint:disable=too-many-arguments
 # pylint:disable=too-many-instance-attributes
@@ -21,7 +30,63 @@ class BaseImputer:
     The `BaseImputer` is not a stand-alone class and thus serves no purpose
     other than as a Parent to Imputers and MissingnessClassifiers. Therefore,
     the BaseImputer should not be used directly unless creating an Imputer.
+    That being said, all dataframe Imputers should inherit from BaseImputer.
+    It contains base functionality for any new dataframe imputer, and it holds
+    the set of strategies that make up this imputation library.
+
+    Attributes:
+        univariate_strategies (dict): univariate imputation methods.
+            Key = imputation name; Value = function to perform imputation.
+            `univariate default` mean for numerical, mode for categorical.
+            `mean` imputes missing values with the average of the series.
+            `median` imputes missing values with the median of the series.
+            `mode` imputes missing values with the mode of the series.
+                Method handles more than one mode (see ModeImputer for info).
+            `random` imputes w/ random choice from set of Series unique vals.
+            `norm` imputes series using random draws from normal distribution.
+                Mean and std calculated from observed values of the Series.
+            `categorical` imputes series using random draws from pmf.
+                Proportions calculated from non-missing category instances.
+            `interpolate` imputes series using chosen interpolation method.
+                Default is linear. See InterpolateImputer for more info.
+        predictive_strategies (dict): predictive imputation methods.
+            Key = imputation name; Value = function to perform imputation.
+            `default_pred` pmm for numerical, logistic for categorical.
+            `least squares` predict missing values from linear regression.
+            `binary logistic` predict missing values with 2 classes.
+            `multinomial logistic` predict missing values with multiclass.
+            `stochastic` linear regression + random draw from norm w/ mse std.
+            `bayesian least squares` draw from the posterior predictive
+                distribution for each missing value, using underlying OLS.
+            `bayesian binary logistic` draw from the posterior predictive
+                distribution for each missing value, using underling logistic.
+            `pmm` imputes series using predictive mean matching. PMM is a
+                semi-supervised method using bayesian & hot-deck imputation.
+        strategies (dict): univariate and predictive strategies merged.
     """
+    univariate_strategies = {
+        methods.DEFAULT_UNIVAR: DefaultSingleImputer,
+        methods.MEAN: MeanImputer,
+        methods.MEDIAN: MedianImputer,
+        methods.MODE:  ModeImputer,
+        methods.RANDOM: RandomImputer,
+        methods.NORM: NormImputer,
+        methods.CATEGORICAL: CategoricalImputer,
+        methods.INTERPOLATE: InterpolateImputer
+    }
+
+    predictive_strategies = {
+        methods.DEFAULT_PRED: DefaultPredictiveImputer,
+        methods.LS: LeastSquaresImputer,
+        methods.STOCHASTIC: StochasticImputer,
+        methods.BINARY_LOGISTIC: BinaryLogisticImputer,
+        methods.MULTI_LOGISTIC: MultiLogisticImputer,
+        methods.BAYESIAN_LS: BayesLeastSquaresImputer,
+        methods.BAYESIAN_BINARY_LOGISTIC: BayesBinaryLogisticImputer,
+        methods.PMM: PMMImputer
+    }
+
+    strategies = {**predictive_strategies, **univariate_strategies}
 
     def __init__(self, imp_kwgs, scaler, verbose):
         """Initialize the BaseImputer.
@@ -50,11 +115,16 @@ class BaseImputer:
     def scaler(self, s):
         """Validate the scaler property and set default parameters.
 
+        The BaseImputer provides the option to scale data from within the
+        imputer. The scaler is optional, and the default value is None. If
+        a scaler is passed, the scaler must be a valid sklearn transformer.
+        Therefore, it must implement the `fit_transform` method.
+
         Args:
-            s (scaler): if None, implement the xgboost classifier
+            s (scaler): if None, no scaler used, nothing to verify.
 
         Raises:
-            ValueError: classifier does not implement `fit_transform`
+            ValueError: scaler does not implement `fit_transform` method.
         """
         if s is None:
             self._scaler = s
@@ -71,7 +141,18 @@ class BaseImputer:
 
     @imp_kwgs.setter
     def imp_kwgs(self, kwgs):
-        """Validate the imp_kwgs and set default properties."""
+        """Validate the imp_kwgs and set default properties.
+
+        The BaseImputer validates the `imp_kwgs` argument. `imp_kwgs` contain
+        optional keyword arguments for an imputers' strategies or columns. The
+        argument is optional, and its default is None.
+
+        Args:
+            kwgs (dict, None): None or dictionary of keywords.
+
+        Raises:
+            ValueError: imp_kwgs not correctly specified as argument.
+        """
         if not isinstance(kwgs, (type(None), dict)):
             err = "imp_kwgs must be dict of args used to instantiate Imputer."
             raise ValueError(err)

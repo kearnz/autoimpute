@@ -15,14 +15,8 @@ from sklearn.utils.validation import check_is_fitted
 from autoimpute.utils import check_nan_columns, check_predictors_fit
 from autoimpute.utils import check_strategy_allowed, check_strategy_fit
 from autoimpute.imputations.helpers import _get_observed
-from autoimpute.imputations import method_names
 from .base_imputer import BaseImputer
 from .single_imputer import SingleImputer
-from ..series import DefaultPredictiveImputer, PMMImputer
-from ..series import LeastSquaresImputer, StochasticImputer
-from ..series import BinaryLogisticImputer, MultiLogisticImputer
-from ..series import BayesLeastSquaresImputer, BayesBinaryLogisticImputer
-methods = method_names
 
 # pylint:disable=attribute-defined-outside-init
 # pylint:disable=arguments-differ
@@ -46,40 +40,14 @@ class PredictiveImputer(BaseImputer, BaseEstimator, TransformerMixin):
     All of the imputers are inductive (i.e. fit and transform for new data).
     That being said, the `fit` stage deviates from what one might expect in a
     few cases. The `predictive_method` module goes into detail of each method.
-
-    Attributes:
-        strategies (dict): dictionary of supported imputation methods.
-            Key = imputation name; Value = function to perform imputation.
-            `default` imputes pmm for numerical, logistic for categorical.
-            `least squares` predict missing values from linear regression.
-            `binary logistic` predict missing values with 2 classes.
-            `multinomial logistic` predict missing values with multiclass.
-            `stochastic` linear regression + random draw from norm w/ mse std.
-            `bayesian least squares` draw from the posterior predictive
-                distribution for each missing value, using underlying OLS.
-            `bayesian binary logistic` draw from the posterior predictive
-                distribution for each missing value, using underling logistic.
-            `pmm` imputes series using predictive mean matching. PMM is a
-                semi-supervised method using bayesian & hot-deck imputation.
     """
-
-    strategies = {
-        methods.DEFAULT: DefaultPredictiveImputer,
-        methods.LS: LeastSquaresImputer,
-        methods.STOCHASTIC: StochasticImputer,
-        methods.BINARY_LOGISTIC: BinaryLogisticImputer,
-        methods.MULTI_LOGISTIC: MultiLogisticImputer,
-        methods.BAYESIAN_LS: BayesLeastSquaresImputer,
-        methods.BAYESIAN_BINARY_LOGISTIC: BayesBinaryLogisticImputer,
-        methods.PMM: PMMImputer
-    }
 
     visit_sequences = (
         "default",
         "left-to-right"
     )
 
-    def __init__(self, strategy="default", predictors="all",
+    def __init__(self, strategy="predictive default", predictors="all",
                  imp_kwgs=None, copy=True, scaler=None, verbose=False,
                  seed=None, visit="default"):
         """Create an instance of the PredictiveImputer class.
@@ -90,7 +58,7 @@ class PredictiveImputer(BaseImputer, BaseEstimator, TransformerMixin):
 
         Args:
             strategy (str, iter, dict; optional): strategies for imputation.
-                Default value is str -> "default". I.e. default imputation.
+                Default value is str -> "predictive default".
                 If str, single strategy broadcast to all series in DataFrame.
                 If iter, must provide 1 strategy per column. Each method within
                 iterator applies to column with same index value in DataFrame.
@@ -208,8 +176,11 @@ class PredictiveImputer(BaseImputer, BaseEstimator, TransformerMixin):
 
         # next, prep the categorical / numerical split
         # only necessary for classes that use other features during imputation
-        # wont see this requirement in the single imputer
-        self._prep_fit_dataframe(X)
+        # not required if all imputation methods are univariate
+        pred_strats = [strat in self.predictive_strategies for
+                       strat in self._strats.values()]
+        if any(pred_strats):
+            self._prep_fit_dataframe(X)
 
         # if scaler passed, need scaler to fit AND transform
         # we want to fit predictive imputer on correctly scaled dataset
@@ -233,7 +204,10 @@ class PredictiveImputer(BaseImputer, BaseEstimator, TransformerMixin):
         # note that this step is crucial if using fit and transform separately
         # when used separately, new data needs to be prepped again
         if new_data:
-            self._prep_fit_dataframe(X)
+            pred_strats = [strat in self.predictive_strategies for
+                           strat in self._strats.values()]
+            if any(pred_strats):
+                self._prep_fit_dataframe(X)
             if self.scaler:
                 self._scaler_transform()
 
@@ -246,8 +220,15 @@ class PredictiveImputer(BaseImputer, BaseEstimator, TransformerMixin):
         methods calculate statistic on the fit data, then impute new missing
         data with that value. All currently supported methods are inductive.
 
+        It's important to note that we have to fit X regardless of whether any
+        data is missing. Transform step may have missing data if new data is
+        used, so fit each column that appears in the given strategies
+
         Args:
             X (pd.DataFrame): pandas DataFrame on which imputer is fit.
+            y (pd.Series, pd.DataFrame Optional): response. Default is None.
+                Determined interally in fit method. Arg is present to remain
+                compatible with sklearn Pipelines.
 
         Returns:
             self: instance of the PredictiveImputer class.
@@ -286,18 +267,25 @@ class PredictiveImputer(BaseImputer, BaseEstimator, TransformerMixin):
                 print(f"Column: {column}, Strategy: {method}")
 
             # if instantiation succeeds, fit the imputer to the dataset.
-            xs, _ = self._prep_predictor_cols(column, self._preds)
             ys = X[column]
 
-            # fit the data on observed values only.
-            x_, y_ = _get_observed(
-                self.strategy, xs, ys, self.verbose
-            )
+            # the fit depends on what type of strategy we use.
+            # first, fit univariate methods, which are straightforward.
+            if method in self.univariate_strategies:
+                imputer.fit(ys)
 
-            # note - have to fit X regardless of whether any data missing
-            # transform step may have missing data
-            # so fit each column that appears in the given strategies
-            imputer.fit(x_, y_)
+            # now, fit on predictive methods, which are more complex.
+            if method in self.predictive_strategies:
+                xs, _ = self._prep_predictor_cols(column, self._preds)
+
+                # fit the data on observed values only.
+                x_, y_ = _get_observed(
+                    self.strategy, xs, ys, self.verbose
+                )
+
+                imputer.fit(x_, y_)
+
+            # finally, store imputer for each column as statistics
             self.statistics_[column] = imputer
         return self
 
@@ -349,27 +337,35 @@ class PredictiveImputer(BaseImputer, BaseEstimator, TransformerMixin):
             # continue if there are no imputations to make
             if imp_ix.empty:
                 continue
-            x_, _ = self._prep_predictor_cols(column, self._preds)
 
-            # if dealing with new data, need to reset the index to missing
-            if new_data:
-                x_.index = self._X_idx
-            x_ = x_.loc[imp_ix, :]
+            # implement transform logic for univariate
+            if imputer.strategy in self.univariate_strategies:
+                x_ = X[column]
 
-            # may abstract SingleImputer in future for flexibility
-            mis_cov = pd.isnull(x_).sum()
-            if any(mis_cov):
-                if self.verbose:
-                    print(f"Missing Covariates:\n{mis_cov}\n")
-                    print("Using single imputer for missing covariates...")
-                x_ = SingleImputer(
-                    verbose=self.verbose, copy=False
-                ).fit_transform(x_)
+            # implement transform logic for predictive
+            if imputer.strategy in self.predictive_strategies:
+                x_, _ = self._prep_predictor_cols(column, self._preds)
 
-            # perform imputation given the specified imputer
+                # if dealing with new data, need to reset the index to missing
+                if new_data:
+                    x_.index = self._X_idx
+                x_ = x_.loc[imp_ix, :]
+
+                # may abstract SingleImputer in future for flexibility
+                mis_cov = pd.isnull(x_).sum()
+                if any(mis_cov):
+                    if self.verbose:
+                        print(f"Missing Covariates:\n{mis_cov}\n")
+                        print("Using single imputer for missing covariates...")
+                    x_ = SingleImputer(
+                        verbose=self.verbose, copy=False
+                    ).fit_transform(x_)
+
+            # perform imputation given the specified imputer and value for x_
             X.loc[imp_ix, column] = imputer.impute(x_)
-            # update the columns used for fitting with new imputed values
-            self._update_dataframes(X)
+            # update predictive columns used for fitting with new imputed vals
+            if hasattr(self, 'data_mi'):
+                self._update_dataframes(X)
         return X
 
     def fit_transform(self, X, y=None):

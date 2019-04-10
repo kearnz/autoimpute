@@ -353,7 +353,7 @@ class DefaultPredictiveImputer(DefaultBaseImputer, BaseEstimator):
     identical. Instead, use PredictiveImputer(strategy="default").
     """
     # class variables
-    strategy = methods.DEFAULT
+    strategy = methods.DEFAULT_PRED
 
     def __init__(
             self,
@@ -362,24 +362,24 @@ class DefaultPredictiveImputer(DefaultBaseImputer, BaseEstimator):
             num_kwgs=None,
             cat_kwgs=None
         ):
-        """Create an instance of the DefaultSingleImputer class.
+        """Create an instance of the DefaultPredictiveImputer class.
 
-        The SingleImputer delegates work to the DefaultSingleImputer if
-        strategy="default" or no strategy is given when SingleImputer is
-        instantiated. The DefaultSingleImputer then determines how to impute
+        The PredictiveImputer delegates work to DefaultPredictiveImputer if
+        strategy="predictive default" or no strategy given when class is
+        instantiated. The DefaultPredictiveImputer determines how to impute
         numerical and categorical columns by default. It does so by passing
         its arguments to the DefaultBaseImputer, which handles validation and
         instantiation of default numerical and categorical imputers.
 
         Args:
             num_imputer (Imputer, Optional): valid Imputer for numerical data.
-                Default is MeanImputer.
+                Default is PMMImputer.
             cat_imputer (Imputer, Optional): valid Imputer for categorical
-                data. Default is ModeImputer.
+                data. Default is MultiLogisticImputer.
             num_kwgs (dict, optional): Keyword args for numerical imputer.
                 Default is None.
             cat_kwgs (dict, optional): keyword args for categorical imputer.
-                Default is {"fill_strategy": "random"}.
+                Default is None.
 
         Returns:
             self. Instance of class.
