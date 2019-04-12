@@ -3,6 +3,7 @@
 DEFAULT = "default"
 DEFAULT_PRED = "predictive default"
 DEFAULT_UNIVAR = "univariate default"
+DEFAULT_TIME = "time default"
 MEAN = "mean"
 MEDIAN = "median"
 MODE = "mode"

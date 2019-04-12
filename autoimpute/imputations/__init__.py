@@ -11,7 +11,7 @@ from autoimpute.imputations.
 
 from .dataframe import BaseImputer
 from .mis_classifier import MissingnessClassifier
-from .dataframe import SingleImputer, TimeSeriesImputer, PredictiveImputer
+from .dataframe import SingleImputer
 from .dataframe import MultipleImputer
 from .deletion import listwise_delete
 
@@ -19,8 +19,6 @@ __all__ = [
     "BaseImputer",
     "MissingnessClassifier",
     "SingleImputer",
-    "TimeSeriesImputer",
-    "PredictiveImputer",
     "MultipleImputer",
     "listwise_delete"
 ]

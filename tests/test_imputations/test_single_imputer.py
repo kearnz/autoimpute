@@ -12,26 +12,24 @@ def test_default_single_imputer():
     imp = SingleImputer()
     # test df_num first
     # -----------------
-    # all strategies should default to mean
+    # all strategies should default to pmm
     imp.fit_transform(dfs.df_num)
     for imputer in imp.statistics_.values():
         strat = imputer.statistics_["strategy"]
-        assert strat == "mean"
+        assert strat == "pmm"
 
     # test df_ts_mixed next
     # ---------------
     # datetime col should default to none
     # numerical col should default to mean
     # categorical col should default to mean
-    imp.fit_transform(dfs.df_ts_mixed)
-    date_imputer = imp.statistics_["date"]
-    values_imputer = imp.statistics_["values"]
-    cats_imputer = imp.statistics_["cats"]
-    assert date_imputer.statistics_["strategy"] is None
-    assert values_imputer.statistics_["strategy"] == "mean"
-    assert cats_imputer.statistics_["strategy"] == "mode"
+    imp.fit_transform(dfs.df_mix)
+    gender_imputer = imp.statistics_["gender"]
+    salary_imputer = imp.statistics_["salary"]
+    assert salary_imputer.statistics_["strategy"] == "pmm"
+    assert gender_imputer.statistics_["strategy"] == "multinomial logistic"
 
-def test_numerical_single_imputers():
+def test_numerical_univar_imputers():
     """Test numerical methods when not using the _default."""
     for num_strat in dfs.num_strategies:
         imp = SingleImputer(strategy=num_strat)
@@ -40,7 +38,7 @@ def test_numerical_single_imputers():
             strat = imputer.statistics_["strategy"]
             assert strat == num_strat
 
-def test_categorical_single_imputers():
+def test_categorical_univar_imputers():
     """Test categorical methods when not using the _default."""
     for cat_strat in dfs.cat_strategies:
         imp = SingleImputer(strategy={"cats": cat_strat})
@@ -48,6 +46,31 @@ def test_categorical_single_imputers():
         for imputer in imp.statistics_.values():
             strat = imputer.statistics_["strategy"]
             assert strat == cat_strat
+
+def test_stochastic_predictive_imputer():
+    """Test stochastic works for numerical columns of PredictiveImputer."""
+    # generate linear, then stochastic
+    imp_p = SingleImputer(strategy={"A":"least squares"})
+    imp_s = SingleImputer(strategy={"A":"stochastic"})
+    # make sure both work
+    _ = imp_p.fit_transform(dfs.df_num)
+    _ = imp_s.fit_transform(dfs.df_num)
+    assert imp_p.imputed_["A"] == imp_s.imputed_["A"]
+
+def test_bayesian_reg_imputer():
+    """Test bayesian works for numerical column of PredictiveImputer."""
+    # test designed first
+    imp_b = SingleImputer(strategy={"y":"bayesian least squares"})
+    imp_b.fit_transform(dfs.df_bayes_reg)
+    # test on numerical in general
+    imp_n = SingleImputer(strategy="bayesian least squares")
+    imp_n.fit_transform(dfs.df_num)
+
+def test_bayesian_logistic_imputer():
+    """Test bayesian works for binary column of PredictiveImputer."""
+    imp_b = SingleImputer(strategy={"y":"bayesian binary logistic"},
+                          imp_kwgs={"y":{"fill_value": "random"}})
+    imp_b.fit_transform(dfs.df_bayes_log)
 
 def test_single_missing_column():
     """Test that the imputer removes columns that are fully missing."""
@@ -75,7 +98,6 @@ def test_imputer_strategies_not_allowed(imp):
     with pytest.raises(ValueError):
         imp.fit_transform(dfs.df_num)
 
-''' HOLD OFF ON TESTS BELOW UNTIL SERIES TYPE CHECKING ERRORS IMPLEMENTED
 def test_wrong_numerical_type():
     """Test supported strategies but improper column type for strategy."""
     num_for_cat = SingleImputer(strategy={"cats": "mean"})
@@ -87,4 +109,3 @@ def test_wrong_categorical_type():
     cat_for_num = SingleImputer(strategy="categorical")
     with pytest.raises(TypeError):
         cat_for_num.fit_transform(dfs.df_num)
-'''

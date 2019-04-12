@@ -2,10 +2,10 @@
 
 The LOCFImputer carries the last observation forward (locf) to impute missing
 data in a time series. NOCBImputer carries the next observation backward (nocb)
-to impute missing data in a time series. Both methods are univariate. Right
-now, these imputers support imputation on Series only. Use
-TimeSeriesImputer(strategy="locf") or TimeSeriesImputer(strategy="nocb") to
-broadcast forward or backward fill across multiple columns of a DataFrame.
+to impute missing data in a time series. Dataframe imputers utilize these
+classes when each's strategy is requested. Use SingleImputer or MultipleImputer
+with strategy = `locf` or `nocb` to broadcast either strategy across all the
+columns in a dataframe, or specify either strategy for a given column.
 """
 
 import pandas as pd
@@ -21,10 +21,10 @@ class LOCFImputer(BaseEstimator):
     """Impute missing values by carrying the last observation forward.
 
     LOCFImputer carries the last observation forward to impute missing data.
-    The imputer can be used directly, but such behavior is discouraged because
-    the imputer supports Series only. LOCFImputer does not have the
-    flexibility or robustness of more complex imputers, nor is its behavior
-    identical. Instead, use TimeSeriesImputer(strategy="locf").
+    The imputer can be used directly, but such behavior is discouraged.
+    LOCFImputer does not have the flexibility / robustness of dataframe
+    imputers, nor is its behavior identical. Preferred use is
+    MultipleImputer(strategy="locf").
     """
     # class variables
     strategy = methods.LOCF
@@ -96,10 +96,10 @@ class NOCBImputer(BaseEstimator):
     """Impute missing data by carrying the next observation backward.
 
     NOCBImputer carries the next observation backward to impute missing data.
-    The imputer can be used directly, but such behavior is discouraged because
-    the imputer supports Series only. NOCBImputer does not have the
-    flexibility or robustness of more complex imputers, nor is its behavior
-    identical. Instead, use TimeSeriesImputer(strategy="nocb").
+    The imputer can be used directly, but such behavior is discouraged.
+    NOCBImputer does not have the flexibility / robustness of dataframe
+    imputers, nor is its behavior identical. Preferred use is
+    MultipleImputer(strategy="nocb").
     """
     # class variables
     strategy = methods.NOCB

@@ -2,9 +2,10 @@
 
 InterpolateImputer imputes missing data using some interpolation strategies
 suppoted by pd.Series.interpolate. Linear is the default strategy, although a
-number of additional strategies exist. Right now, this imputer supports
-imputation on Series only. Use the TimeSeriesImputer (or SingleImputer), with
-strategy="interpolate" to broadcast across multiple columns of a DataFrame.
+number of additional strategies exist. Dataframe imputers utilize this class
+when its strategy is requested. Use SingleImputer or MultipleImputer with
+strategy = `interpolate` to broadcast the strategy across all the columns in a
+dataframe, or specify this strategy for a given column.
 """
 
 import pandas as pd
@@ -21,10 +22,10 @@ class InterpolateImputer(BaseEstimator):
 
     The InterpolateImputer imputes missing values uses a valid pd.Series
     interpolation strategy. See __init__ method docs for supported strategies.
-    The imputer can be used directly, but such behavior is discouraged because
-    the imputer supports Series only. InterpolateImputer does not have the
-    flexibility or robustness of more complex imputers, nor is its behavior
-    identical. Instead, use TimeSeriesImputer or SingleImputer.
+    The imputer can be used directly, but such behavior is discouraged.
+    InterpolateImputer does not have the flexibility / robustness of dataframe
+    imputers, nor is its behavior identical. Preferred use is
+    MultipleImputer(strategy="interpolate").
     """
     # class variables
     strategy = methods.INTERPOLATE

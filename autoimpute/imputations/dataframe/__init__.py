@@ -11,14 +11,10 @@ from autoimpute.imputations.dataframe.
 
 from .base_imputer import BaseImputer
 from .single_imputer import SingleImputer
-from .ts_imputer import TimeSeriesImputer
-from .predictive_imputer import PredictiveImputer
 from .multiple_imputer import MultipleImputer
 
 __all__ = [
     "BaseImputer",
     "SingleImputer",
-    "TimeSeriesImputer",
-    "PredictiveImputer",
     "MultipleImputer"
 ]

@@ -1,11 +1,11 @@
-"""This module implements default imputers used for specific Imputer classes.
+"""This module implements default imputers used for dataframe Imputer classes.
 
 These Imputer classes serve as defaults within more advanced imputers. They
 are flexible, and they allow users to quickly run imputations without getting
 a runtime error as they would in sklearn if the data types in a dataset are
-mixed. There are three default imputers at the moment: DefaultSingleImputer,
-DefaultTimeSeriesImputer, and DefaultPredictiveImputer. They all inherit from
-the DefaultBaseImputer.
+mixed. There are three default imputers at the moment: DefaultUnivarImputer,
+DefaultTimeSeriesImputer and DefaultPredictiveImputer. Default imputers
+inherit from DefaultBaseImputer.
 """
 
 from pandas.api.types import is_string_dtype
@@ -13,18 +13,19 @@ from pandas.api.types import is_numeric_dtype
 from sklearn.base import BaseEstimator
 from sklearn.utils.validation import check_is_fitted
 from autoimpute.imputations import method_names
+from .pmm import PMMImputer
 from .mean import MeanImputer
 from .mode import ModeImputer
 from .interpolation import InterpolateImputer
-from .pmm import PMMImputer
 from .logistic_regression import MultiLogisticImputer
 methods = method_names
 # pylint:disable=attribute-defined-outside-init
 # pylint:disable=unnecessary-pass
 # pylint:disable=dangerous-default-value
+# pylint:disable=too-many-instance-attributes
 
 class DefaultBaseImputer:
-    """Building blocks for the default Single, Time, and Predictive Imputers.
+    """Building blocks for the default imputers.
 
     The DefaultBaseImputer is not a stand-alone class and thus serves no
     purpose other than as a Parent to DefaultImputers. Therefore, the
@@ -217,19 +218,18 @@ class DefaultBaseImputer:
         """Convenience method to perform fit and imputation in one go."""
         return self.fit(X, y).impute(X)
 
-class DefaultSingleImputer(DefaultBaseImputer, BaseEstimator):
-    """Impute missing data using default methods for SingleImputer.
+class DefaultUnivarImputer(DefaultBaseImputer, BaseEstimator):
+    """Impute missing data using default methods for univariate imputation.
 
-    This imputer is the default imputer for the SingleImputer class. When an
-    end-user does not supply a strategy, the default imputer determines how to
-    impute based on the column type of each column in a dataframe. The imputer
-    can be used directly, but such behavior is discouraged because the imputer
-    supports Series only. DefaultSingleImputer does not have the flexibility
-    or robustness of more complex imputers, nor is its behavior identical.
-    Instead, use SingleImputer(strategy="default").
+    This imputer is the default for univariate imputation. The imputer
+    determines how to impute based on the column type of each column in a
+    dataframe. The imputer can be used directly, but such behavior is
+    discouraged. DefaultUnivarImputer does not have the flexibility /
+    robustness of more complex imputers, nor is its behavior identical.
+    Preferred use is MultipleImputer(strategy="univariate default").
     """
     # class variables
-    strategy = methods.DEFAULT
+    strategy = methods.DEFAULT_UNIVAR
 
     def __init__(
             self,
@@ -238,14 +238,13 @@ class DefaultSingleImputer(DefaultBaseImputer, BaseEstimator):
             num_kwgs=None,
             cat_kwgs={"fill_strategy": "random"}
         ):
-        """Create an instance of the DefaultSingleImputer class.
+        """Create an instance of the DefaultUnivarImputer class.
 
-        The SingleImputer delegates work to the DefaultSingleImputer if
-        strategy="default" or no strategy is given when SingleImputer is
-        instantiated. The DefaultSingleImputer then determines how to impute
-        numerical and categorical columns by default. It does so by passing
-        its arguments to the DefaultBaseImputer, which handles validation and
-        instantiation of default numerical and categorical imputers.
+        The dataframe imputers delegate work to the DefaultUnivarImputer if
+        strategy="univariate default" The DefaultUnivarImputer then determines
+        how to impute numerical and categorical columns by default. It does so
+        by passing its arguments to the DefaultBaseImputer, which handles
+        validation and instantiation of numerical and categorical imputers.
 
         Args:
             num_imputer (Imputer, Optional): valid Imputer for numerical data.
@@ -280,18 +279,17 @@ class DefaultSingleImputer(DefaultBaseImputer, BaseEstimator):
         return X_
 
 class DefaultTimeSeriesImputer(DefaultBaseImputer, BaseEstimator):
-    """Impute missing data using default methods for TimeSeriesImputer.
+    """Impute missing data using default methods for time series.
 
-    This imputer is the default imputer for the TimeSeriesImputer class. When
-    an end-user does not supply a strategy, the default imputer determines how
-    to impute based on the column type of each column in a dataframe. The
-    imputer can be used directly, but such behavior is discouraged because the
-    imputer supports Series only. DefaultTimeSeriesImputer does not have the
-    flexibility or robustness of more complex imputers, nor is its behavior
-    identical. Instead, use TimeSeriesImputer(strategy="default").
+    This imputer is the default imputer for time series imputation. The
+    imputer determines how to impute based on the column type of each column
+    in a dataframe. The imputer can be used directly, but such behavior is
+    discouraged. DefaultTimeSeriesImputer does not have the flexibility /
+    robustness of more complex imputers, nor is its behavior identical.
+    Preferred use is MultipleImputer(strategy="time default").
     """
     # class variables
-    strategy = methods.DEFAULT
+    strategy = methods.DEFAULT_TIME
 
     def __init__(
             self,
@@ -302,13 +300,12 @@ class DefaultTimeSeriesImputer(DefaultBaseImputer, BaseEstimator):
         ):
         """Create an instance of the DefaultTimeSeriesImputer class.
 
-        The TimeSeriesImputer delegates work to the DefaultTimeSeriesImputer
-        if strategy="default" or no strategy is given when TimeSeriesImputer
-        is instantiated. The DefaultTimeSeriesImputer then determines how to
-        impute numerical and categorical columns by default. It does so by
-        passing its arguments to the DefaultBaseImputer, which handles
-        validation and instantiation of default numerical and categorical
-        imputers.
+        The dataframe imputers delegate work to the DefaultTimeSeriesImputer
+        if strategy="time default". The DefaultTimeSeriesImputer then
+        determines how to impute numerical and categorical columns by default.
+        It does so by passing its arguments to the DefaultBaseImputer, which
+        handles validation and instantiation of default numerical and
+        categorical imputers.
 
         Args:
             num_imputer (Imputer, Optional): valid Imputer for numerical data.
@@ -342,15 +339,15 @@ class DefaultTimeSeriesImputer(DefaultBaseImputer, BaseEstimator):
         return X_
 
 class DefaultPredictiveImputer(DefaultBaseImputer, BaseEstimator):
-    """Impute missing data using default methods for PredictiveImputer.
+    """Impute missing data using default methods for prediction.
 
-    This imputer is the default imputer for the PredictiveImputer class. When
-    an end-user does not supply a strategy, the default imputer determines how
-    to impute based on the column type of each column in a dataframe. The
-    imputer can be used directly, but such behavior is discouraged because the
-    imputer supports Series only. DefaultPredictiveImputer does not have the
-    flexibility or robustness of more complex imputers, nor is its behavior
-    identical. Instead, use PredictiveImputer(strategy="default").
+    This imputer is the default imputer for the MultipleImputer class. When
+    an end-user does not supply a strategy, the DefaultPredictiveImputer
+    determines how to impute based on the column type of each column in a
+    dataframe. The imputer can be used directly, but such behavior is
+    discouraged. DefaultPredictiveImputer does not have the flexibility /
+    robustness of more complex imputers, nor is its behavior identical.
+    Preferred use is MultipleImputer(strategy="predictive default").
     """
     # class variables
     strategy = methods.DEFAULT_PRED
@@ -364,7 +361,7 @@ class DefaultPredictiveImputer(DefaultBaseImputer, BaseEstimator):
         ):
         """Create an instance of the DefaultPredictiveImputer class.
 
-        The PredictiveImputer delegates work to DefaultPredictiveImputer if
+        The dataframe imputers delegate work to DefaultPredictiveImputer if
         strategy="predictive default" or no strategy given when class is
         instantiated. The DefaultPredictiveImputer determines how to impute
         numerical and categorical columns by default. It does so by passing

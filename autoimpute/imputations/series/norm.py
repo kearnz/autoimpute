@@ -1,9 +1,10 @@
 """This module implements norm imputation via the NormImputer.
 
 The NormImputer imputes missing data with random draws from a construted
-normal distribution. Right now, this imputer supports imputation on Series
-only. Use SingleImputer(strategy="norm") to broadcast the imputation
-strategy across multiple columns of a DataFrame.
+normal distribution. Dataframe imputers utilize this class when its strategy
+is requested. Use SingleImputer or MultipleImputer with strategy = `norm` to
+broadcast the strategy across all the columns in a dataframe, or specify this
+strategy for a given column.
 """
 
 from scipy.stats import norm
@@ -21,10 +22,9 @@ class NormImputer(BaseEstimator):
     The NormImputer constructs a normal distribution using the sample mean and
     variance of the observed data. The imputer then randomly samples from this
     distribution to impute missing data. The imputer can be used directly, but
-    such behavior is discouraged because the imputer supports Series only.
-    NormImputer does not have the flexibility or robustness of more complex
-    imputers, nor is its behavior identical. Instead, use
-    SingleImputer(strategy="norm").
+    such behavior is discouraged. NormImputer does not have the flexibility /
+    robustness of dataframe imputers, nor is its behavior identical.
+    Preferred use is MultipleImputer(strategy="norm").
     """
     # class variables
     strategy = methods.NORM

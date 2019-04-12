@@ -1,9 +1,10 @@
 """This module implements mean imputation via the MeanImputer.
 
 The MeanImputer imputes missing data with the mean of observed data.
-Right now, this imputer supports imputation on Series only.
-Use SingleImputer(strategy="mean") to broadcast the imputation strategy across
-multiple columns of a DataFrame.
+Dataframe imputers utilize this class when its strategy is requested. Use
+SingleImputer or MultipleImputer with strategy = `mean` to broadcast the
+strategy across all the columns in a dataframe, or specify this strategy
+for a given column.
 """
 
 from sklearn.base import BaseEstimator
@@ -18,10 +19,10 @@ class MeanImputer(BaseEstimator):
     """Impute missing values with the mean of the observed data.
 
     This imputer imputes missing values with the mean of observed data.
-    The imputer can be used directly, but such behavior is discouraged because
-    the imputer supports Series only. MeanImputer does not have the
-    flexibility or robustness of more complex imputers, nor is its behavior
-    identical. Instead, use SingleImputer(strategy="mean").
+    The imputer can be used directly, but such behavior is discouraged.
+    MeanImputer does not have the flexibility / robustness of dataframe
+    imputers, nor is its behavior identical. Preferred use is
+    MultipleImputer(strategy="mean").
     """
     # class variables
     strategy = methods.MEAN

@@ -1,12 +1,12 @@
 """This module implements bayesian techniques to impute missing data.
 
-This module contains the BayesLeastSquaresImputer and the
-BayesBinaryLogisticImputer. Both imputers are the bayesian equivalent of their
-frequentist counterparts (LeastSquaresImputer and BinaryLogisticImputer).
-Right now, each imputer supports imputation on Series only. Use the
-PredictiveImputer with strategy = "bayesian least squares" or
-"bayesian binary logistic" to broadcast the strategies across all the columns
-in a dataframe.
+This module contains BayesLeastSquaresImputer and BayesBinaryLogisticImputer.
+Both imputers are the bayesian equivalent of their frequentist counterparts
+(LeastSquaresImputer and BinaryLogisticImputer). Dataframe imputers utilize
+the classes in this module when each's respective strategy is requested.
+Use SingleImputer or MultipleImputer with strategy = `bayesian least squares`
+or `bayesian binary logistic` to broadcast the strategies across all the
+columns in a dataframe, or specify either strategy for a given column.
 """
 
 import numpy as np
@@ -18,22 +18,23 @@ from autoimpute.imputations import method_names
 from autoimpute.imputations.errors import _not_num_series
 methods = method_names
 # pylint:disable=attribute-defined-outside-init
-# pylint:disable=no-member
+# pylint:disable=too-many-arguments
 # pylint:disable=unused-variable
+# pylint:disable=no-member
+# pylint:disable=too-many-instance-attributes
 
 class BayesLeastSquaresImputer(BaseEstimator):
     """Impute missing values using bayesian least squares regression.
 
     The BayesLeastSquaresImputer produces predictions using the bayesian
-    approach to least squares. Prior distributions are fit for the least
-    squares model parameters of interest (alpha, beta, epsilon). Imputations
-    for missing values are samples the posterior predictive distribution of
-    each missing point. To implement bayesian least squares, the imputer
-    utlilizes the pymc3 library. The imputer can be used directly, but such
-    behavior is discouraged because the imputer supports Series only.
-    BayesLeastSquaresImptuer does not have the flexibility or
-    robustness of more complex imputers, nor is its behavior identical.
-    Instead, use PredictiveImputer(strategy="bayesian least squares").
+    approach to least squares. Prior distributions are fit for the model
+    parameters of interest (alpha, beta, epsilon). Imputations for missing
+    values are samples from posterior predictive distribution of each missing
+    point. To implement bayesian least squares, the imputer utlilizes the
+    pymc3 library. The imputer can be used directly, but such behavior is
+    discouraged. BayesLeastSquaresImputer does not have the flexibility /
+    robustness of dataframe imputers, nor is its behavior identical. Preferred
+    use is MultipleImputer(strategy="bayesian least squares").
     """
     # class variables
     strategy = methods.BAYESIAN_LS
@@ -50,7 +51,6 @@ class BayesLeastSquaresImputer(BaseEstimator):
         include arguments used to sample the posterior distributions.
 
         Args:
-            verbose (bool, Optional): print to console. Default is False.
             am (float, Optional): mean of alpha prior. Default 0.
             asd (float, Optional): std. deviation of alpha prior. Default 10.
             bm (float, Optional): mean of beta priors. Default 0.
@@ -164,15 +164,14 @@ class BayesBinaryLogisticImputer(BaseEstimator):
     """Impute missing values using bayesian binary losgistic regression.
 
     The BayesBinaryLogisticImputer produces predictions using the bayesian
-    approach to binar logistic regression. Prior distributions are fit for the
-    model parameters of interest (alpha, beta, epsilon). Imputations
-    for missing values are samples from the posterior predictive distribution
-    of each missing point. To implement bayesian logistic regression, the
-    imputer utlilizes the pymc3 library. The imputer can be used directly, but
-    such behavior is discouraged because the imputer supports Series only.
-    BayesBinaryLogisticImputer does not have the flexibility or robustness of
-    more complex imputers, nor is its behavior identical. Instead, use
-    PredictiveImputer(strategy="bayesian binary logistic").
+    approach to logistic regression. Prior distributions are fit for the model
+    parameters of interest (alpha, beta, epsilon). Imputations for missing
+    values are samples from the posterior predictive distribution of each
+    missing point. To implement bayesian logistic regression, the imputer uses
+    the pymc3 library. The imputer can be used directly, but such behavior is
+    discouraged. BayesLogisticImputer does not have the flexibility /
+    robustness of dataframe imputers, nor is its behavior identical.
+    Preferred use is MultipleImputer(strategy="bayesian binary logistic").
     """
     # class variables
     strategy = methods.BAYESIAN_BINARY_LOGISTIC

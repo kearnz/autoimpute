@@ -1,7 +1,7 @@
-"""Module for BaseImputer - a base class for classifiers/predictive imputers.
+"""Module for BaseImputer - a base class for classifiers/dataframe imputers.
 
 This module contains the `BaseImputer`, which is used to abstract away
-functionality in both missingness classifiers and predictive imputers.
+functionality in both missingness classifiers and dataframe imputers.
 """
 
 import warnings
@@ -10,7 +10,7 @@ import numpy as np
 import pandas as pd
 from sklearn.base import clone
 from autoimpute.imputations import method_names
-from ..series import DefaultSingleImputer, DefaultPredictiveImputer
+from ..series import DefaultUnivarImputer, DefaultPredictiveImputer
 from ..series import MeanImputer, MedianImputer, ModeImputer
 from ..series import NormImputer, CategoricalImputer
 from ..series import RandomImputer, InterpolateImputer
@@ -27,11 +27,11 @@ methods = method_names
 class BaseImputer:
     """Building blocks for more advanced imputers and missingness classifiers.
 
-    The `BaseImputer` is not a stand-alone class and thus serves no purpose
+    The BaseImputer is not a stand-alone class and thus serves no purpose
     other than as a Parent to Imputers and MissingnessClassifiers. Therefore,
     the BaseImputer should not be used directly unless creating an Imputer.
     That being said, all dataframe Imputers should inherit from BaseImputer.
-    It contains base functionality for any new dataframe imputer, and it holds
+    It contains base functionality for any new dataframe Imputer, and it holds
     the set of strategies that make up this imputation library.
 
     Attributes:
@@ -63,9 +63,11 @@ class BaseImputer:
             `pmm` imputes series using predictive mean matching. PMM is a
                 semi-supervised method using bayesian & hot-deck imputation.
         strategies (dict): univariate and predictive strategies merged.
+        visit_sequences: tuple of supported sequences for visiting columns.
+            Right now, default = left-to-right. Only sequence supported.
     """
     univariate_strategies = {
-        methods.DEFAULT_UNIVAR: DefaultSingleImputer,
+        methods.DEFAULT_UNIVAR: DefaultUnivarImputer,
         methods.MEAN: MeanImputer,
         methods.MEDIAN: MedianImputer,
         methods.MODE:  ModeImputer,
@@ -88,7 +90,12 @@ class BaseImputer:
 
     strategies = {**predictive_strategies, **univariate_strategies}
 
-    def __init__(self, imp_kwgs, scaler, verbose):
+    visit_sequences = (
+        "default",
+        "left-to-right"
+    )
+
+    def __init__(self, imp_kwgs, scaler, verbose, visit):
         """Initialize the BaseImputer.
 
         Args:
@@ -101,10 +108,14 @@ class BaseImputer:
                 Default to None. Otherwise, must be sklearn-compliant scaler.
             verbose (bool, optional): Print information to the console.
                 Defaults to False.
+            visit (str, None): order to visit columns for imputation.
+                Default is `default`, which is `left-to-right`.
+                More strategies (random, monotone, etc.) TBD.
         """
         self.imp_kwgs = imp_kwgs
         self.scaler = scaler
         self.verbose = verbose
+        self.visit = visit
 
     @property
     def scaler(self):
@@ -157,6 +168,39 @@ class BaseImputer:
             err = "imp_kwgs must be dict of args used to instantiate Imputer."
             raise ValueError(err)
         self._imp_kwgs = kwgs
+
+    @property
+    def visit(self):
+        """Property getter to return the value of the visit property."""
+        return self._visit
+
+    @visit.setter
+    def visit(self, v):
+        """Validate the visit property to ensure it's type and value.
+
+        Class instance only possible if visit is proper type, as outlined in
+        the init method. Visit property must be one of valid sequences in the
+        `visit_sequences` variable.
+
+        Args:
+            v (str): Visit sequence passed as arg to class instance.
+
+        Raises:
+            TypeError: visit sequence must be a string.
+            ValueError: visit sequenece not in `visit_sequences`.
+        """
+        # deal with type first
+        if not isinstance(v, str):
+            err = "visit must be a string specifying visit sequence to use."
+            raise TypeError(err)
+
+        # deal with value next
+        if v not in self.visit_sequences:
+            err = f"visit not valid. Must be one of {self.visit_sequences}"
+            raise ValueError(err)
+
+        # otherwise, set property for visit
+        self._visit = v
 
     def _scaler_fit(self):
         """Private method to scale data based on scaler provided."""

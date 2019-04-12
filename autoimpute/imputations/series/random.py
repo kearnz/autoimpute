@@ -1,9 +1,10 @@
 """This module implements random imputation via the RandomImputer.
 
 The RandomImputer imputes missing data using a random draw with replacement
-from the observed data. Right now, this imputer supports imputation on Series
-only. Use SingleImputer(strategy="random") to broadcast the imputation
-strategy across multiple columns of a DataFrame.
+from the observed data. Dataframe imputers utilize this class when its
+strategy is requested. Use SingleImputer or MultipleImputer with
+strategy = `random` to broadcast the strategy across all the columns in a
+dataframe, or specify this strategy for a given column.
 """
 
 import numpy as np
@@ -18,10 +19,9 @@ class RandomImputer(BaseEstimator):
     """Impute missing data using random draws from observed data.
 
     The RandomImputer samples with replacement from observed data. The imputer
-    can be used directly, but such behavior is discouraged because the imputer
-    supports Series only. RandomImputer does not have the flexibility or
-    robustness of more complex imputers, nor is its behavior identical.
-    Instead, use SingleImputer(strategy="random").
+    can be used directly, but such behavior is discouraged. RandomImputer does
+    not have the flexibility / robustness of dataframe imputers, nor is its
+    behavior identical. Preferred use is MultipleImputer(strategy="random").
     """
     # class variables
     strategy = methods.RANDOM

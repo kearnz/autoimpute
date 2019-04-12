@@ -1,9 +1,10 @@
 """This module implements mode imputation via the ModeImputer.
 
 The ModeImputer uses the mode of observed data to impute missing values.
-Right now, the imputer supports imputation on Series only. Use
-SingleImputer(strategy="mode") to broadcast the imputation strategy across
-multiple columns of a DataFrame.
+Dataframe imputers utilize this class when its strategy is requested. Use
+SingleImputer or MultipleImputer with strategy = `mode` to broadcast the
+strategy across all the columns in a dataframe, or specify this strategy
+for a given column.
 """
 
 import numpy as np
@@ -20,10 +21,10 @@ class ModeImputer(BaseEstimator):
     The mode imputer calculates the mode of the observed dataset and uses
     it to impute missing observations. In the case where there are more than
     one mode, the user can supply a `fill_strategy` to choose the mode.
-    The imputer can be used directly, but such behavior is discouraged because
-    the imputer supports Series only. ModeImputer does not have the
-    flexibility or robustness of more complex imputers, nor is its behavior
-    identical. Instead, use SingleImputer(strategy="mode").
+    The imputer can be used directly, but such behavior is discouraged.
+    ModeImputer does not have the flexibility / robustness of dataframe
+    imputers, nor is its behavior identical. Preferred use is
+    MultipleImputer(strategy="mode").
     """
     # class variables
     strategy = methods.MODE

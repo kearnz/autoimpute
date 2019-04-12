@@ -1,9 +1,10 @@
 """This module implements median imputation via the MedianImputer.
 
 The MedianImputer imputes missing data with the median of observed data.
-Right now, this imputer supports imputation on Series only. Use
-SingleImputer(strategy="median") to broadcast the imputation strategy across
-multiple columns of a DataFrame.
+Dataframe imputers utilize this class when its strategy is requested. Use
+SingleImputer or MultipleImputer with strategy = `median` to broadcast the
+strategy across all the columns in a dataframe, or specify this strategy
+for a given column.
 """
 
 from sklearn.base import BaseEstimator
@@ -18,10 +19,10 @@ class MedianImputer(BaseEstimator):
     """Impute missing values with the median of the observed data.
 
     This imputer imputes missing values with the median of observed data.
-    The imputer can be used directly, but such behavior is discouraged because
-    the imputer supports Series only. MedianImputer does not have the
-    flexibility or robustness of more complex imputers, nor is its behavior
-    identical. Instead, use SingleImputer(strategy="median").
+    The imputer can be used directly, but such behavior is discouraged.
+    MedianImputer does not have the flexibility / robustness of dataframe
+    imputers, nor is its behavior identical. Preferred use is
+    MultipleImputer(strategy="median").
     """
     # class variables
     strategy = methods.MEDIAN

@@ -2,9 +2,10 @@
 
 This module contains the PMMImputer, which implements predictive mean matching
 to impute missing values. Predictive mean matching is a semi-supervised,
-hot-deck technique to impute missing values. Right now, each imputer supports
-imputation on Series only. Use the PredictiveImputer(strategy="pmm") to
-broadcast the strategies across all the columns in a dataframe.
+hot-deck technique to impute missing values. Dataframe imputers utilize this
+class when its strategy is requested. Use SingleImputer or MultipleImputer
+with strategy = `pmm` to broadcast the strategy across all the columns in a
+dataframe, or specify this strategy for a given column.
 """
 
 import numpy as np
@@ -32,9 +33,9 @@ class PMMImputer(BaseEstimator):
     each of those `n` predictions. The imputation is the resulting sample.
     To implement bayesian least squares, the imputer utlilizes the pymc3
     library. The imputer can be used directly, but such behavior is
-    discouraged because the imputer supports Series only. PMMImputer does not
-    have the flexibility or robustness of more complex imputers, nor is its
-    behavior identical. Instead, use PredictiveImputer(strategy="pmm").
+    discouraged. PmmImputer does not have the flexibility / robustness of
+    dataframe imputers, nor is its behavior identical. Preferred use is
+    MultipleImputer(strategy="pmm").
     """
     # class variables
     strategy = methods.PMM

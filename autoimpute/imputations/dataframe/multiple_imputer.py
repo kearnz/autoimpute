@@ -1,10 +1,10 @@
-"""This module implements multiple imputation through the other imputers.
+"""This module performs multiple imputations of missing features in a dataset.
 
 This module contains one class - the MultipleImputer. Use this class to
-perform multiple imputations for each Series within a DataFrame using methods
-from either the SingleImputer or PredictiveImputer. This class retains each
-imputation as its own dataset. It allows for flexible logic between each
-imputation. More details about the options appear in the class itself.
+impute each Series within a DataFrame multiple times. This class makes
+numerous imputation methods available - both univariate and multivatiate. Each
+method runs `n` times on its specified column. When `n` passes through the
+columns are complete, the MultipleImputer returns the `n` imputed datasets.
 """
 
 from sklearn.base import BaseEstimator, TransformerMixin
@@ -13,11 +13,7 @@ from autoimpute.imputations import method_names
 from autoimpute.utils import check_nan_columns, check_predictors_fit
 from autoimpute.utils import check_strategy_allowed, check_strategy_fit
 from .base_imputer import BaseImputer
-from .predictive_imputer import PredictiveImputer
-from ..series import DefaultPredictiveImputer
-from ..series import LeastSquaresImputer, StochasticImputer, PMMImputer
-from ..series import BinaryLogisticImputer, MultiLogisticImputer
-from ..series import BayesLeastSquaresImputer, BayesBinaryLogisticImputer
+from .single_imputer import SingleImputer
 methods = method_names
 # pylint:disable=attribute-defined-outside-init
 # pylint:disable=protected-access
@@ -38,22 +34,6 @@ class MultipleImputer(BaseImputer, BaseEstimator, TransformerMixin):
     Therefore, the behavior of `strategy` is the exact same as other classes.
     But the predictors and the seed are allowed to change for each imputation.
     """
-
-    strategies = {
-        methods.DEFAULT: DefaultPredictiveImputer,
-        methods.LS: LeastSquaresImputer,
-        methods.STOCHASTIC: StochasticImputer,
-        methods.BINARY_LOGISTIC: BinaryLogisticImputer,
-        methods.MULTI_LOGISTIC: MultiLogisticImputer,
-        methods.BAYESIAN_LS: BayesLeastSquaresImputer,
-        methods.BAYESIAN_BINARY_LOGISTIC: BayesBinaryLogisticImputer,
-        methods.PMM: PMMImputer
-    }
-
-    visit_sequences = (
-        "default",
-        "left-to-right"
-    )
 
     def __init__(self, n=5, strategy="default", predictors="all",
                  imp_kwgs=None, scaler=None, verbose=False,
@@ -94,12 +74,6 @@ class MultipleImputer(BaseImputer, BaseEstimator, TransformerMixin):
                 Default value is False.
             seed (int, optional): seed setting for reproducible results.
                 Defualt is None. No validation, but values should be integer.
-            visit (str, optional): order to visit columns for imputation.
-                Default is "default", which is left-to-right. Options include:
-                - "default", "left-to-right" -> visit in order of columns.
-                - TBD: "random" -> shulffe columns and visit.
-                - TBD: "most missing" -> in order of most missing to least.
-                - TBD: "least missing" -> in order of least missing to most.
             parallel (bool, optional): run n imputations in parallel or
                 sequentially. Default is False to start, but will be True.
         """
@@ -107,13 +81,13 @@ class MultipleImputer(BaseImputer, BaseEstimator, TransformerMixin):
             self,
             imp_kwgs=imp_kwgs,
             scaler=scaler,
-            verbose=verbose
+            verbose=verbose,
+            visit=visit
         )
         self.n = n
         self.strategy = strategy
         self.predictors = predictors
         self.seed = seed
-        self.visit = visit
         self.parallel = parallel
         self.copy = True
 
@@ -169,39 +143,6 @@ class MultipleImputer(BaseImputer, BaseEstimator, TransformerMixin):
         """
         strat_names = self.strategies.keys()
         self._strategy = check_strategy_allowed(strat_names, s)
-
-    @property
-    def visit(self):
-        """Property getter to return the value of the visit property."""
-        return self._visit
-
-    @visit.setter
-    def visit(self, v):
-        """Validate the visit property to ensure it's Type and Value.
-
-        Class instance only possible if visit is proper type, as outlined in
-        the init method. Visit property must be one of valid sequences in the
-        `visit_sequences` variable.
-
-        Args:
-            v (str): Visit sequence passed as arg to class instance.
-
-        Raises:
-            TypeError: visit sequence must be a string.
-            ValueError: visit sequenece not in `visit_sequences`.
-        """
-        # deal with type first
-        if not isinstance(v, str):
-            err = "visit must be a string specifying visit sequence to use."
-            raise TypeError(err)
-
-        # deal with value next
-        if v not in self.visit_sequences:
-            err = f"visit not valid. Must be one of {self.visit_sequences}"
-            raise ValueError(err)
-
-        # otherwise, set property for visit
-        self._visit = v
 
     def _fit_strategy_validator(self, X):
         """Internal helper method to validate strategies appropriate for fit.
@@ -272,7 +213,7 @@ class MultipleImputer(BaseImputer, BaseEstimator, TransformerMixin):
 
         # create PredictiveImputers. sequentially only right now
         for i in range(1, self.n+1):
-            imputer = PredictiveImputer(
+            imputer = SingleImputer(
                 strategy=self.strategy,
                 predictors=self._preds[i-1],
                 imp_kwgs=self.imp_kwgs,

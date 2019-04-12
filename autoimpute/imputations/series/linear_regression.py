@@ -3,9 +3,10 @@
 This module contains the LeastSquaresImputer and the StochasticImputer. Both
 use least squares to find a line of best fit and fill imputations with the
 predictions from the line. Stochastic adds random error to each prediction.
-Right now, each imputer supports imputation on Series only. Use the
-PredictiveImputer with strategy = "least squares" or "stochastic" to broadcast
-the strategies across all the columns in a dataframe.
+Dataframe imputers utilize this class when its strategy is requested. Use
+SingleImputer or MultipleImputer with strategy = `least squares` to broadcast
+the strategy across all the columns in a dataframe, or specify this strategy
+for a given column.
 """
 
 from numpy import sqrt
@@ -27,10 +28,10 @@ class LeastSquaresImputer(BaseEstimator):
     methodology. The prediction from the line of best fit given a set of
     predictors become the imputations. To implement least squares, the imputer
     wraps the sklearn LinearRegression class. The imputer can be used
-    directly, but such behavior is discouraged because the imputer supports
-    Series only. LeastSquaresImptuer does not have the flexibility or
-    robustness of more complex imputers, nor is its behavior identical.
-    Instead, use PredictiveImputer(strategy="least squares").
+    directly, but such behavior is discouraged. LeastSquaresImputer does not
+    have the flexibility / robustness of dataframe imputers, nor is its
+    behavior identical. Preferred use is
+    MultipleImputer(strategy="least squares").
     """
     # class variables
     strategy = methods.LS
@@ -95,14 +96,13 @@ class LeastSquaresImputer(BaseEstimator):
 class StochasticImputer(BaseEstimator):
     """Impute missing values adding error to least squares regression preds.
 
-    The StochasticImputer produces predictions using the least squares
-    methodology. The imputer then samples from the regression's error
-    distribution and adds the random draw to the prediction. This draw adds
-    the stochastic element to the imputations. The imputer can be used
-    directly, but such behavior is discouraged because the imputer supports
-    Series only. StochasticImputer does not have the flexibility or
-    robustness of more complex imputers, nor is its behavior identical.
-    Instead, use PredictiveImputer(strategy="stochastic").
+    The StochasticImputer predicts using the least squares methodology. The
+    imputer then samples from the regression's error distribution and adds the
+    random draw to the prediction. This draw adds the stochastic element to
+    the imputations. The imputer can be used directly, but such behavior is
+    discouraged. StochasticImputer does not have the flexibility / robustness
+    of dataframe imputers, nor is its behavior identical. Preferred use is
+    MultipleImputer(strategy="stochastic").
     """
     # class variables
     strategy = methods.STOCHASTIC

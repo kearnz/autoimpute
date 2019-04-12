@@ -10,6 +10,7 @@ Therefore, this package strives to aid the Python user by providing more clarity
 ## Features
 * Utility functions to explore missingness patterns
 * Missingness classifier and automatic test set generator
+* Single and Multiple Imputation
 * Cross-sectional and time series imputation methods. Imputation methods currently supported:
     - Mean
     - Median
@@ -30,45 +31,40 @@ Therefore, this package strives to aid the Python user by providing more clarity
     - Bayesian linear regression
     - Bayesian binary logistic regression
     - Predictive mean matching
-* Note that some methods offer multiple choices within them:
-    - For mode, use first (default in scipy and autoimpute) or randomly sample from modes (if more than one)
-    - For bayesian methods, use random draw from or mean of posterior predictive dist. (or posterior for pmm)
-    - Also for bayesian methods, multiple MCMC options possible to pass explicitly. See [pymc3 docs](https://docs.pymc.io/) for more. 
-    - For missingness classifier, default is XGBoost, although any valid sklearn classifier can be used so long as it implements `predict_proba` method from sklearn. Therefore, classifiers must support probabilistic assignments.
 
 ## Todo
-* Native support for Mutliple imputation using the imputation methods implemented.
 * Additional cross-sectional methods, including random forest, multivariate sampling, copula sampling, and ML.
 * Additional time-series methods, including ARIMA, Kalman filters, splines, and state-space models.
 * Native support for visualization of missing data patterns and imputation results.
-* Native support for imputation analysis (bias, MI variance, etc.)
+* Native support for imputation analysis (bias, MI variance, etc.) in and effect on supervised learning pipelines.
 * Multiprocessing support and GPU support for larger datasets.
 
 ## Example Usage
 Autoimpute is designed to be user friendly and flexible. Additionally, autoimpute fits directly into sklearn machine learning projects. Imputers inherit from sklearn's `BaseEstimator` and `TransformerMixin` and implement `fit` and `transform` methods, making them valid Transformers in an sklearn pipeline.
 
-Right now, there are four main classes you'll work with:
+Right now, there are three main classes you'll work with:
 ```python
-si = SingleImputer() # basic and quick methods for imputation
-ti = TimeSeriesImputer() # optimized for time series imputation
-pi = PredictiveImputer() # methods using all or some available information
+si = SingleImputer() # imputation methods, passing through the data once
+mi = MultipeImputer() # imputation methods, passing through the data multiple times
 mc = MissingnessClassifier() # predicting missingness and generating test sets for imputation analysis
 ```
 
 Imputations can be as simple as:
 ```python
-imp = PredictiveImputer()
+imp = MultipleImputer()
 imp.fit_transform(data)
 ```
 
 Or quite complex, such as:
 ```python
-from sklearn.preprocessing import MinMaxScaler
-imp = PredictiveImputer(
-    strategy={"x1": "pmm", "x2": "stochastic", "y": "norm"},
-    predictors={"x1": "x2", "y": "all"},
+from sklearn.preprocessing import StandardScaler
+imp = MultipleImputer(
+    n=10,
+    strategy={"salary": "pmm", "gender": "bayesian binary logistic", "age": "norm"},
+    predictors={"salary": "all", "gender": ["salary", "education", "weight"], },
     imp_kwgs={"pmm": {"fill_value": "random"}},
-    scaler=MinMaxScaler(),
+    scaler=StandardScaler(),
+    visit="left-to-right",
     verbose=True
 )
 imp.fit_transform(data)
@@ -87,10 +83,19 @@ For a deeper understanding of how the package works and its available features, 
     - `pymc3` >= 3.5
 
 ## Installation
-OS X & Linux:
+* Autoimpute will be registered with PyPI soon after its first release, so `pip install` coming soon!
+* In the meantime, the following work for Mac OS & Linux as well as Windows (with a couple caveats).
 
+*Master*
 ```sh
 git clone https://github.com/kearnz/autoimpute.git
+cd autoimpute
+python setup.py install
+```
+
+*Development*
+```sh
+git clone -b dev --single-branch https://github.com/kearnz/autoimpute.git
 cd autoimpute
 python setup.py install
 ```

@@ -2,9 +2,10 @@
 
 The CategoricalImputer determines the proportions of discrete features within
 observed data. It then samples this distribution to impute missing values.
-Right now, this imputer supports imputation on Series only. Use
-SingleImputer(strategy="categorical") to broadcast the imputation strategy
-across multiple columns of a DataFrame.
+Dataframe imputers utilize this class when its strategy is requested. Use
+SingleImputer or MultipleImputer with strategy = `categorical` to broadcast
+the strategy across all the columns in a dataframe, or specify this strategy
+for a given column.
 """
 
 import numpy as np
@@ -22,10 +23,10 @@ class CategoricalImputer(BaseEstimator):
     The categorical imputer computes the proportion of observed values for
     each category within a discrete dataset. The imputer then samples the
     distribution to impute missing values with a respective random draw. The
-    imputer can be used directly, but such behavior is discouraged because
-    the imputer supports Series only. CategoricalImputer does not have the
-    flexibility or robustness of more complex imputers, nor is its behavior
-    identical. Instead, use SingleImputer(strategy="categorical").
+    imputer can be used directly, but such behavior is discouraged.
+    CategoricalImputer does not have the flexibility / robustness of dataframe
+    imputers, nor is its behavior identical. Preferred use is
+    MultipleImputer(strategy="categorical").
     """
     # class variables
     strategy = methods.CATEGORICAL

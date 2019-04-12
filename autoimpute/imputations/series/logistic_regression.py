@@ -3,10 +3,11 @@
 This module contains the BinaryLogisticImputer and the MultiLogisticImputer.
 Both use logistic regression to generate class predictions that become values
 for imputations of missing data. Binary is optimized to deal with two classes,
-while Multi is optimized to deal with multiple classes. Right now, each
-imputer supports imputation on Series only. Use the PredictiveImputer with
-strategy = "binary logistic" or "multinomial logistic" to broadcast the
-strategies across all the columns in a dataframe.
+while Multi is optimized to deal with multiple classes. Dataframe imputers
+utilize these classes when each's strategy is requested. Use SingleImputer or
+MultipleImputer with strategy = `binary logistic` or `multinomial logistic`
+to broadcast either strategy across all the columns in a dataframe, or specify
+either strategy for a given column.
 """
 
 import warnings
@@ -26,10 +27,10 @@ class BinaryLogisticImputer(BaseEstimator):
     with two classes. The class predictions given a set of predictors become
     the imputations. To implement logistic regression, the imputer wraps the
     sklearn LogisticRegression class with a default solver (liblinear). The
-    imputer can be used directly, but such behavior is discouraged because the
-    imputer supports Series only. BinaryLogisticImputer does not have the
-    flexibility or robustness of more complex imputers, nor is its behavior
-    identical. Instead, use PredictiveImputer(strategy="binary logistic").
+    imputer can be used directly, but such behavior is discouraged.
+    BinaryLogisticImputer does not have the flexibility / robustness of
+    dataframe imputers, nor is its behavior identical. Preferred use is
+    MultipleImputer(strategy="binary logistic").
     """
     # class variables
     strategy = methods.BINARY_LOGISTIC
@@ -110,10 +111,10 @@ class MultiLogisticImputer(BaseEstimator):
     become the imputations. To implement logistic regression, the imputer
     wraps the sklearn LogisticRegression class with a default solver (saga)
     and default `multi_class` set to multinomial. The imputer can be used
-    directly, but such behavior is discouraged because the imputer supports
-    Series only. MultiLogisticImputer does not have the flexibility or
-    robustness of more complex imputers, nor is its behavior identical.
-    Instead, use PredictiveImputer(strategy="multinomial logistic").
+    directly, but such behavior is discouraged. MultiLogisticImputer does not
+    have the flexibility / robustness of dataframe imputers, nor is its
+    behavior identical. Preferred use is
+    MultipleImputer(strategy="multinomial logistic").
     """
     # class variables
     strategy = methods.MULTI_LOGISTIC

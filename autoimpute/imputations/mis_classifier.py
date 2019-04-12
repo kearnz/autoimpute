@@ -1,7 +1,13 @@
-"""Module to predict missingness in a dataset and generate test cases.
+"""Module to predict missingness in data and generate imputation test cases.
 
 This module contains the MissingnessClassifier, which is used to predict
 missingness within a dataset using information derived from other features.
+The MissingnessClassifier also generates test cases for imputation. Often,
+we do not and will never have the true value of a missing data point,
+so its challenging to validate an imputation model's performance.
+The MissingnessClassifer is generates missing "test" samples from observed
+that have high likelihood of being missing, which a user can then "impute".
+This practice is useful to validate models that contain truly missing data.
 """
 
 import warnings
@@ -67,7 +73,8 @@ class MissingnessClassifier(BaseImputer, BaseEstimator, ClassifierMixin):
             self,
             imp_kwgs=None,
             scaler=scaler,
-            verbose=verbose
+            verbose=verbose,
+            visit="default"
         )
         self.classifier = classifier
         self.predictors = predictors

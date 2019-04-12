@@ -4,14 +4,15 @@ This module handles imports from the series imputations folder that should be
 accessible whenever someone imports autoimpute.imputations.series. Although
 these imputers are stand-alone classes, their direct use is discouraged.
 More robust imputers from the dataframe folder delegate work to these imputers
-whenever their respective strategies are specified.
+whenever their respective strategies are requested.
 
 This module handles `from autoimpute.imputations.series import *` with the
 __all__ variable below. This command imports the main public classes and
 methods from autoimpute.imputations.series.
 """
 
-from .default import DefaultSingleImputer, DefaultTimeSeriesImputer
+from .default import DefaultUnivarImputer
+from .default import DefaultTimeSeriesImputer
 from .default import DefaultPredictiveImputer
 from .mean import MeanImputer
 from .median import MedianImputer
@@ -28,7 +29,7 @@ from .bayesian_regression import BayesBinaryLogisticImputer
 from .pmm import PMMImputer
 
 __all__ = [
-    "DefaultSingleImputer",
+    "DefaultUnivarImputer",
     "DefaultTimeSeriesImputer",
     "DefaultPredictiveImputer",
     "MeanImputer",
