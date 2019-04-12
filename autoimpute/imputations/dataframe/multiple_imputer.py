@@ -35,7 +35,7 @@ class MultipleImputer(BaseImputer, BaseEstimator, TransformerMixin):
     But the predictors and the seed are allowed to change for each imputation.
     """
 
-    def __init__(self, n=5, strategy="default", predictors="all",
+    def __init__(self, n=5, strategy="predictive default", predictors="all",
                  imp_kwgs=None, scaler=None, verbose=False,
                  seed=None, visit="default", parallel=False):
         """Create an instance of the MultipleImputer class.
