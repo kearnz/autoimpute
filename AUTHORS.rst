@@ -1,4 +1,4 @@
-AutoImpute is developed and maintained by Joseph Kearney and Shahid Barkat
+AutoImpute is developed and maintained by Joseph Kearney and Shahid Barkat.
 
 Contacting the Authors
 ```````````````````````

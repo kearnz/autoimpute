@@ -19,6 +19,7 @@ methods = method_names
 # pylint:disable=protected-access
 # pylint:disable=too-many-arguments
 # pylint:disable=unused-argument
+# pylint:disable=too-many-instance-attributes
 # pylint:disable=arguments-differ
 
 class MultipleImputer(BaseImputer, BaseEstimator, TransformerMixin):

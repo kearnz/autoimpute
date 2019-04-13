@@ -7,7 +7,7 @@ from autoimpute.imputations.errors import _not_num_matrix
 from autoimpute.imputations.deletion import listwise_delete
 
 def _get_observed(method, predictors, series, verbose):
-    """Helper method to test datasets and get observed data."""
+    """Private method to test datasets and get observed data."""
     _not_num_matrix(method, predictors)
     conc = pd.concat([predictors, series], axis=1)
     if verbose:

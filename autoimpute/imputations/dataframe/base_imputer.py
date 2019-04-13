@@ -12,9 +12,11 @@ from sklearn.base import clone
 from autoimpute.utils import check_strategy_allowed
 from autoimpute.imputations import method_names
 from ..series import DefaultUnivarImputer, DefaultPredictiveImputer
+from ..series import DefaultTimeSeriesImputer
 from ..series import MeanImputer, MedianImputer, ModeImputer
 from ..series import NormImputer, CategoricalImputer
 from ..series import RandomImputer, InterpolateImputer
+from ..series import LOCFImputer, NOCBImputer
 from ..series import LeastSquaresImputer, StochasticImputer, PMMImputer
 from ..series import BinaryLogisticImputer, MultiLogisticImputer
 from ..series import BayesLeastSquaresImputer, BayesBinaryLogisticImputer
@@ -39,6 +41,7 @@ class BaseImputer:
         univariate_strategies (dict): univariate imputation methods.
             Key = imputation name; Value = function to perform imputation.
             `univariate default` mean for numerical, mode for categorical.
+            `time default` interpolate for numerical, mode for categorical.
             `mean` imputes missing values with the average of the series.
             `median` imputes missing values with the median of the series.
             `mode` imputes missing values with the mode of the series.
@@ -50,6 +53,8 @@ class BaseImputer:
                 Proportions calculated from non-missing category instances.
             `interpolate` imputes series using chosen interpolation method.
                 Default is linear. See InterpolateImputer for more info.
+            `locf` imputes series carrying last observation moving forward.
+            `nocb` imputes series carrying next observation moving backward.
         predictive_strategies (dict): predictive imputation methods.
             Key = imputation name; Value = function to perform imputation.
             `predictive default` pmm for numerical, logistic for categorical.
@@ -69,13 +74,16 @@ class BaseImputer:
     """
     univariate_strategies = {
         methods.DEFAULT_UNIVAR: DefaultUnivarImputer,
+        methods.DEFAULT_TIME: DefaultTimeSeriesImputer,
         methods.MEAN: MeanImputer,
         methods.MEDIAN: MedianImputer,
         methods.MODE:  ModeImputer,
         methods.RANDOM: RandomImputer,
         methods.NORM: NormImputer,
         methods.CATEGORICAL: CategoricalImputer,
-        methods.INTERPOLATE: InterpolateImputer
+        methods.INTERPOLATE: InterpolateImputer,
+        methods.LOCF: LOCFImputer,
+        methods.NOCB: NOCBImputer
     }
 
     predictive_strategies = {

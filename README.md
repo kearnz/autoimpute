@@ -3,13 +3,13 @@
 <span style="font-size:1.5em;">A Python package for analysis and implementation of <b>Imputation Methods!</b></span>
 
 ## Motivation
-Most machine learning algorithms expect clean and complete datasets, but most real-world data is messy and missing. Unfortunately, handling missing data is quite complex, so programming languages generally punt this this responsibility to the end user! By default, R drops all records with missing data - a method that is easy to implement but often problematic. For richer imputation strategies, R has multiple packages to deal with missing data (`MICE`, `Amelia`, `TSImpute`, etc.). Python users are not as fortunate. Python's `scikit-learn` throws a runtime error when an end user attempts to deploy models on datasets with missing records, and few 3rd-party packages exist to handle imputation.
+Most machine learning algorithms expect clean and complete datasets, but most real-world data is messy and missing. Unfortunately, handling missing data is quite complex, so programming languages generally punt this responsibility to the end user. By default, R drops all records with missing data - a method that is easy to implement but often problematic in practice. For richer imputation strategies, R has multiple packages to deal with missing data (`MICE`, `Amelia`, `TSImpute`, etc.). Python users are not as fortunate. Python's `scikit-learn` throws a runtime error when an end user attempts to deploy models on datasets with missing records, and few 3rd-party packages exist to handle imputation.
 
-Therefore, this package strives to aid the Python user by providing more clarity to the imputation process, making imputation methods more accessible, and measuring the impact imputation methods have in supervised regression and classification. In doing so, this package brings missing data imputation methods to the Python world and makes them work nicely in Python machine learning projects and specifically `Pipelines` in `scikit-learn`.
+Therefore, this package aids the Python user by providing more clarity to the imputation process, making imputation methods more accessible, and measuring the impact imputation methods have in supervised regression and classification. In doing so, this package brings missing data imputation methods to the Python world and makes them work nicely in Python machine learning projects (and specifically ones that utilize `scikit-learn`).
 
 ## Features
 * Utility functions to explore missingness patterns
-* Missingness classifier and automatic test set generator
+* Missingness classifier and automatic missing data test set generator
 * Single and Multiple Imputation
 * Cross-sectional and time series imputation methods. Imputation methods currently supported:
     - Mean
@@ -34,10 +34,10 @@ Therefore, this package strives to aid the Python user by providing more clarity
 
 ## Todo
 * Additional cross-sectional methods, including random forest, multivariate sampling, copula sampling, and ML.
-* Additional time-series methods, including ARIMA, Kalman filters, splines, and state-space models.
+* Additional time-series methods, including ARIMA, Kalman filters, and state-space models.
 * Native support for visualization of missing data patterns and imputation results.
-* Native support for imputation analysis (bias, MI variance, etc.) in and effect on supervised learning pipelines.
-* Multiprocessing support and GPU support for larger datasets.
+* Native support for imputation analysis (bias, MI variance, etc.) in and effect on supervised learning models.
+* Multiprocessing and GPU support for larger datasets.
 
 ## Example Usage
 Autoimpute is designed to be user friendly and flexible. Additionally, autoimpute fits directly into sklearn machine learning projects. Imputers inherit from sklearn's `BaseEstimator` and `TransformerMixin` and implement `fit` and `transform` methods, making them valid Transformers in an sklearn pipeline.
@@ -61,7 +61,7 @@ from sklearn.preprocessing import StandardScaler
 imp = MultipleImputer(
     n=10,
     strategy={"salary": "pmm", "gender": "bayesian binary logistic", "age": "norm"},
-    predictors={"salary": "all", "gender": ["salary", "education", "weight"], },
+    predictors={"salary": "all", "gender": ["salary", "education", "weight"]},
     imp_kwgs={"pmm": {"fill_value": "random"}},
     scaler=StandardScaler(),
     visit="left-to-right",
@@ -70,7 +70,7 @@ imp = MultipleImputer(
 imp.fit_transform(data)
 ```
 
-For a deeper understanding of how the package works and its available features, see our [tutorials](https://github.com/kearnz/autoimpute-tutorials/tree/master/tutorials)
+For a deeper understanding of how the package works and its available features, see [tutorials](https://github.com/kearnz/autoimpute-tutorials/tree/master/tutorials)
 
 ## Versions and Dependencies
 * Python 3.6+

@@ -71,6 +71,7 @@ class MissingnessClassifier(BaseImputer, BaseEstimator, ClassifierMixin):
         """
         BaseImputer.__init__(
             self,
+            strategy="mean",
             imp_kwgs=None,
             scaler=scaler,
             verbose=verbose,
