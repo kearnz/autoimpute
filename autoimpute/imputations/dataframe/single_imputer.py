@@ -12,7 +12,7 @@ import pandas as pd
 from sklearn.base import BaseEstimator, TransformerMixin
 from sklearn.utils.validation import check_is_fitted
 from autoimpute.utils import check_nan_columns, check_predictors_fit
-from autoimpute.utils import check_strategy_allowed, check_strategy_fit
+from autoimpute.utils import check_strategy_fit
 from autoimpute.imputations.helpers import _get_observed
 from .base_imputer import BaseImputer
 from ..series import DefaultUnivarImputer
@@ -52,15 +52,6 @@ class SingleImputer(BaseImputer, BaseEstimator, TransformerMixin):
         used to set up a SingleImputer and perform checks on arguments.
 
         Args:
-            strategy (str, iter, dict; optional): strategies for imputation.
-                Default value is str -> `predictive default`.
-                If str, single strategy broadcast to all series in DataFrame.
-                If iter, must provide 1 strategy per column. Each method w/in
-                iterator applies to column with same index value in DataFrame.
-                If dict, must provide key = column name, value = imputer.
-                Dict the most flexible and PREFERRED way to create custom
-                imputation strategies if not using the default. Dict does not
-                require method for every column; just those specified as keys.
             predictors (str, iter, dict, optional): defaults to `all`, i.e.
                 use all predictors. If `all`, every column will be used for
                 every class prediction. If a list, subset of columns used for
@@ -87,6 +78,7 @@ class SingleImputer(BaseImputer, BaseEstimator, TransformerMixin):
         """
         BaseImputer.__init__(
             self,
+            strategy=strategy,
             imp_kwgs=imp_kwgs,
             scaler=scaler,
             verbose=verbose,
@@ -96,30 +88,6 @@ class SingleImputer(BaseImputer, BaseEstimator, TransformerMixin):
         self.predictors = predictors
         self.copy = copy
         self.seed = seed
-
-    @property
-    def strategy(self):
-        """Property getter to return the value of the strategy property."""
-        return self._strategy
-
-    @strategy.setter
-    def strategy(self, s):
-        """Validate the strategy property to ensure it's type and value.
-
-        Class instance only possible if strategy is proper type, as outlined
-        in the init method. Passes supported strategies and user arg to
-        helper method, which performs strategy checks.
-
-        Args:
-            s (str, iter, dict): strategy passed as arg to class instance.
-
-        Raises:
-            ValueError: Strategies not valid (not in allowed strategies).
-            TypeError: Strategy must be a string, tuple, list, or dict.
-            Both errors raised through helper method `check_strategy_allowed`.
-        """
-        strat_names = self.strategies.keys()
-        self._strategy = check_strategy_allowed(strat_names, s)
 
     def _fit_strategy_validator(self, X):
         """Private method to validate strategies appropriate for fit.

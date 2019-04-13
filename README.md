@@ -45,7 +45,7 @@ Autoimpute is designed to be user friendly and flexible. Additionally, autoimput
 Right now, there are three main classes you'll work with:
 ```python
 si = SingleImputer() # imputation methods, passing through the data once
-mi = MultipeImputer() # imputation methods, passing through the data multiple times
+mi = MultipleImputer() # imputation methods, passing through the data multiple times
 mc = MissingnessClassifier() # predicting missingness and generating test sets for imputation analysis
 ```
 
@@ -70,7 +70,7 @@ imp = MultipleImputer(
 imp.fit_transform(data)
 ```
 
-For a deeper understanding of how the package works and its available features, see our [tutorials](https://github.com/kearnz/autoimpute/blob/master/tutorials)
+For a deeper understanding of how the package works and its available features, see our [tutorials](https://github.com/kearnz/autoimpute-tutorials/tree/master/tutorials)
 
 ## Versions and Dependencies
 * Python 3.6+
@@ -111,7 +111,7 @@ python setup.py install
 ```
 
 A note for Windows Users:
-* AutoImpute is tested and works on Windows as well, although some users may have trouble with bayesian methods using pymc3. [(See discourse here)](https://discourse.pymc.io/t/an-error-message-about-cant-pickle-fortran-objects/1073)
+* AutoImpute works on Windows but some users may have trouble with bayesian methods using pymc3. [(See discourse)](https://discourse.pymc.io/t/an-error-message-about-cant-pickle-fortran-objects/1073)
 * Users may receive a runtime error `‘can’t pickle fortran objects’` when sampling using multiple chains.
 * There are a couple of things to do to try to overcome this error:
     - Reinstall theano and pymc3. Make sure to delete .theano cache in your home folder.

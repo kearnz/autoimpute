@@ -11,7 +11,7 @@ from sklearn.base import BaseEstimator, TransformerMixin
 from sklearn.utils.validation import check_is_fitted
 from autoimpute.imputations import method_names
 from autoimpute.utils import check_nan_columns, check_predictors_fit
-from autoimpute.utils import check_strategy_allowed, check_strategy_fit
+from autoimpute.utils import check_strategy_fit
 from .base_imputer import BaseImputer
 from .single_imputer import SingleImputer
 methods = method_names
@@ -25,14 +25,14 @@ class MultipleImputer(BaseImputer, BaseEstimator, TransformerMixin):
     """Techniques to impute Series with missing values multiple times.
 
     The MultipleImputer class implements multiple imputation. It leverages the
-    methods found in the PredictiveImputer. This imputer passes all imputation
-    work to the PredictiveImputer, but it controls the arguments each imputer
-    receives, which are flexible depending on what the user specifies for each
-    imputation.
+    methods found in the BaseImputer. This imputer passes all the work for
+    each imputation to the SingleImputer, but it controls the arguments
+    each imputer receives. The args are flexible depending on what the user
+    specifies for each imputation.
 
-    Note that the imputer allows for one imputation method per column only.
-    Therefore, the behavior of `strategy` is the exact same as other classes.
-    But the predictors and the seed are allowed to change for each imputation.
+    Note that the Imputer allows for one imputation method per column only.
+    Therefore, the behavior of `strategy` is the same as the SingleImputer,
+    but the predictors are allowed to change for each imputation.
     """
 
     def __init__(self, n=5, strategy="predictive default", predictors="all",
@@ -47,15 +47,6 @@ class MultipleImputer(BaseImputer, BaseEstimator, TransformerMixin):
         Args:
             n (int, optional): number of imputations to perform. Default is 5.
                 Value must be greater than or equal to 1.
-            strategy (str, iter, dict; optional): strategies for imputation.
-                Default value is str -> "default". I.e. default imputation.
-                If str, single strategy broadcast to all series in DataFrame.
-                If iter, must provide 1 strategy per column. Each method within
-                iterator applies to column with same index value in DataFrame.
-                If dict, must provide key = column name, value = imputer.
-                Dict the most flexible and PREFERRED way to create custom
-                imputation strategies if not using the default. Dict does not
-                require method for every column; just those specified as keys.
             predictors (str, iter, dict, optional): defaults to all, i.e.
                 use all predictors. If all, every column will be used for
                 every class prediction. If a list, subset of columns used for
@@ -79,13 +70,13 @@ class MultipleImputer(BaseImputer, BaseEstimator, TransformerMixin):
         """
         BaseImputer.__init__(
             self,
+            strategy=strategy,
             imp_kwgs=imp_kwgs,
             scaler=scaler,
             verbose=verbose,
             visit=visit
         )
         self.n = n
-        self.strategy = strategy
         self.predictors = predictors
         self.seed = seed
         self.parallel = parallel
@@ -119,30 +110,6 @@ class MultipleImputer(BaseImputer, BaseEstimator, TransformerMixin):
 
         # otherwise set the property value for n
         self._n = n_
-
-    @property
-    def strategy(self):
-        """Property getter to return the value of the strategy property."""
-        return self._strategy
-
-    @strategy.setter
-    def strategy(self, s):
-        """Validate the strategy property to ensure it's Type and Value.
-
-        Class instance only possible if strategy is proper type, as outlined
-        in the init method. Passes supported strategies and user arg to
-        helper method, which performs strategy checks.
-
-        Args:
-            s (str, iter, dict): Strategy passed as arg to class instance.
-
-        Raises:
-            ValueError: Strategies not valid (not in allowed strategies).
-            TypeError: Strategy must be a string, tuple, list, or dict.
-            Both errors raised through helper method `check_strategy_allowed`.
-        """
-        strat_names = self.strategies.keys()
-        self._strategy = check_strategy_allowed(strat_names, s)
 
     def _fit_strategy_validator(self, X):
         """Internal helper method to validate strategies appropriate for fit.

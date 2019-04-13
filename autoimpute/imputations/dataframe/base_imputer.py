@@ -9,6 +9,7 @@ import itertools
 import numpy as np
 import pandas as pd
 from sklearn.base import clone
+from autoimpute.utils import check_strategy_allowed
 from autoimpute.imputations import method_names
 from ..series import DefaultUnivarImputer, DefaultPredictiveImputer
 from ..series import MeanImputer, MedianImputer, ModeImputer
@@ -28,7 +29,7 @@ class BaseImputer:
     """Building blocks for more advanced imputers and missingness classifiers.
 
     The BaseImputer is not a stand-alone class and thus serves no purpose
-    other than as a Parent to Imputers and MissingnessClassifiers. Therefore,
+    other than as a parent to Imputers and MissingnessClassifiers. Therefore,
     the BaseImputer should not be used directly unless creating an Imputer.
     That being said, all dataframe Imputers should inherit from BaseImputer.
     It contains base functionality for any new dataframe Imputer, and it holds
@@ -42,24 +43,24 @@ class BaseImputer:
             `median` imputes missing values with the median of the series.
             `mode` imputes missing values with the mode of the series.
                 Method handles more than one mode (see ModeImputer for info).
-            `random` imputes w/ random choice from set of Series unique vals.
+            `random` imputes w/ random choice from set of series unique vals.
             `norm` imputes series using random draws from normal distribution.
-                Mean and std calculated from observed values of the Series.
+                Mean and std calculated from observed values of the series.
             `categorical` imputes series using random draws from pmf.
                 Proportions calculated from non-missing category instances.
             `interpolate` imputes series using chosen interpolation method.
                 Default is linear. See InterpolateImputer for more info.
         predictive_strategies (dict): predictive imputation methods.
             Key = imputation name; Value = function to perform imputation.
-            `default_pred` pmm for numerical, logistic for categorical.
+            `predictive default` pmm for numerical, logistic for categorical.
             `least squares` predict missing values from linear regression.
             `binary logistic` predict missing values with 2 classes.
             `multinomial logistic` predict missing values with multiclass.
             `stochastic` linear regression + random draw from norm w/ mse std.
             `bayesian least squares` draw from the posterior predictive
-                distribution for each missing value, using underlying OLS.
+                distribution for each missing value, using OLS model.
             `bayesian binary logistic` draw from the posterior predictive
-                distribution for each missing value, using underling logistic.
+                distribution for each missing value, using logistic model.
             `pmm` imputes series using predictive mean matching. PMM is a
                 semi-supervised method using bayesian & hot-deck imputation.
         strategies (dict): univariate and predictive strategies merged.
@@ -95,10 +96,19 @@ class BaseImputer:
         "left-to-right"
     )
 
-    def __init__(self, imp_kwgs, scaler, verbose, visit):
+    def __init__(self, strategy, imp_kwgs, scaler, verbose, visit):
         """Initialize the BaseImputer.
 
         Args:
+            strategy (str, iter, dict; optional): strategies for imputation.
+                Default value is str -> `predictive default`.
+                If str, single strategy broadcast to all series in DataFrame.
+                If iter, must provide 1 strategy per column. Each method w/in
+                iterator applies to column with same index value in DataFrame.
+                If dict, must provide key = column name, value = imputer.
+                Dict the most flexible and PREFERRED way to create custom
+                imputation strategies if not using the default. Dict does not
+                require method for every column; just those specified as keys.
             imp_kwgs (dict, optional): keyword arguments for each imputer.
                 Default is None, which means default imputer created to match
                 specific strategy. imp_kwgs keys can be either columns or
@@ -109,13 +119,62 @@ class BaseImputer:
             verbose (bool, optional): Print information to the console.
                 Defaults to False.
             visit (str, None): order to visit columns for imputation.
-                Default is `default`, which is `left-to-right`.
+                Default is `default`, which implements `left-to-right`.
                 More strategies (random, monotone, etc.) TBD.
         """
+        self.strategy = strategy
         self.imp_kwgs = imp_kwgs
         self.scaler = scaler
         self.verbose = verbose
         self.visit = visit
+
+    @property
+    def strategy(self):
+        """Property getter to return the value of the strategy property."""
+        return self._strategy
+
+    @strategy.setter
+    def strategy(self, s):
+        """Validate the strategy property to ensure it's type and value.
+
+        Class instance only possible if strategy is proper type, as outlined
+        in the init method. Passes supported strategies and user arg to
+        helper method, which performs strategy checks.
+
+        Args:
+            s (str, iter, dict): Strategy passed as arg to class instance.
+
+        Raises:
+            ValueError: Strategies not valid (not in allowed strategies).
+            TypeError: Strategy must be a string, tuple, list, or dict.
+            Both errors raised through helper method `check_strategy_allowed`.
+        """
+        strat_names = self.strategies.keys()
+        self._strategy = check_strategy_allowed(strat_names, s)
+
+    @property
+    def imp_kwgs(self):
+        """Property getter to return the value of imp_kwgs."""
+        return self._imp_kwgs
+
+    @imp_kwgs.setter
+    def imp_kwgs(self, kwgs):
+        """Validate the imp_kwgs and set default properties.
+
+        The BaseImputer validates the `imp_kwgs` argument. `imp_kwgs` contain
+        optional keyword arguments for an imputers' strategies or columns. The
+        argument is optional, and its default is None.
+
+        Args:
+            kwgs (dict, None): None or dictionary of keywords.
+
+        Raises:
+            ValueError: imp_kwgs not correctly specified as argument.
+        """
+        if not isinstance(kwgs, (type(None), dict)):
+            err = "imp_kwgs must be dict of args used to instantiate Imputer."
+            raise ValueError(err)
+        self._imp_kwgs = kwgs
 
     @property
     def scaler(self):
@@ -144,30 +203,6 @@ class BaseImputer:
             if not hasattr(s, m):
                 raise ValueError(f"Scaler must implement {m} method.")
             self._scaler = s
-
-    @property
-    def imp_kwgs(self):
-        """Property getter to return the value of imp_kwgs."""
-        return self._imp_kwgs
-
-    @imp_kwgs.setter
-    def imp_kwgs(self, kwgs):
-        """Validate the imp_kwgs and set default properties.
-
-        The BaseImputer validates the `imp_kwgs` argument. `imp_kwgs` contain
-        optional keyword arguments for an imputers' strategies or columns. The
-        argument is optional, and its default is None.
-
-        Args:
-            kwgs (dict, None): None or dictionary of keywords.
-
-        Raises:
-            ValueError: imp_kwgs not correctly specified as argument.
-        """
-        if not isinstance(kwgs, (type(None), dict)):
-            err = "imp_kwgs must be dict of args used to instantiate Imputer."
-            raise ValueError(err)
-        self._imp_kwgs = kwgs
 
     @property
     def visit(self):

@@ -9,7 +9,7 @@ Jump to specific sections:
 * [Pull Requests](#pull-requests)
 
 ## Getting Started
-If you're completely new to `autoimpute`, read through our [README](https://github.com/kearnz/autoimpute/blob/master/README.md). To learn more about using the package and review sample use cases, check out our [tutorials](https://github.com/kearnz/autoimpute/tree/master/tutorials).
+If you're completely new to `autoimpute`, read through our [README](https://github.com/kearnz/autoimpute/blob/master/README.md). To learn more about using the package and review sample use cases, check out our [tutorials](https://github.com/kearnz/autoimpute-tutorials/tree/master/tutorials).
 
 ## Code of Conduct
 Before continuing, please read our [Code of Conduct](https://github.com/kearnz/autoimpute/blob/master/CODE_OF_CONDUCT.md). Our code of conduct extends to questions, issues raised, pull requests, and code itself. 
