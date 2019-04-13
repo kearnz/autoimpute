@@ -111,7 +111,7 @@ python setup.py install
 ```
 
 A note for Windows Users:
-* AutoImpute works on Windows but some users may have trouble with bayesian methods using pymc3. [(See discourse)](https://discourse.pymc.io/t/an-error-message-about-cant-pickle-fortran-objects/1073)
+* AutoImpute works on Windows but users may have trouble with pymc3 for bayesian methods. [(See discourse)](https://discourse.pymc.io/t/an-error-message-about-cant-pickle-fortran-objects/1073)
 * Users may receive a runtime error `‘can’t pickle fortran objects’` when sampling using multiple chains.
 * There are a couple of things to do to try to overcome this error:
     - Reinstall theano and pymc3. Make sure to delete .theano cache in your home folder.

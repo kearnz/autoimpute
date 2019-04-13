@@ -161,7 +161,7 @@ class NOCBImputer(BaseEstimator):
             X.fillna(
                 {ix: self._handle_end(self.end, X)}, inplace=True
             )
-        return X.fillna(method="ffill", inplace=False)
+        return X.fillna(method="bfill", inplace=False)
 
     def fit_impute(self, X):
         """Convenience method to perform fit and imputation in one go."""
