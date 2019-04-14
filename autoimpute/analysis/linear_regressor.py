@@ -141,5 +141,5 @@ class MiLinearRegression(BaseRegressor):
         self._predict_strategy_validator(X)
         alpha = self.statistics_["coefs"].values[0]
         betas = self.statistics_["coefs"].values[1:]
-        preds = alpha + betas.dot(X)
+        preds = alpha + betas.dot(X.T)
         return preds
