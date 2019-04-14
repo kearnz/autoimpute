@@ -1,8 +1,8 @@
 """Module containing linear regression for multiply imputed datasets."""
 
 import pandas as pd
-# from sklearn.linear_model import LinearRegression
-# from statsmodels.api import OLS
+from sklearn.linear_model import LinearRegression
+from statsmodels.api import OLS
 from autoimpute.utils import check_nan_columns
 from .base_regressor import BaseRegressor
 # pylint:disable=attribute-defined-outside-init
@@ -75,7 +75,19 @@ class MiLinearRegression(BaseRegressor):
         return self.mi.fit_transform(X)
 
     @check_nan_columns
-    def fit(self, X, y):
+    def fit(self, X, y, add_constant=True):
         """Fit model specified to multiply imputed dataset."""
+
+        # setup and validation
         mi_data = self._fit_strategy_validator(X, y)
-        return mi_data
+        self.coefs_ = {}
+
+        # sequential only for now. multiple processing later.
+        for dataset in mi_data:
+            ind, X = dataset
+            y = X.pop(self._yn)
+            if self.model_lib == "sklearn":
+                model = self._fit_sklearn(LinearRegression, X, y)
+            if self.model_lib == "statsmodels":
+                model = self._fit_statsmodels(OLS, X, y, add_constant)
+            self.coefs_[ind] = model
