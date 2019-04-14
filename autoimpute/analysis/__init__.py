@@ -10,7 +10,7 @@ autoimpute.analysis.
 """
 
 from .base_regressor import BaseRegressor
-from .linear import MiLinearRegression
+from .linear_regressor import MiLinearRegression
 
 __all__ = [
     "BaseRegressor",

@@ -3,6 +3,7 @@
 import numpy as np
 import pandas as pd
 from sklearn.linear_model import LinearRegression
+from sklearn.utils.validation import check_is_fitted
 from statsmodels.api import OLS
 from autoimpute.utils import check_nan_columns
 from .base_regressor import BaseRegressor
@@ -76,6 +77,18 @@ class MiLinearRegression(BaseRegressor):
         X[self._yn] = y
         return self.mi.fit_transform(X)
 
+    def _predict_strategy_validator(self, X):
+        """Private method to validate before prediction."""
+        check_is_fitted(self, "statistics_")
+        # check columns are the same
+        X_cols = X.columns.tolist()
+        fit_cols = set(self.statistics_["coefs"].index.tolist()[1:])
+        diff_fit = set(fit_cols).difference(X_cols)
+        if diff_fit:
+            err = "Same columns that were fit must appear in predict."
+            raise ValueError(err)
+
+
     @check_nan_columns
     def fit(self, X, y, add_constant=True):
         """Fit model specified to multiply imputed dataset."""
@@ -121,3 +134,12 @@ class MiLinearRegression(BaseRegressor):
 
         # still return an instance of the class
         return self
+
+    @check_nan_columns
+    def predict(self, X):
+        """Make predictions using statistics generated from fit."""
+        self._predict_strategy_validator(X)
+        alpha = self.statistics_["coefs"].values[0]
+        betas = self.statistics_["coefs"].values[1:]
+        preds = alpha + betas.dot(X)
+        return preds
