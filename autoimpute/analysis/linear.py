@@ -1,11 +1,13 @@
 """Module containing linear regression for multiply imputed datasets."""
 
+import numpy as np
 import pandas as pd
 from sklearn.linear_model import LinearRegression
 from statsmodels.api import OLS
 from autoimpute.utils import check_nan_columns
 from .base_regressor import BaseRegressor
 # pylint:disable=attribute-defined-outside-init
+# pylint:disable=too-many-locals
 
 class MiLinearRegression(BaseRegressor):
     """Linear Regression wrapper for multiply imputed datasets.
@@ -80,7 +82,8 @@ class MiLinearRegression(BaseRegressor):
 
         # setup and validation
         mi_data = self._fit_strategy_validator(X, y)
-        self.coefs_ = {}
+        self.models_ = {}
+        self.statistics_ = {}
 
         # sequential only for now. multiple processing later.
         for dataset in mi_data:
@@ -90,4 +93,31 @@ class MiLinearRegression(BaseRegressor):
                 model = self._fit_sklearn(LinearRegression, X, y)
             if self.model_lib == "statsmodels":
                 model = self._fit_statsmodels(OLS, X, y, add_constant)
-            self.coefs_[ind] = model
+            self.models_[ind] = model
+
+        # pooling phase
+        items = self.models_.items()
+        li = len(items)
+        if self.model_lib == "sklearn":
+            alpha = sum([j.intercept_ for i, j in items]) / li
+            params = sum([j.coef_ for i, j in items]) / li
+            coefs = pd.Series(np.insert(params, 0, alpha))
+            coefs.index = ["const"] + X.columns.tolist()
+            self.statistics_["coefs"] = coefs
+
+        if self.model_lib == "statsmodels":
+            params = [j.params for i, j in items]
+            bses = [j.bse for i, j in items]
+            # average of the coefficients
+            coefs = sum(params)/li
+            # variance metrics
+            vw = sum(map(lambda x: x*x, bses)) / li
+            vb = sum(map(lambda p: (p - coefs)**2, params)) / (li - 1)
+            vt = vw + vb + (vb / li)
+            self.statistics_["coefs"] = coefs
+            self.statistics_["var_within"] = vw
+            self.statistics_["var_between"] = vb
+            self.statistics_["var_total"] = vt
+
+        # still return an instance of the class
+        return self
