@@ -38,7 +38,7 @@ class MultipleImputer(BaseImputer, BaseEstimator, TransformerMixin):
 
     def __init__(self, n=5, strategy="predictive default", predictors="all",
                  imp_kwgs=None, scaler=None, verbose=False,
-                 seed=None, visit="default", parallel=False):
+                 seed=None, visit="default", return_list=False):
         """Create an instance of the MultipleImputer class.
 
         As with sklearn classes, all arguments take default values. Therefore,
@@ -66,8 +66,9 @@ class MultipleImputer(BaseImputer, BaseEstimator, TransformerMixin):
                 Default value is False.
             seed (int, optional): seed setting for reproducible results.
                 Defualt is None. No validation, but values should be integer.
-            parallel (bool, optional): run n imputations in parallel or
-                sequentially. Default is False to start, but will be True.
+            return_list (bool, optional): return m as list or generator.
+                Default is False. m imputations returned as generator. More
+                memory efficient. return as list if return_list=True
         """
         BaseImputer.__init__(
             self,
@@ -80,7 +81,7 @@ class MultipleImputer(BaseImputer, BaseEstimator, TransformerMixin):
         self.n = n
         self.predictors = predictors
         self.seed = seed
-        self.parallel = parallel
+        self.return_list = return_list
         self.copy = True
 
     @property
@@ -219,11 +220,12 @@ class MultipleImputer(BaseImputer, BaseEstimator, TransformerMixin):
         # call transform strategy validator before applying transform
         self._transform_strategy_validator()
 
-        # right now, return a list with imputations
-        # sequential only for now, and memory intensive
-        # may want to give option to store internally or return generator
-        imputed = [(i[0], i[1].transform(X, new_data))
-                   for i in self.statistics_.items()]
+        # right now, return a generator by default
+        # sequential only for now
+        imputed = ((i[0], i[1].transform(X, new_data))
+                   for i in self.statistics_.items())
+        if self.return_list:
+            imputed = list(imputed)
         return imputed
 
     def fit_transform(self, X, y=None):
