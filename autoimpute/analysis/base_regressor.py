@@ -131,6 +131,7 @@ class BaseRegressor:
 
     def _fit_statsmodels(self, m, X, y, const):
         """Private method to fit a model using statsmodels."""
+
         # add a constant if necessary
         if const:
             X = add_constant(X)

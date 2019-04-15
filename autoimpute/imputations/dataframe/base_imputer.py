@@ -232,6 +232,7 @@ class BaseImputer:
             TypeError: visit sequence must be a string.
             ValueError: visit sequenece not in `visit_sequences`.
         """
+
         # deal with type first
         if not isinstance(v, str):
             err = "visit must be a string specifying visit sequence to use."
@@ -247,6 +248,7 @@ class BaseImputer:
 
     def _scaler_fit(self):
         """Private method to scale data based on scaler provided."""
+
         # scale numerical data and dummy data if it exists
         if self._len_num > 0:
             sc = clone(self.scaler)
@@ -275,6 +277,7 @@ class BaseImputer:
 
     def _fit_init_params(self, column, method, kwgs):
         """Private method to supply imputation model fit params if any."""
+
         # first, handle easy case when no kwargs given
         if kwgs is None:
             final_params = kwgs
@@ -303,6 +306,7 @@ class BaseImputer:
 
     def _update_dataframes(self, X):
         """Private method to update processed dataframes."""
+
         # note that this method can be further optimized
         # numerical columns first
         self._data_num = X.select_dtypes(include=(np.number,))
@@ -358,6 +362,7 @@ class BaseImputer:
 
     def _use_all_cols(self, c):
         """Private method to pedict using all columns."""
+
         # set numerical columns first
         if c in self._cols_num:
             num_cols = self._data_num.drop(c, axis=1)
@@ -378,6 +383,7 @@ class BaseImputer:
 
     def _use_iter_cols(self, c, preds):
         """Private method to predict using some columns."""
+
         # set numerical columns first
         if c in self._cols_num:
             cn = self._data_num.drop(c, axis=1)

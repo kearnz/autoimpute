@@ -5,12 +5,13 @@
 ## Motivation
 Most machine learning algorithms expect clean and complete datasets, but most real-world data is messy and missing. Unfortunately, handling missing data is quite complex, so programming languages generally punt this responsibility to the end user. By default, R drops all records with missing data - a method that is easy to implement but often problematic in practice. For richer imputation strategies, R has multiple packages to deal with missing data (`MICE`, `Amelia`, `TSImpute`, etc.). Python users are not as fortunate. Python's `scikit-learn` throws a runtime error when an end user attempts to deploy models on datasets with missing records, and few 3rd-party packages exist to handle imputation.
 
-Therefore, this package aids the Python user by providing more clarity to the imputation process, making imputation methods more accessible, and measuring the impact imputation methods have in supervised regression and classification. In doing so, this package brings missing data imputation methods to the Python world and makes them work nicely in Python machine learning projects (and specifically ones that utilize `scikit-learn`).
+Therefore, this package aids the Python user by providing more clarity to the imputation process, making imputation methods more accessible, and measuring the impact imputation methods have in supervised regression and classification. In doing so, this package brings missing data imputation methods to the Python world and makes them work nicely in Python machine learning projects (and specifically ones that utilize `scikit-learn`). Lastly, this package provides its own implementation of supervised machine learning methods that **extend both `scikit-learn` and `statsmodels` to mutiply imputed datasets.**
 
 ## Features
 * Utility functions to explore missingness patterns
 * Missingness classifier and automatic missing data test set generator
 * Single and Multiple Imputation
+* Analysis methods and parameter inference using multiply imputed datasets
 * Cross-sectional and time series imputation methods. Imputation methods currently supported:
     - Mean
     - Median
@@ -20,7 +21,7 @@ Therefore, this package aids the Python user by providing more clarity to the im
     - Categorical
     - Linear interpolation
     - Time-weighted interpolation
-    - Quadratic, Cubic, and Polynomial interpolation
+    - quadratic, cubic, and polynomial interpolation
     - Spline interpolation
     - Last observation carried forward (LOCF)
     - Next observation carried backward (NOCB)
@@ -33,31 +34,38 @@ Therefore, this package aids the Python user by providing more clarity to the im
     - Predictive mean matching
 
 ## Todo
-* Additional cross-sectional methods, including random forest, multivariate sampling, copula sampling, and ML.
-* Additional time-series methods, including ARIMA, Kalman filters, and state-space models.
-* Native support for visualization of missing data patterns and imputation results.
-* Native support for imputation analysis (bias, MI variance, etc.) in and effect on supervised learning models.
-* Multiprocessing and GPU support for larger datasets.
+* Additional cross-sectional methods, including random forest, multivariate sampling, copula sampling, and ML
+* Additional time-series methods, including ARIMA, Kalman filters, and state-space models
+* Native support for visualization of missing data patterns and imputation results
+* Additional support for analysis (bias, MI variance, etc.) after multiple imputation
+* Multiprocessing and GPU support for larger datasets, as well as integration with `dask` dataframes.
 
 ## Example Usage
-Autoimpute is designed to be user friendly and flexible. Additionally, autoimpute fits directly into sklearn machine learning projects. Imputers inherit from sklearn's `BaseEstimator` and `TransformerMixin` and implement `fit` and `transform` methods, making them valid Transformers in an sklearn pipeline.
+Autoimpute is designed to be user friendly and flexible. When performing imputation, autoimpute fits directly into sklearn machine learning projects. Imputers inherit from sklearn's `BaseEstimator` and `TransformerMixin` and implement `fit` and `transform` methods, making them valid Transformers in an sklearn pipeline.
 
-Right now, there are three main classes you'll work with:
+Right now, there are two imputer classes you'll work with:
 ```python
+from autoimpute.imputations import SingleImputer, MultipleImputer
 si = SingleImputer() # imputation methods, passing through the data once
 mi = MultipleImputer() # imputation methods, passing through the data multiple times
-mc = MissingnessClassifier() # predicting missingness and generating test sets for imputation analysis
 ```
 
 Imputations can be as simple as:
 ```python
+# simple example using default instance of MultipleImputer
 imp = MultipleImputer()
+
+# fit transform returns a generator by default, calculating each imputation method lazily
 imp.fit_transform(data)
 ```
 
 Or quite complex, such as:
 ```python
 from sklearn.preprocessing import StandardScaler
+
+# create a complex instance of the MultipleImputer
+# Here, we specify strategies by column and predictors for each column
+# We also specify what additional arguments any `pmm` strategies should take
 imp = MultipleImputer(
     n=10,
     strategy={"salary": "pmm", "gender": "bayesian binary logistic", "age": "norm"},
@@ -65,12 +73,59 @@ imp = MultipleImputer(
     imp_kwgs={"pmm": {"fill_value": "random"}},
     scaler=StandardScaler(),
     visit="left-to-right",
+    return_list=True
     verbose=True
 )
+
+# Because we set return_list=True, imputations are done all at once, not evaluated lazily.
+# This will return M*N, where M is the number of imputations and N is the size of original dataframe.
 imp.fit_transform(data)
 ```
 
-For a deeper understanding of how the package works and its available features, see [tutorials](https://github.com/kearnz/autoimpute-tutorials/tree/master/tutorials)
+Autoimpute also extends supervised machine learning methods from `scikit-learn` and `statsmodels` to apply them to multiply imputed datasets (using the `MultipleImputer` under the hood). Right now, autoimpute supports linear regression. Logistic regression and additional supervised methods are currently under development.
+
+As with Imputers, Autoimpute's analysis methods can be simple or complex:
+```python
+from autoimpute.analysis import MiLinearRegression
+
+# By default, use statsmodels OLS and MultipleImputer()
+simple_lm = MiLinearRegression()
+
+# fit the model on each multiply imputed dataset and pool parameters
+simple_lm.fit(X_train, y)
+
+# retrieve pooled parameters under Rubin's rules
+print(simple_lm.statistics_["coefs"]) # pooled means for alpha and betas
+print(simple_lm.statistics_["var_within"]) # variance within imputations (Vw)
+print(simple_lm.statistics_["var_between"]) # variance between imputations (Vb)
+print(simple_lm.statistics_["var_total"]) # Total variance (Vw + Vb + Vb / M) where M = # imputations
+
+# make predictions on a new dataset using pooled parameters
+simple_lm.predict(X_test)
+
+# Control both the regression used and the MultipleImputer itself
+multiple_imputer_arguments = dict(
+    n=3,
+    strategy={"salary": "pmm", "gender": "bayesian binary logistic", "age": "norm"},
+    predictors={"salary": "all", "gender": ["salary", "education", "weight"]},
+    imp_kwgs={"pmm": {"fill_value": "random"}},
+    scaler=StandardScaler(),
+    visit="left-to-right",
+    verbose=True
+)
+complex_lm = MiLinearRegression(
+    model_lib="sklearn", # use sklearn linear regression
+    mi_kwgs=multiple_imputer_arguments # control the multiple imputer
+)
+
+# fit the model on each multiply imputed dataset
+complex_lm.fit(X, y)
+
+# Note - using sklearn means NO POOLED VARIANCE. Pooled coefficients only
+print(complex_lm.statistics_)
+```
+
+For a deeper understanding of how the package works and its available features, see our [tutorials](https://github.com/kearnz/autoimpute-tutorials/tree/master/tutorials).
 
 ## Versions and Dependencies
 * Python 3.6+
@@ -78,6 +133,7 @@ For a deeper understanding of how the package works and its available features, 
     - `numpy` >= 1.15.4
     - `scipy` >= 1.2.1
     - `pandas` >= 0.20.3
+    - `statsmodels` >= 0.8.0
     - `scikit-learn` >= 0.20.2
     - `xgboost` >= 0.83
     - `pymc3` >= 3.5

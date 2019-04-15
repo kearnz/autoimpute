@@ -100,6 +100,7 @@ class MultipleImputer(BaseImputer, BaseEstimator, TransformerMixin):
             TypeError: n must be an integer.
             ValueError: n must be greater than zero.
         """
+
         # deal with type first
         if not isinstance(n_, int):
             err = "n must be an integer specifying number of imputations."
@@ -119,6 +120,7 @@ class MultipleImputer(BaseImputer, BaseEstimator, TransformerMixin):
         Checks whether strategies match with type of column they are applied
         to. If not, error is raised through `check_strategy_fit` method.
         """
+
         # remove nan columns and store colnames
         cols = X.columns.tolist()
         self._strats = check_strategy_fit(self.strategy, cols)
@@ -150,9 +152,6 @@ class MultipleImputer(BaseImputer, BaseEstimator, TransformerMixin):
 
     def _transform_strategy_validator(self):
         """Private method to prep for prediction."""
-        # initial checks before transformation
-        # as of now, don't need to do anything else
-        # predictive imputer will handle transform strategy validator
         check_is_fitted(self, "statistics_")
 
     @check_nan_columns
@@ -170,6 +169,7 @@ class MultipleImputer(BaseImputer, BaseEstimator, TransformerMixin):
         Returns:
             self: instance of the PredictiveImputer class.
         """
+
         # first, run the fit strategy validator, then create statistics
         self._fit_strategy_validator(X)
         self.statistics_ = {}
@@ -217,6 +217,7 @@ class MultipleImputer(BaseImputer, BaseEstimator, TransformerMixin):
         Raises:
             ValueError: same columns must appear in fit and transform.
         """
+
         # call transform strategy validator before applying transform
         self._transform_strategy_validator()
 

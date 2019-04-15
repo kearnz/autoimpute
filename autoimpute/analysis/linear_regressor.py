@@ -13,7 +13,7 @@ from .base_regressor import BaseRegressor
 class MiLinearRegression(BaseRegressor):
     """Linear Regression wrapper for multiply imputed datasets.
 
-    The LinearRegression class wraps the sklearn and statsmodels libraries
+    The MiLinearRegression class wraps the sklearn and statsmodels libraries
     to extend linear regression to multiply imputed datasets. The class wraps
     statsmodels as well as sklearn because sklearn alone does not provide
     sufficient functionality to pool estimates under Rubin's rules. sklearn is
@@ -25,7 +25,7 @@ class MiLinearRegression(BaseRegressor):
 
     def __init__(self, model_lib="statsmodels", mi_kwgs=None,
                  model_kwgs=None):
-        """Create an instance of the AutoImpute LinearRegression class.
+        """Create an instance of the AutoImpute MiLinearRegression class.
 
         Args:
             model_lib (str, Optional): library the regressor will use to
@@ -48,6 +48,7 @@ class MiLinearRegression(BaseRegressor):
 
     def _fit_strategy_validator(self, X, y):
         """Private method to validate data before fitting model."""
+
         # y must be a series or dataframe
         if not isinstance(y, (pd.Series, pd.DataFrame)):
             err = "y must be a Series or DataFrame"
@@ -79,8 +80,9 @@ class MiLinearRegression(BaseRegressor):
 
     def _predict_strategy_validator(self, X):
         """Private method to validate before prediction."""
+
+        # first check that model is fitted, then check columns are the same
         check_is_fitted(self, "statistics_")
-        # check columns are the same
         X_cols = X.columns.tolist()
         fit_cols = set(self.statistics_["coefs"].index.tolist()[1:])
         diff_fit = set(fit_cols).difference(X_cols)
@@ -88,10 +90,29 @@ class MiLinearRegression(BaseRegressor):
             err = "Same columns that were fit must appear in predict."
             raise ValueError(err)
 
-
     @check_nan_columns
     def fit(self, X, y, add_constant=True):
-        """Fit model specified to multiply imputed dataset."""
+        """Fit model specified to multiply imputed dataset.
+
+        Fit a linear regression on multiply imputed datasets. The method first
+        creates multiply imputed data using the MultipleImputer instantiated
+        when creating an instance of the class. It then runs a linear model on
+        each m datasets. The linear model comes from sklearn or statsmodels.
+        Finally, the fit method calculates pooled parameters from the m linear
+        models. Note that variance for pooled parameters using Rubin's rules
+        is available for statsmodels only. sklearn does not implement
+        parameter inference out of the box.
+
+        Args:
+            X (pd.DataFrame): predictors to use. can contain missingness.
+            y (pd.Series, pd.DataFrame): response. can contain missingness.
+            add_constant (bool, Optional): whether or not to add a constant.
+                Default is True. Applies to statsmodels only. If sklearn used,
+                `add_constant` is ignored.
+
+        Returns:
+            self. Instance of the class
+        """
 
         # setup and validation
         mi_data = self._fit_strategy_validator(X, y)
@@ -108,7 +129,7 @@ class MiLinearRegression(BaseRegressor):
                 model = self._fit_statsmodels(OLS, X, y, add_constant)
             self.models_[ind] = model
 
-        # pooling phase
+        # pooling phase: sklearn - coefficients only, no variance
         items = self.models_.items()
         li = len(items)
         if self.model_lib == "sklearn":
@@ -118,11 +139,12 @@ class MiLinearRegression(BaseRegressor):
             coefs.index = ["const"] + X.columns.tolist()
             self.statistics_["coefs"] = coefs
 
+        # pooling phase: statsmodels - coefficients and variance possible
         if self.model_lib == "statsmodels":
             params = [j.params for i, j in items]
             bses = [j.bse for i, j in items]
-            # average of the coefficients
             coefs = sum(params)/li
+
             # variance metrics
             vw = sum(map(lambda x: x*x, bses)) / li
             vb = sum(map(lambda p: (p - coefs)**2, params)) / (li - 1)
@@ -137,8 +159,23 @@ class MiLinearRegression(BaseRegressor):
 
     @check_nan_columns
     def predict(self, X):
-        """Make predictions using statistics generated from fit."""
+        """Make predictions using statistics generated from fit.
+
+        The regression uses the pooled parameters from each of the imputed
+        datasets to generate a set of single predictions. The pooled params
+        come from multiply imputed datasets, but the predictions themselves
+        follow the same rules as an ordinary linear regression.
+
+        Args:
+            X (pd.DataFrame): data to make predictions using pooled params.
+
+        Returns:
+            np.array: predictions.
+        """
+        # validation before prediction
         self._predict_strategy_validator(X)
+
+        # get the alpha and betas, then create linear equation for predictions
         alpha = self.statistics_["coefs"].values[0]
         betas = self.statistics_["coefs"].values[1:]
         preds = alpha + betas.dot(X.T)
