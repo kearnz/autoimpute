@@ -138,3 +138,7 @@ class BaseRegressor:
         model = m(y, X, **self.model_kwgs) if self.model_kwgs else m(y, X)
         model = model.fit()
         return model
+
+    def _var_ratios(self, imps, num, denom):
+        """Private method for the variance ratios."""
+        return (num+(num/imps))/denom

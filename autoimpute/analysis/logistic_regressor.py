@@ -1,20 +1,20 @@
-"""Module containing linear regression for multiply imputed datasets."""
+"""Module containing logistic regression for multiply imputed datasets."""
 
 import numpy as np
 import pandas as pd
-from sklearn.linear_model import LinearRegression
+from sklearn.linear_model import LogisticRegression
 from sklearn.utils.validation import check_is_fitted
-from statsmodels.api import OLS
+from statsmodels.discrete.discrete_model import Logit
 from autoimpute.utils import check_nan_columns
 from .base_regressor import BaseRegressor
 # pylint:disable=attribute-defined-outside-init
 # pylint:disable=too-many-locals
 
-class MiLinearRegression(BaseRegressor):
-    """Linear Regression wrapper for multiply imputed datasets.
+class MiLogisticRegression(BaseRegressor):
+    """Logistic Regression wrapper for multiply imputed datasets.
 
-    The MiLinearRegression class wraps the sklearn and statsmodels libraries
-    to extend linear regression to multiply imputed datasets. The class wraps
+    The MiLogisticRegression class wraps the sklearn and statsmodels libraries
+    to extend logistic regression to multiply imputed datasets. The class wraps
     statsmodels as well as sklearn because sklearn alone does not provide
     sufficient functionality to pool estimates under Rubin's rules. sklearn is
     for machine learning; therefore, important inference capabilities are
@@ -25,7 +25,7 @@ class MiLinearRegression(BaseRegressor):
 
     def __init__(self, model_lib="statsmodels", mi_kwgs=None,
                  model_kwgs=None):
-        """Create an instance of the AutoImpute MiLinearRegression class.
+        """Create an instance of the AutoImpute MiLogisticRegression class.
 
         Args:
             model_lib (str, Optional): library the regressor will use to
@@ -94,11 +94,11 @@ class MiLinearRegression(BaseRegressor):
     def fit(self, X, y, add_constant=True):
         """Fit model specified to multiply imputed dataset.
 
-        Fit a linear regression on multiply imputed datasets. The method first
+        Fit a logistic regression on multiply imputed datasets. The method
         creates multiply imputed data using the MultipleImputer instantiated
-        when creating an instance of the class. It then runs a linear model on
-        each m datasets. The linear model comes from sklearn or statsmodels.
-        Finally, the fit method calculates pooled parameters from the m linear
+        when creating an instance of the class. It then runs a logistic model
+        on m datasets. The logistic model comes from sklearn or statsmodels.
+        Finally, the fit method calculates pooled parameters from m logistic
         models. Note that variance for pooled parameters using Rubin's rules
         is available for statsmodels only. sklearn does not implement
         parameter inference out of the box.
@@ -124,9 +124,9 @@ class MiLinearRegression(BaseRegressor):
             ind, X = dataset
             y = X.pop(self._yn)
             if self.model_lib == "sklearn":
-                model = self._fit_sklearn(LinearRegression, X, y)
+                model = self._fit_sklearn(LogisticRegression, X, y)
             if self.model_lib == "statsmodels":
-                model = self._fit_statsmodels(OLS, X, y, add_constant)
+                model = self._fit_statsmodels(Logit, X, y, add_constant)
             self.models_[ind] = model
 
         # pooling phase: sklearn - coefficients only, no variance
@@ -164,7 +164,7 @@ class MiLinearRegression(BaseRegressor):
         The regression uses the pooled parameters from each of the imputed
         datasets to generate a set of single predictions. The pooled params
         come from multiply imputed datasets, but the predictions themselves
-        follow the same rules as an ordinary linear regression.
+        follow the same rules as an logistic regression.
 
         Args:
             X (pd.DataFrame): data to make predictions using pooled params.

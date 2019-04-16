@@ -11,8 +11,10 @@ autoimpute.analysis.
 
 from .base_regressor import BaseRegressor
 from .linear_regressor import MiLinearRegression
+from .logistic_regressor import MiLogisticRegression
 
 __all__ = [
     "BaseRegressor",
-    "MiLinearRegression"
+    "MiLinearRegression",
+    "MiLogisticRegression"
 ]
