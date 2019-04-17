@@ -264,9 +264,9 @@ class MiLinearRegression(BaseRegressor):
         Raises:
             ValueError: Variance ratios not available unless statsmodels
         """
-        r = self.relative_increase_in_variance()
+        l = self.variance_from_missing()
         v = self.degrees_freedom()
-        fmi = (r+2/(v+3))/1+r
+        fmi = ((v+1)/(v+3))*l + 2/(v+3)
         return fmi
 
     def summary(self):
