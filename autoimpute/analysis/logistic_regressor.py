@@ -249,10 +249,10 @@ class MiLogisticRegression(BaseRegressor):
         self._var_error_handle()
         m = self.mi.n
         l = self.variance_from_missing()
-        # include the coefficient for degrees freedom
-        n = self.statistics_["coefficient"].index.size
         # all models same # obs, but can't be sure there's more than 1 model
-        k = self.models_[1].nobs
+        n = self.models_[1].nobs
+        # include the coefficient for degrees freedom
+        k = self.statistics_["coefficient"].index.size
         v = self._degrees_freedom(m, l, n, k)
         return v
 
