@@ -84,7 +84,7 @@ class MiLogisticRegression(BaseRegressor):
         # first check that model is fitted, then check columns are the same
         check_is_fitted(self, "statistics_")
         X_cols = X.columns.tolist()
-        fit_cols = set(self.statistics_["coefs"].index.tolist()[1:])
+        fit_cols = set(self.statistics_["coefficient"].index.tolist()[1:])
         diff_fit = set(fit_cols).difference(X_cols)
         if diff_fit:
             err = "Same columns that were fit must appear in predict."
@@ -137,7 +137,7 @@ class MiLogisticRegression(BaseRegressor):
             params = sum([j.coef_ for i, j in items]) / li
             coefs = pd.Series(np.insert(params, 0, alpha))
             coefs.index = ["const"] + X.columns.tolist()
-            self.statistics_["coefs"] = coefs
+            self.statistics_["coefficient"] = coefs
 
         # pooling phase: statsmodels - coefficients and variance possible
         if self.model_lib == "statsmodels":
@@ -149,7 +149,7 @@ class MiLogisticRegression(BaseRegressor):
             vw = sum(map(lambda x: x*x, bses)) / li
             vb = sum(map(lambda p: (p - coefs)**2, params)) / (li - 1)
             vt = vw + vb + (vb / li)
-            self.statistics_["coefs"] = coefs
+            self.statistics_["coefficient"] = coefs
             self.statistics_["var_within"] = vw
             self.statistics_["var_between"] = vb
             self.statistics_["var_total"] = vt
@@ -176,8 +176,8 @@ class MiLogisticRegression(BaseRegressor):
         self._predict_strategy_validator(X)
 
         # get the alpha and betas, then create linear equation for predictions
-        alpha = self.statistics_["coefs"].values[0]
-        betas = self.statistics_["coefs"].values[1:]
+        alpha = self.statistics_["coefficient"].values[0]
+        betas = self.statistics_["coefficient"].values[1:]
         preds = alpha + betas.dot(X.T)
         return preds
 
@@ -217,6 +217,13 @@ class MiLogisticRegression(BaseRegressor):
     def relative_increase_in_variance(self):
         """Calculate the relative increase in variance due to nonresponse.
 
+        Relative Increase in variance explains how much variance increased
+        or decreases relative to what it was without multiple imputation.
+        The metric is closely linked to `variance_from_missing`. In fact,
+        r_ = lambda_ / (1-lambda_). The higher amount of variance attributable
+        to the imputation model, the greater the relative increase in variance
+        because of multiple imputation. Logically, this should make sense.
+
         Returns:
             r: relative increase due to nonresponse
 
@@ -229,3 +236,59 @@ class MiLogisticRegression(BaseRegressor):
         u = self.statistics_["var_within"]
         r_ = self._var_ratios(m, b, u)
         return r_
+
+    def degrees_freedom(self):
+        """Calculate the degrees of freedom, as found in Van Buuren.
+
+        Returns:
+            v: adjusted degrees of freedom
+
+        Raises:
+            ValueError: Variance ratios not available unless statsmodels
+        """
+        self._var_error_handle()
+        m = self.mi.n
+        l = self.variance_from_missing()
+        # include the coefficient for degrees freedom
+        n = self.statistics_["coefficient"].index.size
+        # all models same # obs, but can't be sure there's more than 1 model
+        k = self.models_[1].nobs
+        v = self._degrees_freedom(m, l, n, k)
+        return v
+
+    def fraction_missing_info(self):
+        """Calculate fraction of missing information, as found in Van Buuren.
+
+        Returns:
+            fmi: fraction of missing info
+
+        Raises:
+            ValueError: Variance ratios not available unless statsmodels
+        """
+        r = self.relative_increase_in_variance()
+        v = self.degrees_freedom()
+        fmi = (r+2/(v+3))/1+r
+        return fmi
+
+    def summary(self):
+        """Provide a summary for model parameters, variance, and metrics.
+
+        The summary method brings together the statistics generated from fit
+        as well as the variance ratios, if available. The statistics are far
+        more valuable when using statsmodels than sklearn.
+
+        Returns:
+            pd.DataFrame: summary statistics
+        """
+
+        # only possible once we've fit a model with statsmodels
+        check_is_fitted(self, "statistics_")
+        sdf = pd.DataFrame(self.statistics_)
+
+        # add variance ratios if dealing with statsmodels
+        if self.model_lib == "statsmodels":
+            sdf["var_missing"] = self.variance_from_missing()
+            sdf["var_rel_increase"] = self.relative_increase_in_variance()
+            sdf["df"] = self.degrees_freedom()
+            sdf["fmi"] = self.fraction_missing_info()
+        return sdf

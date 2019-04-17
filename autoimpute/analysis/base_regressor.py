@@ -142,3 +142,11 @@ class BaseRegressor:
     def _var_ratios(self, imps, num, denom):
         """Private method for the variance ratios."""
         return (num+(num/imps))/denom
+
+    def _degrees_freedom(self, imps, lambda_, n, k):
+        """Private method to calculate degrees of freedom for estimates."""
+        v_old = (imps-1)/lambda_**2
+        v_com = n-k
+        v_obs = ((v_com+1)/(v_com+3))*v_com*(1-lambda_)
+        v = (v_old*v_obs)/(v_old+v_obs)
+        return v
