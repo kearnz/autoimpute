@@ -1,6 +1,9 @@
 """Module sets up AutoImpute regressors for multiply imputed data analysis."""
 
+import numpy as np
+import pandas as pd
 from statsmodels.api import add_constant
+from sklearn.utils.validation import check_is_fitted
 from autoimpute.imputations import MultipleImputer
 # pylint:disable=attribute-defined-outside-init
 
@@ -116,28 +119,126 @@ class BaseRegressor:
         Raises:
             ValueError: `lib` not a valid library to use.
         """
-
-        # error handling for improper data types
         if lib not in self.model_libs:
             err = f"{lib} not valid `model_lib`. Must be {self.model_libs}."
             raise ValueError(err)
         self._model_lib = lib
 
-    def _fit_sklearn(self, m, X, y):
-        """Private method to fit a model using sklearn."""
-        model = m(**self.model_kwgs) if self.model_kwgs else m()
-        model.fit(X, y)
+    def _fit_strategy_validator(self, X, y):
+        """Private method to validate data before fitting model."""
+
+        # y must be a series or dataframe
+        if not isinstance(y, (pd.Series, pd.DataFrame)):
+            err = "y must be a Series or DataFrame"
+            raise ValueError(err)
+
+        # y and X must have the same number of rows
+        if X.shape[0] != y.shape[0]:
+            err = "y and X must have the same number of records"
+            raise ValueError(err)
+
+        # y must have a name if series.
+        if isinstance(y, pd.Series):
+            self._yn = y.name
+            if self._yn is None:
+                err = "series y must have a name"
+                raise ValueError(err)
+
+        # y must have one column if dataframe.
+        if isinstance(y, pd.DataFrame):
+            yc = y.shape[1]
+            if yc != 1:
+                err = "y should only have one column"
+                raise ValueError(err)
+            self._yn = y.columns.tolist()[0]
+
+        # if no errors thus far, add y to X for imputation
+        X[self._yn] = y
+        return self.mi.fit_transform(X)
+
+    def _predict_strategy_validator(self, instance, X):
+        """Private method to validate before prediction."""
+
+        # first check that model is fitted, then check columns are the same
+        check_is_fitted(instance, "statistics_")
+        X_cols = X.columns.tolist()
+        fit_cols = set(instance.statistics_["coefficient"].index.tolist())
+        diff_fit = set(fit_cols).difference(X_cols)
+        if diff_fit:
+            err = "Same columns that were fit must appear in predict."
+            raise ValueError(err)
+
+    def _fit_model(self, m, X, y, const):
+        """Private method to fit a model using sklearn or statsmodels."""
+
+        # statsmodels fit case, which requires different logic than sklearn
+        if self.model_lib == "statsmodels":
+            if const:
+                X = add_constant(X)
+            model = m(y, X, **self.model_kwgs) if self.model_kwgs else m(y, X)
+            model = model.fit()
+
+        # sklearn fit case, which requires different logic than statsmodels
+        if self.model_lib == "sklearn":
+            model = m(**self.model_kwgs) if self.model_kwgs else m()
+            model.fit(X, y)
+
+        # return the model after fitting it to a given dataset
         return model
 
-    def _fit_statsmodels(self, m, X, y, const):
-        """Private method to fit a model using statsmodels."""
+    def _apply_models_to_mi_data(self, model_dict, X, y, const):
+        """Private method to apply analysis model to multiply imputed data."""
 
-        # add a constant if necessary
-        if const:
-            X = add_constant(X)
-        model = m(y, X, **self.model_kwgs) if self.model_kwgs else m(y, X)
-        model = model.fit()
-        return model
+        # find regressor based on model lib, then get mutliply imputed data
+        regressor = model_dict[self.model_lib]
+        mi_data = self._fit_strategy_validator(X, y)
+        models = {}
+
+        # then preform analysis models. Sequential only right now.
+        for dataset in mi_data:
+            ind, X = dataset
+            y = X.pop(self._yn)
+            model = self._fit_model(regressor, X, y, const)
+            models[ind] = model
+
+        # returns a dictionary: k=imp #; v=analysis model applied to imp #
+        return models
+
+    def _get_stats_from_models(self, models, cols):
+        """Private method to generate statistics given on model lib chosen."""
+
+        # initial setup - get items from models and get number of models
+        items = models.items()
+        m = self.mi.n
+        statistics = {}
+
+        # pooling phase: sklearn - coefficients only, no variance
+        if self.model_lib == "sklearn":
+            self.mi_alphas_ = [j.intercept_ for i, j in items]
+            self.mi_params_ = [j.coef_ for i, j in items]
+            alpha = sum(self.mi_alphas_) / m
+            params = sum(self.mi_params_) / m
+            coefs = pd.Series(np.insert(params, 0, alpha))
+            coefs.index = ["const"] + cols
+            statistics["coefficient"] = coefs
+
+        # pooling phase: statsmodels - coefficients and variance possible
+        if self.model_lib == "statsmodels":
+            self.mi_params_ = [j.params for i, j in items]
+            self.mi_std_errors_ = [j.bse for i, j in items]
+            coefs = sum(self.mi_params_)/ m
+            # variance metrics
+            vw = sum(map(lambda x: x*x, self.mi_std_errors_)) / m
+            vb = sum(map(lambda p: (p-coefs)**2, self.mi_params_)) / (m-1)
+            vt = vw + vb + (vb / m)
+            statistics["coefficient"] = coefs
+            statistics["var_within"] = vw
+            statistics["var_between"] = vb
+            statistics["var_total"] = vt
+            statistics["std_error"] = np.sqrt(vt)
+
+        # finally, return dictionary with stats from fit used in transform
+        return statistics
 
     def _var_ratios(self, imps, num, denom):
         """Private method for the variance ratios."""
