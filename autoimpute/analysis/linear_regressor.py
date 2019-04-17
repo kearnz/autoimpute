@@ -76,6 +76,7 @@ class MiLinearRegression(BaseRegressor):
         Returns:
             self. Instance of the class
         """
+
         # generate the imputation datasets from multiple imputation
         # then fit the analysis models on each of the imputed datasets
         self.models_ = self._apply_models_to_mi_data(

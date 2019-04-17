@@ -1,5 +1,6 @@
 """Module containing logistic regression for multiply imputed datasets."""
 
+import numpy as np
 import pandas as pd
 from sklearn.linear_model import LogisticRegression
 from sklearn.utils.validation import check_is_fitted
@@ -91,31 +92,61 @@ class MiLogisticRegression(BaseRegressor):
         # still return an instance of the class
         return self
 
+    def _sigmoid(self, z):
+        """Private method that applies sigmoid function to input."""
+        return 1 / (1 + np.exp(-z))
+
     @check_nan_columns
-    def predict(self, X, add_constant=True):
-        """Make predictions using statistics generated from fit.
+    def predict_proba(self, X, add_constant):
+        """Predict probabilities of class membership for logistic regression.
 
         The regression uses the pooled parameters from each of the imputed
         datasets to generate a set of single predictions. The pooled params
         come from multiply imputed datasets, but the predictions themselves
-        follow the same rules as an logistic regression.
+        follow the same rules as an logistic regression. Because this is
+        logistic regression, the sigmoid function is applied to the result
+        of the normal equation, giving us probabilities between 0 and 1 for
+        each prediction. This method returns those probabilities.
+
+        Args:
+            X (pd.Dataframe): predictors to predict response
+            add_constant (bool, Optional): whether or not to add intercept.
+
+        Returns:
+            np.array: prob of class membership for predicted observations.
+        """
+
+        # start with the initial coefs
+        coefs = self.statistics_["coefficient"][1:]
+        # if adding a constant, use full set of coefs
+        if add_constant:
+            X = add_constant(X)
+            coefs = self.statistics_["coefficient"]
+        return self._sigmoid(np.dot(X, coefs))
+
+    @check_nan_columns
+    def predict(self, X, threshold=0.5, add_constant=True):
+        """Make predictions using statistics generated from fit.
+
+        The predict method calls on the predict_proba method, which returns
+        the probability of class membership for each prediction. These
+        probabilities range from 0 to 1. Therefore, anything below the set
+        threshold is assigned to class 0, while anything above the threshold
+        is assigned to class 1. The deafult threshhold is 0.5, which indicates
+        a balanced dataset.
 
         Args:
             X (pd.DataFrame): data to make predictions using pooled params.
+            threshold (float, Optional): boundary for class membership.
+                Default is 0.5. Values can range from 0 to 1.
+            add_constant (bool, Optional): Whether or not to add constant.
+                Default is True.
 
         Returns:
             np.array: predictions.
         """
-        # validation before prediction
-        if self.model_lib == "statsmodels" and add_constant:
-            X = add_constant(X)
-        self._predict_strategy_validator(self, X)
-
-        # get the alpha and betas, then create linear equation for predictions
-        alpha = self.statistics_["coefficient"].values[0]
-        betas = self.statistics_["coefficient"].values[1:]
-        preds = alpha + betas.dot(X.T)
-        return preds
+        pred_probs = self.predict_proba(X, add_constant)
+        return pred_probs >= threshold
 
     def _var_error_handle(self):
         """Private method to handle error for variance ratios."""
