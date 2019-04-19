@@ -119,8 +119,8 @@ class MiLogisticRegression(BaseRegressor):
         self._predict_strategy_validator(self, X)
 
         # get the alpha and betas, then create linear equation for predictions
-        alpha = self.statistics_["coefficient"].values[0]
-        betas = self.statistics_["coefficient"].values[1:]
+        alpha = self.statistics_["coefs"].values[0]
+        betas = self.statistics_["coefs"].values[1:]
         return self._sigmoid(alpha + np.dot(X, betas))
 
     @check_nan_columns

@@ -1,5 +1,6 @@
 """Module sets up AutoImpute regressors for multiply imputed data analysis."""
 
+from collections import OrderedDict
 import numpy as np
 import pandas as pd
 from statsmodels.api import add_constant
@@ -235,7 +236,7 @@ class BaseRegressor:
         # first check that model is fitted, then check columns are the same
         check_is_fitted(instance, "statistics_")
         X_cols = X.columns.tolist()
-        fit_cols = set(instance.statistics_["coefficient"].index.tolist()[1:])
+        fit_cols = set(instance.statistics_["coefs"].index.tolist()[1:])
         diff_fit = set(fit_cols).difference(X_cols)
         if diff_fit:
             err = "Same columns that were fit must appear in predict."
@@ -268,9 +269,9 @@ class BaseRegressor:
             params = sum(self.mi_params_) / m
             coefs = pd.Series(np.insert(params, 0, alpha))
             coefs.index = ["const"] + cols
-            statistics = {
-                "coefs": coefs
-            }
+            statistics = OrderedDict(
+                coefs=coefs
+            )
 
         # pooling phase: statsmodels - coefficients and variance possible
         if self.model_lib == "statsmodels":
@@ -280,7 +281,7 @@ class BaseRegressor:
             self.mi_std_errors_ = [j.bse for i, j in items]
             coefs = sum(self.mi_params_)/ m
             k = coefs.index.size
-            n = items[0][1].nobs
+            n = list(items)[0][1].nobs
             dfcom = n-k
 
             # variance metrics (See VB Ch 2.3)
@@ -296,18 +297,18 @@ class BaseRegressor:
             fmi_ = ((v_+1)/(v_+3))*lambda_ + 2/(v_+3)
 
             # create statistics
-            statistics = {
-                "coefs": coefs,
-                "vw": vw,
-                "vb": vb,
-                "vt": vt,
-                "stdt": stdt,
-                "lambda": lambda_,
-                "riv": r_,
-                "dfcom": dfcom,
-                "dfadj": v_,
-                "fmi": fmi_
-            }
+            statistics = OrderedDict(
+                coefs=coefs,
+                std=stdt,
+                vw=vw,
+                vb=vb,
+                vt=vt,
+                dfcom=dfcom,
+                dfadj=v_,
+                lambda_= lambda_,
+                riv=r_,
+                fmi=fmi_
+            )
 
         # finally, return dictionary with stats from fit used in transform
         return statistics
