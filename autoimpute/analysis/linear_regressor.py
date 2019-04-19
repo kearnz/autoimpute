@@ -54,7 +54,7 @@ class MiLinearRegression(BaseRegressor):
         )
 
     @check_nan_columns
-    def fit(self, X, y, add_constant=True):
+    def fit(self, X, y):
         """Fit model specified to multiply imputed dataset.
 
         Fit a linear regression on multiply imputed datasets. The method first
@@ -69,9 +69,6 @@ class MiLinearRegression(BaseRegressor):
         Args:
             X (pd.DataFrame): predictors to use. can contain missingness.
             y (pd.Series, pd.DataFrame): response. can contain missingness.
-            add_constant (bool, Optional): whether or not to add a constant.
-                Default is True. Applies to statsmodels only. If sklearn used,
-                `add_constant` is ignored.
 
         Returns:
             self. Instance of the class
@@ -80,7 +77,7 @@ class MiLinearRegression(BaseRegressor):
         # generate the imputation datasets from multiple imputation
         # then fit the analysis models on each of the imputed datasets
         self.models_ = self._apply_models_to_mi_data(
-            self.linear_models, X, y, add_constant
+            self.linear_models, X, y
         )
 
         # generate the fit statistics from each of the m models
@@ -92,7 +89,7 @@ class MiLinearRegression(BaseRegressor):
         return self
 
     @check_nan_columns
-    def predict(self, X, add_constant=True):
+    def predict(self, X):
         """Make predictions using statistics generated from fit.
 
         The regression uses the pooled parameters from each of the imputed
@@ -107,8 +104,6 @@ class MiLinearRegression(BaseRegressor):
             np.array: predictions.
         """
         # validation before prediction
-        if self.model_lib == "statsmodels" and add_constant:
-            X = add_constant(X)
         self._predict_strategy_validator(self, X)
 
         # get the alpha and betas, then create linear equation for predictions

@@ -156,25 +156,12 @@ class BaseRegressor:
         X[self._yn] = y
         return self.mi.fit_transform(X)
 
-    def _predict_strategy_validator(self, instance, X):
-        """Private method to validate before prediction."""
-
-        # first check that model is fitted, then check columns are the same
-        check_is_fitted(instance, "statistics_")
-        X_cols = X.columns.tolist()
-        fit_cols = set(instance.statistics_["coefficient"].index.tolist())
-        diff_fit = set(fit_cols).difference(X_cols)
-        if diff_fit:
-            err = "Same columns that were fit must appear in predict."
-            raise ValueError(err)
-
-    def _fit_model(self, m, X, y, const):
+    def _fit_model(self, m, X, y):
         """Private method to fit a model using sklearn or statsmodels."""
 
         # statsmodels fit case, which requires different logic than sklearn
         if self.model_lib == "statsmodels":
-            if const:
-                X = add_constant(X)
+            X = add_constant(X)
             model = m(y, X, **self.model_kwgs) if self.model_kwgs else m(y, X)
             model = model.fit()
 
@@ -186,7 +173,7 @@ class BaseRegressor:
         # return the model after fitting it to a given dataset
         return model
 
-    def _apply_models_to_mi_data(self, model_dict, X, y, const):
+    def _apply_models_to_mi_data(self, model_dict, X, y):
         """Private method to apply analysis model to multiply imputed data."""
 
         # find regressor based on model lib, then get mutliply imputed data
@@ -198,11 +185,23 @@ class BaseRegressor:
         for dataset in mi_data:
             ind, X = dataset
             y = X.pop(self._yn)
-            model = self._fit_model(regressor, X, y, const)
+            model = self._fit_model(regressor, X, y)
             models[ind] = model
 
         # returns a dictionary: k=imp #; v=analysis model applied to imp #
         return models
+
+    def _predict_strategy_validator(self, instance, X):
+        """Private method to validate before prediction."""
+
+        # first check that model is fitted, then check columns are the same
+        check_is_fitted(instance, "statistics_")
+        X_cols = X.columns.tolist()
+        fit_cols = set(instance.statistics_["coefficient"].index.tolist()[1:])
+        diff_fit = set(fit_cols).difference(X_cols)
+        if diff_fit:
+            err = "Same columns that were fit must appear in predict."
+            raise ValueError(err)
 
     def _get_stats_from_models(self, models, cols):
         """Private method to generate statistics given on model lib chosen."""

@@ -82,7 +82,7 @@ imp = MultipleImputer(
 imp.fit_transform(data)
 ```
 
-Autoimpute also extends supervised machine learning methods from `scikit-learn` and `statsmodels` to apply them to multiply imputed datasets (using the `MultipleImputer` under the hood). Right now, autoimpute supports linear regression. Logistic regression and additional supervised methods are currently under development.
+Autoimpute also extends supervised machine learning methods from `scikit-learn` and `statsmodels` to apply them to multiply imputed datasets (using the `MultipleImputer` under the hood). Right now, autoimpute supports linear regression and binary logistic regression. Additional supervised methods are currently under development.
 
 As with Imputers, Autoimpute's analysis methods can be simple or complex:
 ```python
@@ -92,7 +92,7 @@ from autoimpute.analysis import MiLinearRegression
 simple_lm = MiLinearRegression()
 
 # fit the model on each multiply imputed dataset and pool parameters
-simple_lm.fit(X_train, y)
+simple_lm.fit(X_train, y_train)
 
 # retrieve pooled parameters under Rubin's rules
 print(simple_lm.statistics_["coefs"]) # pooled means for alpha and betas
@@ -119,10 +119,13 @@ complex_lm = MiLinearRegression(
 )
 
 # fit the model on each multiply imputed dataset
-complex_lm.fit(X, y)
+complex_lm.fit(X_train, y_train)
 
 # Note - using sklearn means NO POOLED VARIANCE. Pooled coefficients only
 print(complex_lm.statistics_)
+
+# make predictions on new dataset using pooled parameters
+complex_lm.predict(X_test)
 ```
 
 For a deeper understanding of how the package works and its available features, see our [tutorials](https://github.com/kearnz/autoimpute-tutorials/tree/master/tutorials).

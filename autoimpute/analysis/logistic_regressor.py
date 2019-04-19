@@ -55,7 +55,7 @@ class MiLogisticRegression(BaseRegressor):
         )
 
     @check_nan_columns
-    def fit(self, X, y, add_constant=True):
+    def fit(self, X, y):
         """Fit model specified to multiply imputed dataset.
 
         Fit a logistic regression on multiply imputed datasets. The method
@@ -70,9 +70,6 @@ class MiLogisticRegression(BaseRegressor):
         Args:
             X (pd.DataFrame): predictors to use. can contain missingness.
             y (pd.Series, pd.DataFrame): response. can contain missingness.
-            add_constant (bool, Optional): whether or not to add a constant.
-                Default is True. Applies to statsmodels only. If sklearn used,
-                `add_constant` is ignored.
 
         Returns:
             self. Instance of the class
@@ -81,7 +78,7 @@ class MiLogisticRegression(BaseRegressor):
         # generate the imputation datasets from multiple imputation
         # then fit the analysis models on each of the imputed datasets
         self.models_ = self._apply_models_to_mi_data(
-            self.logistic_models, X, y, add_constant
+            self.logistic_models, X, y
         )
 
         # generate the fit statistics from each of the m models
@@ -97,7 +94,7 @@ class MiLogisticRegression(BaseRegressor):
         return 1 / (1 + np.exp(-z))
 
     @check_nan_columns
-    def predict_proba(self, X, add_constant):
+    def predict_proba(self, X):
         """Predict probabilities of class membership for logistic regression.
 
         The regression uses the pooled parameters from each of the imputed
@@ -110,7 +107,6 @@ class MiLogisticRegression(BaseRegressor):
 
         Args:
             X (pd.Dataframe): predictors to predict response
-            add_constant (bool, Optional): whether or not to add intercept.
 
         Returns:
             np.array: prob of class membership for predicted observations.
@@ -118,17 +114,12 @@ class MiLogisticRegression(BaseRegressor):
 
         # run validation first
         self._predict_strategy_validator(self, X)
-
-        # start with the initial coefs
-        coefs = self.statistics_["coefficient"][1:]
-        # if adding a constant, use full set of coefs
-        if add_constant:
-            X = add_constant(X)
-            coefs = self.statistics_["coefficient"]
-        return self._sigmoid(np.dot(X, coefs))
+        alpha = self.statistics_["coefficient"].values[0]
+        betas = self.statistics_["coefficient"].values[1:]
+        return self._sigmoid(alpha + np.dot(X, betas))
 
     @check_nan_columns
-    def predict(self, X, threshold=0.5, add_constant=True):
+    def predict(self, X, threshold=0.5):
         """Make predictions using statistics generated from fit.
 
         The predict method calls on the predict_proba method, which returns
@@ -142,13 +133,11 @@ class MiLogisticRegression(BaseRegressor):
             X (pd.DataFrame): data to make predictions using pooled params.
             threshold (float, Optional): boundary for class membership.
                 Default is 0.5. Values can range from 0 to 1.
-            add_constant (bool, Optional): Whether or not to add constant.
-                Default is True.
 
         Returns:
             np.array: predictions.
         """
-        pred_probs = self.predict_proba(X, add_constant)
+        pred_probs = self.predict_proba(X)
         return pred_probs >= threshold
 
     def _var_error_handle(self):

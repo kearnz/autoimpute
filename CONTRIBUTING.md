@@ -25,7 +25,7 @@ Because AutoImpute is in rapid development, bugs are inevitable. We do our best 
 * For unexpected behavior, determine if any implicit assumptions from `autoimpute` logic produce the output.
 
 #### When Reporting Bugs
-* Follow the guidelines specified from our [Bug Report Issue Template](https://github.com/kearnz/autoimpute/blob/master/.github/ISSUE_TEMPLATE/bug-report.md)
+* Follow the guidelines specified from our [Bug Report Issue Template](https://github.com/kearnz/autoimpute/blob/master/.github/ISSUE_TEMPLATE/bug_report.md)
 * If you're unsure who should act on this bug, assign it to `kearnz` by default.
 
 #### After Reporting Bugs
@@ -41,7 +41,7 @@ Missing data imputation is a vast field. While we hope to cover as much as we po
 * Comb through the [Issues Board](https://github.com/kearnz/autoimpute/issues) to see if the feature has already been requested.
 
 #### When Suggesting New Features
-* Follow the guidelines specified from our [New Feature Issue Template](https://github.com/kearnz/autoimpute/blob/master/.github/ISSUE_TEMPLATE/feature-request.md)
+* Follow the guidelines specified from our [New Feature Issue Template](https://github.com/kearnz/autoimpute/blob/master/.github/ISSUE_TEMPLATE/feature_request.md)
 * If you're unsure who should act on this feature request, assign it to `kearnz` by default.
 
 #### After Suggesting New Features
