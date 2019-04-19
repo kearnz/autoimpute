@@ -116,6 +116,9 @@ class MiLogisticRegression(BaseRegressor):
             np.array: prob of class membership for predicted observations.
         """
 
+        # run validation first
+        self._predict_strategy_validator(self, X)
+
         # start with the initial coefs
         coefs = self.statistics_["coefficient"][1:]
         # if adding a constant, use full set of coefs
