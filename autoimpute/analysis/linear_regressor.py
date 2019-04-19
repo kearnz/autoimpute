@@ -30,11 +30,13 @@ class MiLinearRegression(BaseRegressor):
         "sklearn": LinearRegression
     }
 
-    def __init__(self, model_lib="statsmodels", mi_kwgs=None,
+    def __init__(self, mi=None, model_lib="statsmodels", mi_kwgs=None,
                  model_kwgs=None):
         """Create an instance of the AutoImpute MiLinearRegression class.
 
         Args:
+            mi (MultipleImputer, Optional): An instance of a MultipleImputer.
+                Default is none. Can create one through `mi_kwgs` instead.
             model_lib (str, Optional): library the regressor will use to
                 implement regression. Options are sklearn and statsmodels.
                 Default is statsmodels.
@@ -48,6 +50,7 @@ class MiLinearRegression(BaseRegressor):
         """
         BaseRegressor.__init__(
             self,
+            mi=mi,
             model_lib=model_lib,
             mi_kwgs=mi_kwgs,
             model_kwgs=model_kwgs
@@ -112,94 +115,6 @@ class MiLinearRegression(BaseRegressor):
         preds = alpha + betas.dot(X.T)
         return preds
 
-    def _var_error_handle(self):
-        """Private method to handle error for variance ratios."""
-
-        # only possible once we've fit a model with statsmodels
-        check_is_fitted(self, "statistics_")
-        if self.model_lib != "statsmodels":
-            err = f"Variance ratios not available unless using statsmodels."
-            raise ValueError(err)
-
-    def variance_from_missing(self):
-        """Calculate the variance attributable to missing data.
-
-        Variance attributable to missing data is the amount of variation that
-        we can attribute to the need for imputation. Lambda represents this
-        ratio. If lambda is 0, no variation comes from missing data. If
-        the variation is 1, then all variation comes from missing data. More
-        likely are values between 0 and 1. The higher the value, the more
-        influence the imputation model has than the complete data model that
-        generated the data in the first place.
-
-        Returns:
-            lambda: ratio of variation attributable to missing data
-
-        Raises:
-            ValueError: Variance ratios not available unless statsmodels
-        """
-        self._var_error_handle()
-        m = self.mi.n
-        b = self.statistics_["var_between"]
-        t = self.statistics_["var_total"]
-        lambda_ = self._var_ratios(m, b, t)
-        return lambda_
-
-    def relative_increase_in_variance(self):
-        """Calculate the relative increase in variance due to nonresponse.
-
-        Relative Increase in variance explains how much variance increased
-        or decreases relative to what it was without multiple imputation.
-        The metric is closely linked to `variance_from_missing`. In fact,
-        r_ = lambda_ / (1-lambda_). The higher amount of variance attributable
-        to the imputation model, the greater the relative increase in variance
-        because of multiple imputation. Logically, this should make sense.
-
-        Returns:
-            r: relative increase due to nonresponse
-
-        Raises:
-            ValueError: Variance ratios not available unless statsmodels
-        """
-        self._var_error_handle()
-        m = self.mi.n
-        b = self.statistics_["var_between"]
-        u = self.statistics_["var_within"]
-        r_ = self._var_ratios(m, b, u)
-        return r_
-
-    def degrees_freedom(self):
-        """Calculate the degrees of freedom, as found in Van Buuren.
-
-        Returns:
-            v: adjusted degrees of freedom
-
-        Raises:
-            ValueError: Variance ratios not available unless statsmodels
-        """
-        m = self.mi.n
-        l = self.variance_from_missing()
-        # all models same # obs, but can't be sure there's more than 1 model
-        n = self.models_[1].nobs
-        # include the coefficient for degrees freedom
-        k = self.statistics_["coefficient"].index.size
-        v = self._degrees_freedom(m, l, n, k)
-        return v
-
-    def fraction_missing_info(self):
-        """Calculate fraction of missing information, as found in Van Buuren.
-
-        Returns:
-            fmi: fraction of missing info
-
-        Raises:
-            ValueError: Variance ratios not available unless statsmodels
-        """
-        l = self.variance_from_missing()
-        v = self.degrees_freedom()
-        fmi = ((v+1)/(v+3))*l + 2/(v+3)
-        return fmi
-
     def summary(self):
         """Provide a summary for model parameters, variance, and metrics.
 
@@ -214,11 +129,4 @@ class MiLinearRegression(BaseRegressor):
         # only possible once we've fit a model with statsmodels
         check_is_fitted(self, "statistics_")
         sdf = pd.DataFrame(self.statistics_)
-
-        # add variance ratios if dealing with statsmodels
-        if self.model_lib == "statsmodels":
-            sdf["var_missing"] = self.variance_from_missing()
-            sdf["var_rel_increase"] = self.relative_increase_in_variance()
-            sdf["df"] = self.degrees_freedom()
-            sdf["fmi"] = self.fraction_missing_info()
         return sdf

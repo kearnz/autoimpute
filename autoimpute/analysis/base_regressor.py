@@ -21,7 +21,7 @@ class BaseRegressor:
 
     model_libs = ("sklearn", "statsmodels")
 
-    def __init__(self, model_lib, mi_kwgs, model_kwgs):
+    def __init__(self, mi, model_lib, mi_kwgs, model_kwgs):
         """Create an instance of the BaseRegressor class.
 
         The BaseRegressor class is not a stand-alone class and should not be
@@ -32,22 +32,23 @@ class BaseRegressor:
         instance of the MultipleImputer to impute missing data.
 
         Args:
+            mi (MultipleImputer): An instance of a MultipleImputer.
+                Can create one through `mi_kwgs` instead.
             model_lib (str): library the regressor will use to implement
                 regression. Options are sklearn and statsmodels.
                 Default is statsmodels.
-            mi_kwgs (dict): keyword args to instantiate MultipleImputer.
+            mi_kwgs (dict): keyword args to instantiate MultipleImputer. IF
+                valid MultipleImputer passed to `mi`, model_kwgs ignored.
             model_kwgs (dict): keyword args to instantiate regressor.
 
         Returns:
             self. Instance of BaseRegressor class.
         """
+        # Order Important. `mi_kwgs` validation first b/c it's used in `mi`
         self.mi_kwgs = mi_kwgs
+        self.mi = mi
         self.model_kwgs = model_kwgs
         self.model_lib = model_lib
-        if self.mi_kwgs:
-            self.mi = MultipleImputer(**self.mi_kwgs)
-        else:
-            self.mi = MultipleImputer()
 
     @property
     def mi_kwgs(self):
@@ -69,9 +70,44 @@ class BaseRegressor:
             ValueError: mi_kwgs not correctly specified as argument.
         """
         if not isinstance(kwgs, (type(None), dict)):
-            err = "mi_kwgs must be dict of args used to instantiate Imputer."
+            err = "mi_kwgs must be None or dict of args for MultipleImputer."
             raise ValueError(err)
         self._mi_kwgs = kwgs
+
+    @property
+    def mi(self):
+        """Propoerty getter to return the value of mi."""
+        return self._mi
+
+    @mi.setter
+    def mi(self, m):
+        """Validate mi and set default properties.
+
+        The BaseRegressor validates the `mi` argument. `mi` must be a valid
+        instance of a MultipleImputer. It can also be None. If None, the
+        BaseRegressor will create a MultipleImputer on its own, either by
+        default or with any key values passed to the `mi_kwgs` args dict.
+
+        Args:
+            m (MultipleImputer, None): Instance of a MultipleImputer.
+
+        Raises:
+            ValueError: mi is not an instance of a MultipleImputer.
+        """
+
+        # check if m is None or a MultipleImputer
+        if not isinstance(m, (type(None), MultipleImputer)):
+            err = f"{m} must be None or a valid instance of MultipleImputer."
+            raise ValueError(err)
+
+        # handle each case if None or MultipleImputer
+        if m is not None:
+            self._mi = m
+        else:
+            if self.mi_kwgs:
+                self._mi = MultipleImputer(**self.mi_kwgs)
+            else:
+                self.mi = MultipleImputer()
 
     @property
     def model_kwgs(self):
@@ -83,8 +119,8 @@ class BaseRegressor:
         """Validate the model_kwgs and set default properties.
 
         The BaseRegressor validates the `model_kwgs` argument. `model_kwgs`
-        contain optional keyword arguments to create a regression model. The
-        argument is optional, and its default is None
+        contain optional keyword arguments pased to a regression model. The
+        argument is optional, and its default is None.
 
         Args:
             kwgs (dict, None): None or dictionary of keywords.
@@ -154,6 +190,8 @@ class BaseRegressor:
 
         # if no errors thus far, add y to X for imputation
         X[self._yn] = y
+
+        # return the multiply imputed datasets
         return self.mi.fit_transform(X)
 
     def _fit_model(self, m, X, y):
@@ -203,42 +241,6 @@ class BaseRegressor:
             err = "Same columns that were fit must appear in predict."
             raise ValueError(err)
 
-    def _get_stats_from_models(self, models, cols):
-        """Private method to generate statistics given on model lib chosen."""
-
-        # initial setup - get items from models and get number of models
-        items = models.items()
-        m = self.mi.n
-        statistics = {}
-
-        # pooling phase: sklearn - coefficients only, no variance
-        if self.model_lib == "sklearn":
-            self.mi_alphas_ = [j.intercept_ for i, j in items]
-            self.mi_params_ = [j.coef_ for i, j in items]
-            alpha = sum(self.mi_alphas_) / m
-            params = sum(self.mi_params_) / m
-            coefs = pd.Series(np.insert(params, 0, alpha))
-            coefs.index = ["const"] + cols
-            statistics["coefficient"] = coefs
-
-        # pooling phase: statsmodels - coefficients and variance possible
-        if self.model_lib == "statsmodels":
-            self.mi_params_ = [j.params for i, j in items]
-            self.mi_std_errors_ = [j.bse for i, j in items]
-            coefs = sum(self.mi_params_)/ m
-            # variance metrics
-            vw = sum(map(lambda x: x*x, self.mi_std_errors_)) / m
-            vb = sum(map(lambda p: (p-coefs)**2, self.mi_params_)) / (m-1)
-            vt = vw + vb + (vb / m)
-            statistics["coefficient"] = coefs
-            statistics["var_within"] = vw
-            statistics["var_between"] = vb
-            statistics["var_total"] = vt
-            statistics["std_error"] = np.sqrt(vt)
-
-        # finally, return dictionary with stats from fit used in transform
-        return statistics
-
     def _var_ratios(self, imps, num, denom):
         """Private method for the variance ratios."""
         return (num+(num/imps))/denom
@@ -250,3 +252,62 @@ class BaseRegressor:
         v_obs = ((v_com+1)/(v_com+3))*v_com*(1-lambda_)
         v = (v_old*v_obs)/(v_old+v_obs)
         return v
+
+    def _get_stats_from_models(self, models, cols):
+        """Private method to generate statistics given on model lib chosen."""
+
+        # initial setup - get items from models and get number of models
+        items = models.items()
+        m = self.mi.n
+
+        # pooling phase: sklearn - coefficients only, no variance
+        if self.model_lib == "sklearn":
+            self.mi_alphas_ = [j.intercept_ for i, j in items]
+            self.mi_params_ = [j.coef_ for i, j in items]
+            alpha = sum(self.mi_alphas_) / m
+            params = sum(self.mi_params_) / m
+            coefs = pd.Series(np.insert(params, 0, alpha))
+            coefs.index = ["const"] + cols
+            statistics = {
+                "coefs": coefs
+            }
+
+        # pooling phase: statsmodels - coefficients and variance possible
+        if self.model_lib == "statsmodels":
+
+            # data and model parameters
+            self.mi_params_ = [j.params for i, j in items]
+            self.mi_std_errors_ = [j.bse for i, j in items]
+            coefs = sum(self.mi_params_)/ m
+            k = coefs.index.size
+            n = items[0][1].nobs
+            dfcom = n-k
+
+            # variance metrics (See VB Ch 2.3)
+            vw = sum(map(lambda x: x*x, self.mi_std_errors_)) / m
+            vb = sum(map(lambda p: (p-coefs)**2, self.mi_params_)) / (m-1)
+            vt = vw + vb + (vb / m)
+            stdt = np.sqrt(vt)
+
+            # variance ratios (See VB Ch 2.3)
+            lambda_ = self._var_ratios(m, vb, vt)
+            r_ = self._var_ratios(m, vb, vw)
+            v_ = self._degrees_freedom(m, lambda_, n, k)
+            fmi_ = ((v_+1)/(v_+3))*lambda_ + 2/(v_+3)
+
+            # create statistics
+            statistics = {
+                "coefs": coefs,
+                "vw": vw,
+                "vb": vb,
+                "vt": vt,
+                "stdt": stdt,
+                "lambda": lambda_,
+                "riv": r_,
+                "dfcom": dfcom,
+                "dfadj": v_,
+                "fmi": fmi_
+            }
+
+        # finally, return dictionary with stats from fit used in transform
+        return statistics
