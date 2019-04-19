@@ -94,14 +94,12 @@ simple_lm = MiLinearRegression()
 # fit the model on each multiply imputed dataset and pool parameters
 simple_lm.fit(X_train, y_train)
 
-# retrieve pooled parameters under Rubin's rules
-print(simple_lm.statistics_["coefs"]) # pooled means for alpha and betas
-print(simple_lm.statistics_["var_within"]) # variance within imputations (Vw)
-print(simple_lm.statistics_["var_between"]) # variance between imputations (Vb)
-print(simple_lm.statistics_["var_total"]) # Total variance (Vw + Vb + Vb / M) where M = # imputations
+# get summary of fit, which includes pooled parameters under Rubin's rules
+# also provides diagnostics related to analysis after multiple imputation
+simple_lm.summary()
 
 # make predictions on a new dataset using pooled parameters
-simple_lm.predict(X_test)
+predictions = simple_lm.predict(X_test)
 
 # Control both the regression used and the MultipleImputer itself
 multiple_imputer_arguments = dict(
@@ -121,11 +119,29 @@ complex_lm = MiLinearRegression(
 # fit the model on each multiply imputed dataset
 complex_lm.fit(X_train, y_train)
 
-# Note - using sklearn means NO POOLED VARIANCE. Pooled coefficients only
-print(complex_lm.statistics_)
+# get summary of fit, which includes pooled parameters under Rubin's rules
+# also provides diagnostics related to analysis after multiple imputation
+complex_lm.summary()
 
 # make predictions on new dataset using pooled parameters
-complex_lm.predict(X_test)
+predictions = complex_lm.predict(X_test)
+```
+
+Note that we can also pass a pre-specified `MultipleImputer` to either analysis model instead of using `mi_kwgs`. The option is yours, and it's a matter of preference. If you pass a pre-specified `MultipleImputer`, anything in `mi_kwgs` is ignored, although the `mi_kwgs` argument is still validated.
+
+```python
+from autoimpute.imputations import MultipleImputer
+from autoimpute.analysis import MiLinearRegression
+
+# create a multiple imputer first
+custom_imputer = MultipleImputer(n=3, strategy="pmm", return_list=True)
+
+# pass the imputer to a linear regression model
+complex_lm = MiLinearRegression(mi=custom_imputer, model_lib="statsmodels")
+
+# proceed the same as the previous examples
+complex_lm.fit(X_train, y_train).predict(X_test)
+complex_lm.summary()
 ```
 
 For a deeper understanding of how the package works and its available features, see our [tutorials](https://github.com/kearnz/autoimpute-tutorials/tree/master/tutorials).

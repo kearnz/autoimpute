@@ -305,7 +305,7 @@ class BaseRegressor:
                 vt=vt,
                 dfcom=dfcom,
                 dfadj=v_,
-                lambda_= lambda_,
+                lambda_=lambda_,
                 riv=r_,
                 fmi=fmi_
             )

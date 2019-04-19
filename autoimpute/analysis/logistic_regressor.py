@@ -2,6 +2,7 @@
 
 import numpy as np
 import pandas as pd
+from sklearn.base import BaseEstimator
 from sklearn.linear_model import LogisticRegression
 from sklearn.utils.validation import check_is_fitted
 from statsmodels.discrete.discrete_model import Logit
@@ -10,7 +11,7 @@ from .base_regressor import BaseRegressor
 # pylint:disable=attribute-defined-outside-init
 # pylint:disable=too-many-locals
 
-class MiLogisticRegression(BaseRegressor):
+class MiLogisticRegression(BaseRegressor, BaseEstimator):
     """Logistic Regression wrapper for multiply imputed datasets.
 
     The MiLogisticRegression class wraps the sklearn and statsmodels libraries

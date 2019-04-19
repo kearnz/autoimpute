@@ -1,6 +1,7 @@
 """Module containing linear regression for multiply imputed datasets."""
 
 import pandas as pd
+from sklearn.base import BaseEstimator
 from sklearn.linear_model import LinearRegression
 from sklearn.utils.validation import check_is_fitted
 from statsmodels.api import OLS
@@ -9,7 +10,7 @@ from .base_regressor import BaseRegressor
 # pylint:disable=attribute-defined-outside-init
 # pylint:disable=too-many-locals
 
-class MiLinearRegression(BaseRegressor):
+class MiLinearRegression(BaseRegressor, BaseEstimator):
     """Linear Regression wrapper for multiply imputed datasets.
 
     The MiLinearRegression class wraps the sklearn and statsmodels libraries
