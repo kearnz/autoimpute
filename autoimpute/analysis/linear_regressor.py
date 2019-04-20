@@ -27,6 +27,7 @@ class MiLinearRegression(BaseRegressor, BaseEstimator):
     """
 
     linear_models = {
+        "type": "linear",
         "statsmodels": OLS,
         "sklearn": LinearRegression
     }
@@ -42,7 +43,8 @@ class MiLinearRegression(BaseRegressor, BaseEstimator):
                 implement regression. Options are sklearn and statsmodels.
                 Default is statsmodels.
             mi_kwgs (dict, Optional): keyword args to instantiate
-                MultipleImputer. Default is None.
+                MultipleImputer. Default is None. If valid MultipleImputer
+                passed as `mi` argument, then `mi_kwgs` ignored.
             model_kwgs (dict, Optional): keyword args to instantiate
                 regressor. Default is None.
 
@@ -77,6 +79,9 @@ class MiLinearRegression(BaseRegressor, BaseEstimator):
         Returns:
             self. Instance of the class
         """
+
+        # retain columns incase encoding occurs
+        self.fit_X_columns = X.columns.tolist()
 
         # generate the imputation datasets from multiple imputation
         # then fit the analysis models on each of the imputed datasets

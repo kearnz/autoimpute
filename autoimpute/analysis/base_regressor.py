@@ -5,6 +5,7 @@ import numpy as np
 import pandas as pd
 from statsmodels.api import add_constant
 from sklearn.utils.validation import check_is_fitted
+from category_encoders import OneHotEncoder
 from autoimpute.imputations import MultipleImputer
 # pylint:disable=attribute-defined-outside-init
 
@@ -38,7 +39,7 @@ class BaseRegressor:
             model_lib (str): library the regressor will use to implement
                 regression. Options are sklearn and statsmodels.
                 Default is statsmodels.
-            mi_kwgs (dict): keyword args to instantiate MultipleImputer. IF
+            mi_kwgs (dict): keyword args to instantiate MultipleImputer. If
                 valid MultipleImputer passed to `mi`, model_kwgs ignored.
             model_kwgs (dict): keyword args to instantiate regressor.
 
@@ -50,6 +51,7 @@ class BaseRegressor:
         self.mi = mi
         self.model_kwgs = model_kwgs
         self.model_lib = model_lib
+        self.encoder = OneHotEncoder(handle_unknown="error")
 
     @property
     def mi_kwgs(self):
@@ -169,11 +171,6 @@ class BaseRegressor:
             err = "y must be a Series or DataFrame"
             raise ValueError(err)
 
-        # y and X must have the same number of rows
-        if X.shape[0] != y.shape[0]:
-            err = "y and X must have the same number of records"
-            raise ValueError(err)
-
         # y must have a name if series.
         if isinstance(y, pd.Series):
             self._yn = y.name
@@ -187,7 +184,13 @@ class BaseRegressor:
             if yc != 1:
                 err = "y should only have one column"
                 raise ValueError(err)
-            self._yn = y.columns.tolist()[0]
+            y = y.iloc[:, 0]
+            self._yn = y.name
+
+        # y and X must have the same number of rows
+        if X.shape[0] != y.shape[0]:
+            err = "y and X must have the same number of records"
+            raise ValueError(err)
 
         # if no errors thus far, add y to X for imputation
         X[self._yn] = y
@@ -195,18 +198,33 @@ class BaseRegressor:
         # return the multiply imputed datasets
         return self.mi.fit_transform(X)
 
-    def _fit_model(self, m, X, y):
+    def _fit_model(self, model_type, regressor, X, y):
         """Private method to fit a model using sklearn or statsmodels."""
+
+        # encoding for predictor variable
+        X = self.encoder.fit_transform(X)
+
+        # encoding for response variable
+        if model_type == "logistic":
+            ycat = y.astype("category").cat
+            self._response_categories = ycat.categories
 
         # statsmodels fit case, which requires different logic than sklearn
         if self.model_lib == "statsmodels":
             X = add_constant(X)
-            model = m(y, X, **self.model_kwgs) if self.model_kwgs else m(y, X)
+            if self.model_kwgs:
+                model = regressor(ycat.codes, X, **self.model_kwgs)
+            else:
+                model = regressor(ycat.codes, X)
             model = model.fit()
 
         # sklearn fit case, which requires different logic than statsmodels
         if self.model_lib == "sklearn":
-            model = m(**self.model_kwgs) if self.model_kwgs else m()
+            if self.model_kwgs:
+                model = regressor(**self.model_kwgs)
+            else:
+                model = regressor()
+            # sklearn doesn't need encoding for response
             model.fit(X, y)
 
         # return the model after fitting it to a given dataset
@@ -216,6 +234,7 @@ class BaseRegressor:
         """Private method to apply analysis model to multiply imputed data."""
 
         # find regressor based on model lib, then get mutliply imputed data
+        model_type = model_dict["type"]
         regressor = model_dict[self.model_lib]
         mi_data = self._fit_strategy_validator(X, y)
         models = {}
@@ -224,7 +243,7 @@ class BaseRegressor:
         for dataset in mi_data:
             ind, X = dataset
             y = X.pop(self._yn)
-            model = self._fit_model(regressor, X, y)
+            model = self._fit_model(model_type, regressor, X, y)
             models[ind] = model
 
         # returns a dictionary: k=imp #; v=analysis model applied to imp #
@@ -236,7 +255,7 @@ class BaseRegressor:
         # first check that model is fitted, then check columns are the same
         check_is_fitted(instance, "statistics_")
         X_cols = X.columns.tolist()
-        fit_cols = set(instance.statistics_["coefs"].index.tolist()[1:])
+        fit_cols = set(instance.fit_X_columns)
         diff_fit = set(fit_cols).difference(X_cols)
         if diff_fit:
             err = "Same columns that were fit must appear in predict."
