@@ -202,20 +202,26 @@ class BaseRegressor:
         """Private method to fit a model using sklearn or statsmodels."""
 
         # encoding for predictor variable
-        X = self.encoder.fit_transform(X)
+        # we enforce that predictors were imputed in imputation phase.
+        try:
+            X = self.encoder.fit_transform(X)
+        except ValueError as ve:
+            me = "Must impute columns used as predictors in analysis model."
+            raise ValueError(me) from ve
 
         # encoding for response variable
         if model_type == "logistic":
             ycat = y.astype("category").cat
+            y = ycat.codes
             self._response_categories = ycat.categories
 
         # statsmodels fit case, which requires different logic than sklearn
         if self.model_lib == "statsmodels":
             X = add_constant(X)
             if self.model_kwgs:
-                model = regressor(ycat.codes, X, **self.model_kwgs)
+                model = regressor(y, X, **self.model_kwgs)
             else:
-                model = regressor(ycat.codes, X)
+                model = regressor(y, X)
             model = model.fit()
 
         # sklearn fit case, which requires different logic than statsmodels
@@ -260,6 +266,15 @@ class BaseRegressor:
         if diff_fit:
             err = "Same columns that were fit must appear in predict."
             raise ValueError(err)
+
+        # encoding for predictor variable
+        # we enforce that predictors were imputed in imputation phase.
+        try:
+            X = self.encoder.fit_transform(X)
+        except ValueError as ve:
+            me = "Data passed to make predictions can't contain missingness."
+            raise ValueError(me) from ve
+        return X
 
     def _var_ratios(self, imps, num, denom):
         """Private method for the variance ratios."""

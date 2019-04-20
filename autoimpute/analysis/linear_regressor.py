@@ -113,7 +113,7 @@ class MiLinearRegression(BaseRegressor, BaseEstimator):
             np.array: predictions.
         """
         # validation before prediction
-        self._predict_strategy_validator(self, X)
+        X = self._predict_strategy_validator(self, X)
 
         # get the alpha and betas, then create linear equation for predictions
         alpha = self.statistics_["coefs"].values[0]

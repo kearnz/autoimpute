@@ -122,7 +122,7 @@ class MiLogisticRegression(BaseRegressor, BaseEstimator):
         """
 
         # run validation first
-        self._predict_strategy_validator(self, X)
+        X = self._predict_strategy_validator(self, X)
 
         # get the alpha and betas, then create linear equation for predictions
         alpha = self.statistics_["coefs"].values[0]
