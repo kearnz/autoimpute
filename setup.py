@@ -20,6 +20,7 @@ REQUIRED = [
     "statsmodels",
     "xgboost",
     "scikit-learn",
+    "category_encoders",
     "pymc3"
 ]
 EXTRAS = {}

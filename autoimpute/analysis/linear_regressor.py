@@ -90,9 +90,7 @@ class MiLinearRegression(BaseRegressor, BaseEstimator):
         )
 
         # generate the fit statistics from each of the m models
-        self.statistics_ = self._get_stats_from_models(
-            self.models_, X.columns.tolist()
-        )
+        self.statistics_ = self._get_stats_from_models(self.models_)
 
         # still return an instance of the class
         return self

@@ -91,9 +91,7 @@ class MiLogisticRegression(BaseRegressor, BaseEstimator):
         )
 
         # generate the fit statistics from each of the m models
-        self.statistics_ = self._get_stats_from_models(
-            self.models_, X.columns.tolist()
-        )
+        self.statistics_ = self._get_stats_from_models(self.models_)
 
         # still return an instance of the class
         return self
@@ -149,7 +147,9 @@ class MiLogisticRegression(BaseRegressor, BaseEstimator):
             np.array: predictions.
         """
         pred_probs = self.predict_proba(X)
-        return pred_probs >= threshold
+        pred_array = (pred_probs >= threshold).astype(int)
+        responses = self._response_categories.values
+        return responses[pred_array]
 
     def summary(self):
         """Provide a summary for model parameters, variance, and metrics.

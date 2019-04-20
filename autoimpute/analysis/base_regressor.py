@@ -205,6 +205,7 @@ class BaseRegressor:
         # we enforce that predictors were imputed in imputation phase.
         try:
             X = self.encoder.fit_transform(X)
+            self.new_X_columns = X.columns.tolist()
         except ValueError as ve:
             me = "Must impute columns used as predictors in analysis model."
             raise ValueError(me) from ve
@@ -288,7 +289,7 @@ class BaseRegressor:
         v = (v_old*v_obs)/(v_old+v_obs)
         return v
 
-    def _get_stats_from_models(self, models, cols):
+    def _get_stats_from_models(self, models):
         """Private method to generate statistics given on model lib chosen."""
 
         # initial setup - get items from models and get number of models
@@ -302,7 +303,7 @@ class BaseRegressor:
             alpha = sum(self.mi_alphas_) / m
             params = sum(self.mi_params_) / m
             coefs = pd.Series(np.insert(params, 0, alpha))
-            coefs.index = ["const"] + cols
+            coefs.index = ["const"] + self.new_X_columns
             statistics = OrderedDict(
                 coefs=coefs
             )
