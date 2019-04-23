@@ -10,7 +10,7 @@ def _not_num_series(m, s):
     """Private method to detect columns of Matrix that are not categorical."""
     if not is_numeric_dtype(s):
         t = s.dtype
-        err = f"{m} not appropriate for Series type {t}. Need numeric."
+        err = f"{m} not appropriate for Series {s} of type {t}."
         raise TypeError(err)
 
 def _not_num_matrix(m, mat):
@@ -27,7 +27,7 @@ def _not_cat_series(m, s):
     """Private method to detect Series that are not categorical."""
     if not is_string_dtype(s):
         t = s.dtype
-        err = f"{m} not appropriate for Series type {t}. Need categorical."
+        err = f"{m} not appropriate for Series {s} of type {t}."
         raise TypeError(err)
 
 def _not_cat_matrix(m, mat):
