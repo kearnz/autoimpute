@@ -1,4 +1,4 @@
-"""This module implements default imputers used for dataframe Imputer classes.
+"""This module implements default imputers used for series Imputer classes.
 
 These Imputer classes serve as defaults within more advanced imputers. They
 are flexible, and they allow users to quickly run imputations without getting
@@ -18,13 +18,14 @@ from .mean import MeanImputer
 from .mode import ModeImputer
 from .interpolation import InterpolateImputer
 from .logistic_regression import MultinomialLogisticImputer
+from .base import ISeriesImputer
 methods = method_names
 # pylint:disable=attribute-defined-outside-init
 # pylint:disable=unnecessary-pass
 # pylint:disable=dangerous-default-value
 # pylint:disable=too-many-instance-attributes
 
-class DefaultBaseImputer:
+class DefaultBaseImputer(ISeriesImputer):
     """Building blocks for the default imputers.
 
     The DefaultBaseImputer is not a stand-alone class and thus serves no
@@ -226,7 +227,7 @@ class DefaultUnivarImputer(DefaultBaseImputer, BaseEstimator):
     dataframe. The imputer can be used directly, but such behavior is
     discouraged. DefaultUnivarImputer does not have the flexibility /
     robustness of more complex imputers, nor is its behavior identical.
-    Preferred use is MultipleImputer(strategy="univariate default").
+    Preferred use is MultipleImputer(strategy="default univariate").
     """
     # class variables
     strategy = methods.DEFAULT_UNIVAR
@@ -241,7 +242,7 @@ class DefaultUnivarImputer(DefaultBaseImputer, BaseEstimator):
         """Create an instance of the DefaultUnivarImputer class.
 
         The dataframe imputers delegate work to the DefaultUnivarImputer if
-        strategy="univariate default" The DefaultUnivarImputer then determines
+        strategy="default univariate" The DefaultUnivarImputer then determines
         how to impute numerical and categorical columns by default. It does so
         by passing its arguments to the DefaultBaseImputer, which handles
         validation and instantiation of numerical and categorical imputers.
@@ -286,7 +287,7 @@ class DefaultTimeSeriesImputer(DefaultBaseImputer, BaseEstimator):
     in a dataframe. The imputer can be used directly, but such behavior is
     discouraged. DefaultTimeSeriesImputer does not have the flexibility /
     robustness of more complex imputers, nor is its behavior identical.
-    Preferred use is MultipleImputer(strategy="time default").
+    Preferred use is MultipleImputer(strategy="default time").
     """
     # class variables
     strategy = methods.DEFAULT_TIME
@@ -301,7 +302,7 @@ class DefaultTimeSeriesImputer(DefaultBaseImputer, BaseEstimator):
         """Create an instance of the DefaultTimeSeriesImputer class.
 
         The dataframe imputers delegate work to the DefaultTimeSeriesImputer
-        if strategy="time default". The DefaultTimeSeriesImputer then
+        if strategy="default time". The DefaultTimeSeriesImputer then
         determines how to impute numerical and categorical columns by default.
         It does so by passing its arguments to the DefaultBaseImputer, which
         handles validation and instantiation of default numerical and
@@ -347,7 +348,7 @@ class DefaultPredictiveImputer(DefaultBaseImputer, BaseEstimator):
     dataframe. The imputer can be used directly, but such behavior is
     discouraged. DefaultPredictiveImputer does not have the flexibility /
     robustness of more complex imputers, nor is its behavior identical.
-    Preferred use is MultipleImputer(strategy="predictive default").
+    Preferred use is MultipleImputer(strategy="default predictive").
     """
     # class variables
     strategy = methods.DEFAULT_PRED
@@ -362,7 +363,7 @@ class DefaultPredictiveImputer(DefaultBaseImputer, BaseEstimator):
         """Create an instance of the DefaultPredictiveImputer class.
 
         The dataframe imputers delegate work to DefaultPredictiveImputer if
-        strategy="predictive default" or no strategy given when class is
+        strategy="default predictive" or no strategy given when class is
         instantiated. The DefaultPredictiveImputer determines how to impute
         numerical and categorical columns by default. It does so by passing
         its arguments to the DefaultBaseImputer, which handles validation and

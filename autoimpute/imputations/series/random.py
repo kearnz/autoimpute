@@ -11,11 +11,12 @@ import numpy as np
 from sklearn.base import BaseEstimator
 from sklearn.utils.validation import check_is_fitted
 from autoimpute.imputations import method_names
+from .base import ISeriesImputer
 methods = method_names
 # pylint:disable=attribute-defined-outside-init
 # pylint:disable=unnecessary-pass
 
-class RandomImputer(BaseEstimator):
+class RandomImputer(ISeriesImputer, BaseEstimator):
     """Impute missing data using random draws from observed data.
 
     The RandomImputer samples with replacement from observed data. The imputer
@@ -30,11 +31,12 @@ class RandomImputer(BaseEstimator):
         """Create an instance of the RandomImputer class."""
         pass
 
-    def fit(self, X):
+    def fit(self, X, y=None):
         """Fit the Imputer to the dataset and get unique observed to sample.
 
         Args:
             X (pd.Series): Dataset to fit the imputer.
+            y (None): ignored, None to meet requirements of base class
 
         Returns:
             self. Instance of the class.
@@ -67,6 +69,6 @@ class RandomImputer(BaseEstimator):
         imp = np.random.choice(param, len(ind))
         return imp
 
-    def fit_impute(self, X):
+    def fit_impute(self, X, y=None):
         """Convenience method to perform fit and imputation in one go."""
-        return self.fit(X).impute(X)
+        return self.fit(X, y).impute(X)

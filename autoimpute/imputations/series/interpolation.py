@@ -12,12 +12,13 @@ import pandas as pd
 from sklearn.base import BaseEstimator
 from sklearn.utils.validation import check_is_fitted
 from autoimpute.imputations import method_names
+from .base import ISeriesImputer
 methods = method_names
 # pylint:disable=attribute-defined-outside-init
 # pylint:disable=unnecessary-pass
 # pylint:disable=unused-argument
 
-class InterpolateImputer(BaseEstimator):
+class InterpolateImputer(ISeriesImputer, BaseEstimator):
     """Impute missing values using interpolation techniques.
 
     The InterpolateImputer imputes missing values uses a valid pd.Series
@@ -96,11 +97,12 @@ class InterpolateImputer(BaseEstimator):
             v = X.mean()
         return v
 
-    def fit(self, X):
+    def fit(self, X, y=None):
         """Fit the Imputer to the dataset. Nothing to calculate.
 
         Args:
             X (pd.Series): Dataset to fit the imputer.
+            y (None): ignored, None to meet requirements of base class
 
         Returns:
             self. Instance of the class.
@@ -154,6 +156,6 @@ class InterpolateImputer(BaseEstimator):
                              inplace=False,
                              order=self.order)
 
-    def fit_impute(self, X):
+    def fit_impute(self, X, y=None):
         """Convenience method to perform fit and imputation in one go."""
-        return self.fit(X).impute(X)
+        return self.fit(X, y).impute(X)

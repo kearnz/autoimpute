@@ -16,11 +16,12 @@ from sklearn.base import BaseEstimator
 from sklearn.utils.validation import check_is_fitted
 from sklearn.linear_model import LogisticRegression
 from autoimpute.imputations import method_names
+from .base import ISeriesImputer
 methods = method_names
 # pylint:disable=attribute-defined-outside-init
 # pylint:
 
-class BinaryLogisticImputer(BaseEstimator):
+class BinaryLogisticImputer(ISeriesImputer, BaseEstimator):
     """Impute missing values w/ predictions from binary logistic regression.
 
     The BinaryLogisticImputer produces predictions using logsitic regression
@@ -103,7 +104,7 @@ class BinaryLogisticImputer(BaseEstimator):
         miss_y_ix = y[y.isnull()].index
         return self.fit(X, y).impute(X.loc[miss_y_ix])
 
-class MultinomialLogisticImputer(BaseEstimator):
+class MultinomialLogisticImputer(ISeriesImputer, BaseEstimator):
     """Impute missing values w/ preds from multinomial logistic regression.
 
     The MultinomialLogisticImputer produces predictions w/ logsitic regression

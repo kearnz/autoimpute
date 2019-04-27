@@ -13,11 +13,12 @@ from sklearn.base import BaseEstimator
 from sklearn.utils.validation import check_is_fitted
 from autoimpute.imputations import method_names
 from autoimpute.imputations.errors import _not_cat_series
+from .base import ISeriesImputer
 methods = method_names
 # pylint:disable=attribute-defined-outside-init
 # pylint:disable=unnecessary-pass
 
-class CategoricalImputer(BaseEstimator):
+class CategoricalImputer(ISeriesImputer, BaseEstimator):
     """Impute missing data w/ draw from dataset's categorical distribution.
 
     The categorical imputer computes the proportion of observed values for
@@ -35,11 +36,12 @@ class CategoricalImputer(BaseEstimator):
         """Create an instance of the CategoricalImputer class."""
         pass
 
-    def fit(self, X):
+    def fit(self, X, y=None):
         """Fit the Imputer to the dataset and calculate proportions.
 
         Args:
             X (pd.Series): Dataset to fit the imputer.
+            y (None): ignored, None to meet requirements of base class
 
         Returns:
             self. Instance of the class.
@@ -76,6 +78,6 @@ class CategoricalImputer(BaseEstimator):
         imp = np.random.choice(cats, size=len(ind), p=proportions)
         return imp
 
-    def fit_impute(self, X):
+    def fit_impute(self, X, y=None):
         """Convenience method to perform fit and imputation in one go."""
-        return self.fit(X).impute(X)
+        return self.fit(X, y).impute(X)

@@ -12,11 +12,12 @@ from sklearn.base import BaseEstimator
 from sklearn.utils.validation import check_is_fitted
 from autoimpute.imputations import method_names
 from autoimpute.imputations.errors import _not_num_series
+from .base import ISeriesImputer
 methods = method_names
 # pylint:disable=attribute-defined-outside-init
 # pylint:disable=unnecessary-pass
 
-class NormImputer(BaseEstimator):
+class NormImputer(ISeriesImputer, BaseEstimator):
     """Impute missing data with draws from normal distribution.
 
     The NormImputer constructs a normal distribution using the sample mean and
@@ -33,11 +34,12 @@ class NormImputer(BaseEstimator):
         """Create an instance of the NormImputer class."""
         pass
 
-    def fit(self, X):
+    def fit(self, X, y=None):
         """Fit Imputer to dataset and calculate mean and sample variance.
 
         Args:
             X (pd.Series): Dataset to fit the imputer.
+            y (None): ignored, None to meet requirements of base class
 
         Returns:
             self. Instance of the class.
@@ -74,6 +76,6 @@ class NormImputer(BaseEstimator):
         imp = norm(imp_mean, imp_std).rvs(size=len(ind))
         return imp
 
-    def fit_impute(self, X):
+    def fit_impute(self, X, y):
         """Convenience method to perform fit and imputation in one go."""
-        return self.fit(X).impute(X)
+        return self.fit(X, y=None).impute(X)

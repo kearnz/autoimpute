@@ -17,11 +17,12 @@ from sklearn.linear_model import LinearRegression
 from sklearn.metrics import mean_squared_error
 from autoimpute.imputations import method_names
 from autoimpute.imputations.errors import _not_num_series
+from .base import ISeriesImputer
 methods = method_names
 # pylint:disable=attribute-defined-outside-init
 # pylint:
 
-class LeastSquaresImputer(BaseEstimator):
+class LeastSquaresImputer(ISeriesImputer, BaseEstimator):
     """Impute missing values using predictions from least squares regression.
 
     The LeastSquaresImputer produces predictions using the least squares

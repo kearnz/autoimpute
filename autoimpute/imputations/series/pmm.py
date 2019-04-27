@@ -18,12 +18,13 @@ from sklearn.utils.validation import check_is_fitted
 from autoimpute.imputations import method_names
 from autoimpute.imputations.helpers import _neighbors
 from autoimpute.imputations.errors import _not_num_series
+from .base import ISeriesImputer
 methods = method_names
 # pylint:disable=attribute-defined-outside-init
 # pylint:disable=no-member
 # pylint:disable=unused-variable
 
-class PMMImputer(BaseEstimator):
+class PMMImputer(ISeriesImputer, BaseEstimator):
     """Impute missing values using predictive mean matching.
 
     The PMMIMputer produces predictions using a combination of bayesian

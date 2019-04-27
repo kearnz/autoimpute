@@ -12,12 +12,13 @@ import pandas as pd
 from sklearn.base import BaseEstimator
 from sklearn.utils.validation import check_is_fitted
 from autoimpute.imputations import method_names
+from .base import ISeriesImputer
 methods = method_names
 # pylint:disable=attribute-defined-outside-init
 # pylint:disable=unnecessary-pass
 # pylint:disable=unused-argument
 
-class LOCFImputer(BaseEstimator):
+class LOCFImputer(ISeriesImputer, BaseEstimator):
     """Impute missing values by carrying the last observation forward.
 
     LOCFImputer carries the last observation forward to impute missing data.
@@ -51,11 +52,13 @@ class LOCFImputer(BaseEstimator):
             v = X.mean()
         return v
 
-    def fit(self, X):
+    def fit(self, X, y=None):
         """Fit the Imputer to the dataset.
 
         Args:
             X (pd.Series): Dataset to fit the imputer.
+            y (None): ignored, None to meet requirements of base class
+
 
         Returns:
             self. Instance of the class.
@@ -88,11 +91,11 @@ class LOCFImputer(BaseEstimator):
             )
         return X.fillna(method="ffill", inplace=False)
 
-    def fit_impute(self, X):
+    def fit_impute(self, X, y=None):
         """Convenience method to perform fit and imputation in one go."""
-        return self.fit(X).impute(X)
+        return self.fit(X, y).impute(X)
 
-class NOCBImputer(BaseEstimator):
+class NOCBImputer(ISeriesImputer, BaseEstimator):
     """Impute missing data by carrying the next observation backward.
 
     NOCBImputer carries the next observation backward to impute missing data.
@@ -126,11 +129,13 @@ class NOCBImputer(BaseEstimator):
             v = X.mean()
         return v
 
-    def fit(self, X):
+    def fit(self, X, y=None):
         """Fit the Imputer to the dataset and calculate the mean.
 
         Args:
             X (pd.Series): Dataset to fit the imputer
+            y (None): ignored, None to meet requirements of base class
+
 
         Returns:
             self. Instance of the class.
@@ -163,6 +168,6 @@ class NOCBImputer(BaseEstimator):
             )
         return X.fillna(method="bfill", inplace=False)
 
-    def fit_impute(self, X):
+    def fit_impute(self, X, y=None):
         """Convenience method to perform fit and imputation in one go."""
-        return self.fit(X).impute(X)
+        return self.fit(X, y).impute(X)
