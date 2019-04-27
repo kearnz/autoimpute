@@ -1,9 +1,9 @@
 """Module contains names of methods used in Imputer Classes."""
 
 DEFAULT = "default"
-DEFAULT_PRED = "predictive default"
-DEFAULT_UNIVAR = "univariate default"
-DEFAULT_TIME = "time default"
+DEFAULT_PRED = "default predictive"
+DEFAULT_UNIVAR = "default univariate"
+DEFAULT_TIME = "default time"
 MEAN = "mean"
 MEDIAN = "median"
 MODE = "mode"

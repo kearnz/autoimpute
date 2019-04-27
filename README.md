@@ -144,7 +144,7 @@ complex_lm.fit(X_train, y_train).predict(X_test)
 complex_lm.summary()
 ```
 
-For a deeper understanding of how the package works and its available features, see our [tutorials](https://github.com/kearnz/autoimpute-tutorials/tree/master/tutorials).
+For a deeper understanding of how the package works and its available features, see our [tutorials](https://github.com/kearnz/autoimpute-tutorials/blob/master/README.md).
 
 ## Versions and Dependencies
 * Python 3.6+
@@ -154,6 +154,7 @@ For a deeper understanding of how the package works and its available features, 
     - `pandas` >= 0.20.3
     - `statsmodels` >= 0.8.0
     - `scikit-learn` >= 0.20.2
+    - `category_encoders` >= 1.3.0
     - `xgboost` >= 0.83
     - `pymc3` >= 3.5
 

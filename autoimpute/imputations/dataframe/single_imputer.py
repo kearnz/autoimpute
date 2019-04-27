@@ -42,7 +42,7 @@ class SingleImputer(BaseImputer, BaseEstimator, TransformerMixin):
     fit and transform methods.
     """
 
-    def __init__(self, strategy="predictive default", predictors="all",
+    def __init__(self, strategy="default predictive", predictors="all",
                  imp_kwgs=None, copy=True, scaler=None, verbose=False,
                  seed=None, visit="default"):
         """Create an instance of the SingleImputer class.
