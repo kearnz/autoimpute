@@ -23,16 +23,16 @@ methods = method_names
 # pylint:disable=no-member
 # pylint:disable=too-many-instance-attributes
 
-class BayesLeastSquaresImputer(BaseEstimator):
+class BayesianLeastSquaresImputer(BaseEstimator):
     """Impute missing values using bayesian least squares regression.
 
-    The BayesLeastSquaresImputer produces predictions using the bayesian
+    The BayesianLeastSquaresImputer produces predictions using the bayesian
     approach to least squares. Prior distributions are fit for the model
     parameters of interest (alpha, beta, epsilon). Imputations for missing
     values are samples from posterior predictive distribution of each missing
     point. To implement bayesian least squares, the imputer utlilizes the
     pymc3 library. The imputer can be used directly, but such behavior is
-    discouraged. BayesLeastSquaresImputer does not have the flexibility /
+    discouraged. BayesianLeastSquaresImputer does not have the flexibility /
     robustness of dataframe imputers, nor is its behavior identical. Preferred
     use is MultipleImputer(strategy="bayesian least squares").
     """
@@ -41,7 +41,7 @@ class BayesLeastSquaresImputer(BaseEstimator):
 
     def __init__(self, am=0, asd=10, bm=0, bsd=10, sig=1, sample=1000,
                  tune=1000, init="auto", fill_value=None):
-        """Create an instance of the BayesLeastSquaresImputer class.
+        """Create an instance of the BayesianLeastSquaresImputer class.
 
         The class requires multiple arguments necessary to create priors for
         a bayesian linear regression equation. The regression is:
@@ -160,16 +160,16 @@ class BayesLeastSquaresImputer(BaseEstimator):
         miss_y_ix = y[y.isnull()].index
         return self.fit(X, y).impute(X.loc[miss_y_ix])
 
-class BayesBinaryLogisticImputer(BaseEstimator):
+class BayesianBinaryLogisticImputer(BaseEstimator):
     """Impute missing values using bayesian binary losgistic regression.
 
-    The BayesBinaryLogisticImputer produces predictions using the bayesian
+    The BayesianBinaryLogisticImputer produces predictions using the bayesian
     approach to logistic regression. Prior distributions are fit for the model
     parameters of interest (alpha, beta, epsilon). Imputations for missing
     values are samples from the posterior predictive distribution of each
     missing point. To implement bayesian logistic regression, the imputer uses
     the pymc3 library. The imputer can be used directly, but such behavior is
-    discouraged. BayesLogisticImputer does not have the flexibility /
+    discouraged. BayesianBinaryLogisticImputer does not have the flexibility /
     robustness of dataframe imputers, nor is its behavior identical.
     Preferred use is MultipleImputer(strategy="bayesian binary logistic").
     """
@@ -178,7 +178,7 @@ class BayesBinaryLogisticImputer(BaseEstimator):
 
     def __init__(self, am=0, asd=10, bm=0, bsd=10, thresh=0.5, sample=1000,
                  tune=1000, init="auto", fill_value=None):
-        """Create an instance of the BayesLeastSquaresImputer class.
+        """Create an instance of the BayesianBinaryLogisticImputer class.
 
         The class requires multiple arguments necessary to create priors for
         a bayesian logistic regression equation. The parameters are the same

@@ -103,17 +103,17 @@ class BinaryLogisticImputer(BaseEstimator):
         miss_y_ix = y[y.isnull()].index
         return self.fit(X, y).impute(X.loc[miss_y_ix])
 
-class MultiLogisticImputer(BaseEstimator):
+class MultinomialLogisticImputer(BaseEstimator):
     """Impute missing values w/ preds from multinomial logistic regression.
 
-    The MultiLogisticImputer produces predictions using logsitic regression
+    The MultinomialLogisticImputer produces predictions w/ logsitic regression
     with more than two classes. Class predictions given a set of predictors
     become the imputations. To implement logistic regression, the imputer
     wraps the sklearn LogisticRegression class with a default solver (saga)
     and default `multi_class` set to multinomial. The imputer can be used
-    directly, but such behavior is discouraged. MultiLogisticImputer does not
-    have the flexibility / robustness of dataframe imputers, nor is its
-    behavior identical. Preferred use is
+    directly, but such behavior is discouraged. MultinomialLogisticImputer
+    does not have the flexibility / robustness of dataframe imputers, nor is
+    its behavior identical. Preferred use is
     MultipleImputer(strategy="multinomial logistic").
     """
     # class variables

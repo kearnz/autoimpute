@@ -23,9 +23,10 @@ from .categorical import CategoricalImputer
 from .ffill import NOCBImputer, LOCFImputer
 from .interpolation import InterpolateImputer
 from .linear_regression import LeastSquaresImputer, StochasticImputer
-from .logistic_regression import BinaryLogisticImputer, MultiLogisticImputer
-from .bayesian_regression import BayesLeastSquaresImputer
-from .bayesian_regression import BayesBinaryLogisticImputer
+from .logistic_regression import BinaryLogisticImputer
+from .logistic_regression import MultinomialLogisticImputer
+from .bayesian_regression import BayesianLeastSquaresImputer
+from .bayesian_regression import BayesianBinaryLogisticImputer
 from .pmm import PMMImputer
 
 __all__ = [
@@ -44,8 +45,8 @@ __all__ = [
     "LeastSquaresImputer",
     "StochasticImputer",
     "BinaryLogisticImputer",
-    "MultiLogisticImputer",
-    "BayesLeastSquaresImputer",
-    "BayesBinaryLogisticImputer",
+    "MultinomialLogisticImputer",
+    "BayesianLeastSquaresImputer",
+    "BayesianBinaryLogisticImputer",
     "PMMImputer"
 ]

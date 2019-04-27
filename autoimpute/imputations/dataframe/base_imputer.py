@@ -18,8 +18,9 @@ from ..series import NormImputer, CategoricalImputer
 from ..series import RandomImputer, InterpolateImputer
 from ..series import LOCFImputer, NOCBImputer
 from ..series import LeastSquaresImputer, StochasticImputer, PMMImputer
-from ..series import BinaryLogisticImputer, MultiLogisticImputer
-from ..series import BayesLeastSquaresImputer, BayesBinaryLogisticImputer
+from ..series import BinaryLogisticImputer, MultinomialLogisticImputer
+from ..series import BayesianLeastSquaresImputer
+from ..series import BayesianBinaryLogisticImputer
 methods = method_names
 # pylint:disable=attribute-defined-outside-init
 # pylint:disable=too-many-arguments
@@ -91,9 +92,9 @@ class BaseImputer:
         methods.LS: LeastSquaresImputer,
         methods.STOCHASTIC: StochasticImputer,
         methods.BINARY_LOGISTIC: BinaryLogisticImputer,
-        methods.MULTI_LOGISTIC: MultiLogisticImputer,
-        methods.BAYESIAN_LS: BayesLeastSquaresImputer,
-        methods.BAYESIAN_BINARY_LOGISTIC: BayesBinaryLogisticImputer,
+        methods.MULTI_LOGISTIC: MultinomialLogisticImputer,
+        methods.BAYESIAN_LS: BayesianLeastSquaresImputer,
+        methods.BAYESIAN_BINARY_LOGISTIC: BayesianBinaryLogisticImputer,
         methods.PMM: PMMImputer
     }
 
