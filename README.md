@@ -1,5 +1,7 @@
 # AutoImpute
-[![Build Status](https://travis-ci.com/kearnz/autoimpute.svg?branch=master)](https://travis-ci.com/kearnz/autoimpute)  
+[![Build Status](https://travis-ci.com/kearnz/autoimpute.svg?branch=master)](https://travis-ci.com/kearnz/autoimpute) [![MIT license](https://img.shields.io/badge/License-MIT-blue.svg)](https://lbesson.mit-license.org/) [![made-with-python](https://img.shields.io/badge/Made%20with-Python-1f425f.svg)](https://www.python.org/)
+
+  
 <span style="font-size:1.5em;">A Python package for analysis and implementation of <b>Imputation Methods!</b></span>
 
 ## Motivation
@@ -144,7 +146,7 @@ complex_lm.fit(X_train, y_train).predict(X_test)
 complex_lm.summary()
 ```
 
-For a deeper understanding of how the package works and its available features, see our [tutorials](https://github.com/kearnz/autoimpute-tutorials/blob/master/README.md).
+For a deeper understanding of how the package works and its available features, see our [tutorials](https://kearnz.github.io/autoimpute-tutorials/).
 
 ## Versions and Dependencies
 * Python 3.6+
