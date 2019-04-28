@@ -204,7 +204,7 @@ class SingleImputer(BaseImputer, BaseEstimator, TransformerMixin):
             # the fit depends on what type of strategy we use.
             # first, fit univariate methods, which are straightforward.
             if method in self.univariate_strategies:
-                imputer.fit(ys)
+                imputer.fit(ys, None)
 
             # now, fit on predictive methods, which are more complex.
             if method in self.predictive_strategies:

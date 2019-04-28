@@ -175,10 +175,10 @@ class DefaultBaseImputer(ISeriesImputer):
         # if y is None, fitting simply X. univariate method.
         if y is None:
             if is_numeric_dtype(X):
-                stats = {"param": self.num_imputer.fit(X),
+                stats = {"param": self.num_imputer.fit(X, y),
                          "strategy": self.num_imputer.strategy}
             if is_string_dtype(X):
-                stats = {"param": self.cat_imputer.fit(X),
+                stats = {"param": self.cat_imputer.fit(X, y),
                          "strategy": self.cat_imputer.strategy}
 
         # if y is not None, fitting X to y. predictive method.

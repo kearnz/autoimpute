@@ -94,7 +94,7 @@ class LeastSquaresImputer(ISeriesImputer, BaseEstimator):
         miss_y_ix = y[y.isnull()].index
         return self.fit(X, y).impute(X.loc[miss_y_ix])
 
-class StochasticImputer(BaseEstimator):
+class StochasticImputer(ISeriesImputer, BaseEstimator):
     """Impute missing values adding error to least squares regression preds.
 
     The StochasticImputer predicts using the least squares methodology. The
