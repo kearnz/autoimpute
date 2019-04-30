@@ -1,7 +1,7 @@
 """Manage the autoimpute package.
 
 This module handles imports that should be accessible from the top level.
-Because this pacakge contains specific directories for imputation, diagnostics,
+Because this package contains specific directories for imputation, diagnostics,
 exploratory data analysis, and visualizations, no classes or methods should be
 accessible from autoimpute itself. Users of this package should import specific
 classes or functions they need from the appropriate folder.
@@ -19,4 +19,9 @@ This module handles `from autoimpute import *` with the __all__ variable below.
 This command imports the major directories from autoimpute.
 """
 
-__all__ = ["utils", "visuals", "imputations", "analysis"]
+__all__ = [
+    "utils",
+    "visuals",
+    "imputations",
+    "analysis"
+]

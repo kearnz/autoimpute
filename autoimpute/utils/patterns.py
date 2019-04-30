@@ -108,7 +108,7 @@ def feature_cov(data):
     """Calculates the covariance between features in a DataFrame.
 
     Leverages pandas method to calculate covariance. Note that this method
-    DROPS NA VALUES to compute covariance. It also employs `check_missingness`
+    drops NA values to compute covariance. It also employs `check_missingness`
     decorator to ensure DataFrame not fully missing.
 
     Args:
@@ -129,7 +129,7 @@ def feature_corr(data, method="pearson"):
     """Calculates the correlation between features in a DataFrame.
 
     Leverages pandas method to calculate correlation. Note that this method
-    DROPS NA VALUES to compute correlation. It also employs `check_missingness`
+    drops NA values to compute correlation. It also employs `check_missingness`
     decorator to ensure DataFrame not fully missing. Rerarding the correlation
     method, the default is `pearson`. If dataset encodes discrete and / or
     ordinal features, proper method to use is `spearman`.

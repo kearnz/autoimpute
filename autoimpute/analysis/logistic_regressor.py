@@ -7,11 +7,11 @@ from sklearn.linear_model import LogisticRegression
 from sklearn.utils.validation import check_is_fitted
 from statsmodels.discrete.discrete_model import Logit
 from autoimpute.utils import check_nan_columns
-from .base_regressor import BaseRegressor
+from .base_regressor import MiBaseRegressor
 # pylint:disable=attribute-defined-outside-init
 # pylint:disable=too-many-locals
 
-class MiLogisticRegression(BaseRegressor, BaseEstimator):
+class MiLogisticRegression(MiBaseRegressor, BaseEstimator):
     """Logistic Regression wrapper for multiply imputed datasets.
 
     The MiLogisticRegression class wraps the sklearn and statsmodels libraries
@@ -35,7 +35,7 @@ class MiLogisticRegression(BaseRegressor, BaseEstimator):
 
     def __init__(self, mi=None, model_lib="statsmodels", mi_kwgs=None,
                  model_kwgs=None):
-        """Create an instance of the AutoImpute MiLogisticRegression class.
+        """Create an instance of the Autoimpute MiLogisticRegression class.
 
         Args:
             mi (MultipleImputer, Optional): An instance of a MultipleImputer.
@@ -52,7 +52,7 @@ class MiLogisticRegression(BaseRegressor, BaseEstimator):
         Returns:
             self. Instance of the class.
         """
-        BaseRegressor.__init__(
+        MiBaseRegressor.__init__(
             self,
             mi=mi,
             model_lib=model_lib,

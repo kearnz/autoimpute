@@ -1,4 +1,4 @@
-"""Module sets up AutoImpute regressors for multiply imputed data analysis."""
+"""Module to set up Autoimpute regressors for multiply imputed analysis."""
 
 from collections import OrderedDict
 import numpy as np
@@ -9,42 +9,48 @@ from category_encoders import OneHotEncoder
 from autoimpute.imputations import MultipleImputer
 # pylint:disable=attribute-defined-outside-init
 
-class BaseRegressor:
-    """Building blocks to create an AutoImpute regressor.
+class MiBaseRegressor:
+    """Building blocks to create an Autoimpute regressor.
 
-    Every AutoImpute regressor inherits from the BaseRegressor. The class
-    provides the functionality necessary for AutoImpute regressors to wrap
+    Every Autoimpute regressor inherits from the MiBaseRegressor. The class
+    provides the functionality necessary for Autoimpute regressors to wrap
     sklearn or statsmodels libraries and apply them to multiply imputed
-    datasets. It also creates the MultipleImputer used to impute data.
+    datasets. It also creates the MultipleImputer used to impute data if the
+    user does not specify a custom MultipleImputer during instantiation.
 
     Attributes:
-        model_libs (tuple): libraries supported by AutoImpute regressors.
+        model_libs (tuple): libraries supported by Autoimpute regressors.
     """
 
     model_libs = ("sklearn", "statsmodels")
 
     def __init__(self, mi, model_lib, mi_kwgs, model_kwgs):
-        """Create an instance of the BaseRegressor class.
+        """Create an instance of the MiBaseRegressor class.
 
-        The BaseRegressor class is not a stand-alone class and should not be
-        used other than as a parent class to an AutoImpute regressor. An
-        AutoImpute regressor wraps either sklearn or statsmodels regressors to
-        apply them on multiply imputed datasets. The BaseRegressor contains
-        the logic AutoImpute regressors share. In addition, it creates an
+        The MiBaseRegressor class is not a stand-alone class and should not be
+        used other than as a parent class to an Autoimpute regressor. An
+        Autoimpute regressor wraps either sklearn or statsmodels regressors to
+        apply them on multiply imputed datasets. The MiBaseRegressor contains
+        the logic Autoimpute regressors share. In addition, it creates an
         instance of the MultipleImputer to impute missing data.
 
         Args:
-            mi (MultipleImputer): An instance of a MultipleImputer.
-                Can create one through `mi_kwgs` instead.
+            mi (MultipleImputer): An instance of a MultipleImputer. If `mi`
+                passed explicitly, this `mi` will be used for MultipleImptuer.
+                Can use `mi_kwgs` instead, although `mi` is cleaner/preferred.
             model_lib (str): library the regressor will use to implement
                 regression. Options are sklearn and statsmodels.
                 Default is statsmodels.
-            mi_kwgs (dict): keyword args to instantiate MultipleImputer. If
-                valid MultipleImputer passed to `mi`, model_kwgs ignored.
-            model_kwgs (dict): keyword args to instantiate regressor.
+            mi_kwgs (dict): keyword args to instantiate MultipleImputer.
+                If valid MultipleImputer passed to `mi`, model_kwgs ignored.
+                If `mi_kwgs` is None and `mi` is None, MiBaseRegressor creates
+                default instance of MultipleImputer.
+            model_kwgs (dict): keyword args to instantiate regressor. Arg is
+                passed along to either sklearn or statsmodels regressor. If
+                `model_kwgs` is None, default instance of regressor created.
 
         Returns:
-            self. Instance of BaseRegressor class.
+            self. Instance of MiBaseRegressor class.
         """
         # Order Important. `mi_kwgs` validation first b/c it's used in `mi`
         self.mi_kwgs = mi_kwgs
@@ -62,7 +68,7 @@ class BaseRegressor:
     def mi_kwgs(self, kwgs):
         """Validate the mi_kwgs and set default properties.
 
-        The BaseRegressor validates the `mi_kwgs` argument. `mi_kwgs` contain
+        The MiBaseRegressor validates mi_kwgs argument. mi_kwgs contain
         optional keyword arguments to create a MultipleImputer. The argument
         is optional, and its default is None.
 
@@ -86,10 +92,10 @@ class BaseRegressor:
     def mi(self, m):
         """Validate mi and set default properties.
 
-        The BaseRegressor validates the `mi` argument. `mi` must be a valid
+        The MiBaseRegressor validates the mi argument. mi must be a valid
         instance of a MultipleImputer. It can also be None. If None, the
-        BaseRegressor will create a MultipleImputer on its own, either by
-        default or with any key values passed to the `mi_kwgs` args dict.
+        MiBaseRegressor will create a MultipleImputer on its own, either by
+        default or with any key values passed to the mi_kwgs args dict.
 
         Args:
             m (MultipleImputer, None): Instance of a MultipleImputer.
@@ -107,6 +113,7 @@ class BaseRegressor:
         if m is not None:
             self._mi = m
         else:
+            # handle whether or not mi_kwgs should be passed
             if self.mi_kwgs:
                 self._mi = MultipleImputer(**self.mi_kwgs)
             else:
@@ -121,7 +128,7 @@ class BaseRegressor:
     def model_kwgs(self, kwgs):
         """Validate the model_kwgs and set default properties.
 
-        The BaseRegressor validates the `model_kwgs` argument. `model_kwgs`
+        The MiBaseRegressor validates the model_kwgs argument. model_kwgs
         contain optional keyword arguments pased to a regression model. The
         argument is optional, and its default is None.
 
@@ -145,18 +152,18 @@ class BaseRegressor:
     def model_lib(self, lib):
         """Validate model_lib and set default properties.
 
-        The BaseRegressor validates the `model_lib` argument. `model_lib`
-        should be in the BaseRegressor.model_libs tuple, which contains the
-        possible libs to use for regression of multiply imputed datasets. The
-        library chosen is important. Only statsmodels (the default) provides
-        proper parameter pooling using Rubin's rules. sklearn provides mean
-        estimate pooling only.
+        The MiBaseRegressor validates the model_lib argument. model_lib should
+        be in the MiBaseRegressor.model_libs tuple, which contains the libs to
+        use for regression of multiply imputed datasets. The library chosen is
+        important. Only statsmodels (the default) provides proper parameter
+        pooling using Rubin's rules. sklearn provides mean estimate pooling
+        only. sklearn variance parameter pooling and diagnostics in dev, TBD.
 
         Args:
             lib (iter): library to use
 
         Raises:
-            ValueError: `lib` not a valid library to use.
+            ValueError: lib not a valid library to use.
         """
         if lib not in self.model_libs:
             err = f"{lib} not valid `model_lib`. Must be {self.model_libs}."
@@ -281,10 +288,12 @@ class BaseRegressor:
         """Private method for the variance ratios."""
         return (num+(num/imps))/denom
 
-    def _degrees_freedom(self, imps, lambda_, n, k):
+    def _degrees_freedom(self, imps, lambda_, v_com):
         """Private method to calculate degrees of freedom for estimates."""
+        # note we nudge lambda if zero b/c need lambda for other stats
+        # see source code barnard.rubin.R from MICE for more
+        lambda_ = max(1e-04, lambda_)
         v_old = (imps-1)/lambda_**2
-        v_com = n-k
         v_obs = ((v_com+1)/(v_com+3))*v_com*(1-lambda_)
         v = (v_old*v_obs)/(v_old+v_obs)
         return v
@@ -298,6 +307,10 @@ class BaseRegressor:
 
         # pooling phase: sklearn - coefficients only, no variance
         if self.model_lib == "sklearn":
+
+            # find basic parameters, but can't return much more than coeff
+            # sklearn does not implement inference out of the box
+            # will have to write methods to do so from stratch, so TBD
             self.mi_alphas_ = [j.intercept_ for i, j in items]
             self.mi_params_ = [j.coef_ for i, j in items]
             alpha = sum(self.mi_alphas_) / m
@@ -317,10 +330,10 @@ class BaseRegressor:
             coefs = sum(self.mi_params_)/ m
             k = coefs.index.size
             n = list(items)[0][1].nobs
-            dfcom = n-k
+            df_com = n-k
 
             # variance metrics (See VB Ch 2.3)
-            vw = sum(map(lambda x: x*x, self.mi_std_errors_)) / m
+            vw = sum(map(lambda x: x**2, self.mi_std_errors_)) / m
             vb = sum(map(lambda p: (p-coefs)**2, self.mi_params_)) / (m-1)
             vt = vw + vb + (vb / m)
             stdt = np.sqrt(vt)
@@ -328,21 +341,23 @@ class BaseRegressor:
             # variance ratios (See VB Ch 2.3)
             lambda_ = self._var_ratios(m, vb, vt)
             r_ = self._var_ratios(m, vb, vw)
-            v_ = self._degrees_freedom(m, lambda_, n, k)
+            v_ = self._degrees_freedom(m, lambda_, df_com)
             fmi_ = ((v_+1)/(v_+3))*lambda_ + 2/(v_+3)
+            eff_ = ((1+max(1e0-4, lambda_))/m)**-1
 
-            # create statistics
+            # create statistics with pooled metrics from above
             statistics = OrderedDict(
                 coefs=coefs,
                 std=stdt,
                 vw=vw,
                 vb=vb,
                 vt=vt,
-                dfcom=dfcom,
+                dfcom=df_com,
                 dfadj=v_,
                 lambda_=lambda_,
                 riv=r_,
-                fmi=fmi_
+                fmi=fmi_,
+                eff_=eff_
             )
 
         # finally, return dictionary with stats from fit used in transform

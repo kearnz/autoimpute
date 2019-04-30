@@ -1,4 +1,4 @@
-"""Manage the analysis folder from the autoimpute package.
+"""Manage the analysis folder from the Autoimpute package.
 
 This module handles imports from the analysis folder that should be accessible
 whenever someone imports autoimpute.analysis. The list below specifies the
@@ -9,12 +9,15 @@ variable below. This command imports the public classes and methods from
 autoimpute.analysis.
 """
 
-from .base_regressor import BaseRegressor
+from .base_regressor import MiBaseRegressor
 from .linear_regressor import MiLinearRegression
 from .logistic_regressor import MiLogisticRegression
+from .metrics import raw_bias, percent_bias
 
 __all__ = [
-    "BaseRegressor",
+    "MiBaseRegressor",
     "MiLinearRegression",
-    "MiLogisticRegression"
+    "MiLogisticRegression",
+    "raw_bias",
+    "percent_bias"
 ]

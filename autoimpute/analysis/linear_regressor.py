@@ -6,11 +6,11 @@ from sklearn.linear_model import LinearRegression
 from sklearn.utils.validation import check_is_fitted
 from statsmodels.api import OLS
 from autoimpute.utils import check_nan_columns
-from .base_regressor import BaseRegressor
+from .base_regressor import MiBaseRegressor
 # pylint:disable=attribute-defined-outside-init
 # pylint:disable=too-many-locals
 
-class MiLinearRegression(BaseRegressor, BaseEstimator):
+class MiLinearRegression(MiBaseRegressor, BaseEstimator):
     """Linear Regression wrapper for multiply imputed datasets.
 
     The MiLinearRegression class wraps the sklearn and statsmodels libraries
@@ -34,7 +34,7 @@ class MiLinearRegression(BaseRegressor, BaseEstimator):
 
     def __init__(self, mi=None, model_lib="statsmodels", mi_kwgs=None,
                  model_kwgs=None):
-        """Create an instance of the AutoImpute MiLinearRegression class.
+        """Create an instance of the Autoimpute MiLinearRegression class.
 
         Args:
             mi (MultipleImputer, Optional): An instance of a MultipleImputer.
@@ -44,14 +44,14 @@ class MiLinearRegression(BaseRegressor, BaseEstimator):
                 Default is statsmodels.
             mi_kwgs (dict, Optional): keyword args to instantiate
                 MultipleImputer. Default is None. If valid MultipleImputer
-                passed as `mi` argument, then `mi_kwgs` ignored.
+                passed as mi argument, then mi_kwgs ignored.
             model_kwgs (dict, Optional): keyword args to instantiate
                 regressor. Default is None.
 
         Returns:
             self. Instance of the class.
         """
-        BaseRegressor.__init__(
+        MiBaseRegressor.__init__(
             self,
             mi=mi,
             model_lib=model_lib,
@@ -70,7 +70,7 @@ class MiLinearRegression(BaseRegressor, BaseEstimator):
         Finally, the fit method calculates pooled parameters from the m linear
         models. Note that variance for pooled parameters using Rubin's rules
         is available for statsmodels only. sklearn does not implement
-        parameter inference out of the box.
+        parameter inference out of the box. Autoimpute sklearn pooling TBD.
 
         Args:
             X (pd.DataFrame): predictors to use. can contain missingness.
@@ -110,6 +110,7 @@ class MiLinearRegression(BaseRegressor, BaseEstimator):
         Returns:
             np.array: predictions.
         """
+
         # validation before prediction
         X = self._predict_strategy_validator(self, X)
 
