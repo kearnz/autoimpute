@@ -292,7 +292,7 @@ class MiBaseRegressor:
         """Private method to calculate degrees of freedom for estimates."""
         # note we nudge lambda if zero b/c need lambda for other stats
         # see source code barnard.rubin.R from MICE for more
-        lambda_ = max(1e-04, lambda_)
+        lambda_ = np.maximum(1e-04, lambda_)
         v_old = (imps-1)/lambda_**2
         v_obs = ((v_com+1)/(v_com+3))*v_com*(1-lambda_)
         v = (v_old*v_obs)/(v_old+v_obs)
@@ -339,11 +339,12 @@ class MiBaseRegressor:
             stdt = np.sqrt(vt)
 
             # variance ratios (See VB Ch 2.3)
+            # efficiency as specified in stats manual
             lambda_ = self._var_ratios(m, vb, vt)
             r_ = self._var_ratios(m, vb, vw)
             v_ = self._degrees_freedom(m, lambda_, df_com)
             fmi_ = ((v_+1)/(v_+3))*lambda_ + 2/(v_+3)
-            eff_ = ((1+max(1e0-4, lambda_))/m)**-1
+            eff_ = ((1+np.maximum(1e-04, fmi_))/m)**-1
 
             # create statistics with pooled metrics from above
             statistics = OrderedDict(
