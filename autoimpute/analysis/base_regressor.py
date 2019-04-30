@@ -333,8 +333,8 @@ class MiBaseRegressor:
             df_com = n-k
 
             # variance metrics (See VB Ch 2.3)
-            vw = sum(map(lambda x: x**2, self.mi_std_errors_)) / m
-            vb = sum(map(lambda p: (p-coefs)**2, self.mi_params_)) / (m-1)
+            vw = sum(map(lambda x: x**2, self.mi_std_errors_))/m
+            vb = sum(map(lambda p: (p-coefs)**2, self.mi_params_))/max(1, m-1)
             vt = vw + vb + (vb / m)
             stdt = np.sqrt(vt)
 
@@ -344,7 +344,7 @@ class MiBaseRegressor:
             r_ = self._var_ratios(m, vb, vw)
             v_ = self._degrees_freedom(m, lambda_, df_com)
             fmi_ = ((v_+1)/(v_+3))*lambda_ + 2/(v_+3)
-            eff_ = ((1+np.maximum(1e-04, fmi_))/m)**-1
+            eff_ = (1+(np.maximum(1e-04, fmi_)/m))**-1
 
             # create statistics with pooled metrics from above
             statistics = OrderedDict(
@@ -358,7 +358,7 @@ class MiBaseRegressor:
                 lambda_=lambda_,
                 riv=r_,
                 fmi=fmi_,
-                eff_=eff_
+                eff=eff_
             )
 
         # finally, return dictionary with stats from fit used in transform

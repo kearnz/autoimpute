@@ -134,4 +134,5 @@ class MiLinearRegression(MiBaseRegressor, BaseEstimator):
         # only possible once we've fit a model with statsmodels
         check_is_fitted(self, "statistics_")
         sdf = pd.DataFrame(self.statistics_)
+        sdf.rename(columns={"lambda_": "lambda"}, inplace=True)
         return sdf
