@@ -21,7 +21,9 @@ REQUIRED = [
     "xgboost",
     "scikit-learn",
     "category_encoders",
-    "pymc3"
+    "pymc3",
+    "seaborn",
+    "missingno"
 ]
 EXTRAS = {}
 

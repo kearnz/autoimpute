@@ -159,6 +159,8 @@ For a deeper understanding of how the package works and its available features, 
     - `category_encoders` >= 1.3.0
     - `xgboost` >= 0.83
     - `pymc3` >= 3.5
+    - `seaborn` >= 0.9.0
+    - `missingno` >= 0.4.1
 
 ## Installation
 * Autoimpute will be registered with PyPI soon after its first release, so `pip install` coming soon!
