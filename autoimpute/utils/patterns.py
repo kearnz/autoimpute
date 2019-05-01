@@ -124,7 +124,7 @@ def nullility_cov(data):
         ValueError: If DataFrame values all missing and none complete.
             Also raised through decorator.
     """
-    data_cov = data.cov()
+    data_cov = data.isnull().cov()
     return data_cov.dropna(axis=0, how="all").dropna(axis=1, how="all")
 
 @check_missingness
@@ -155,7 +155,7 @@ def nullility_corr(data, method="pearson"):
     if method not in accepted_methods:
         err = f"Correlation method must be in {accepted_methods}"
         raise ValueError(err)
-    data_corr = data.corr(method=method)
+    data_corr = data.isnull().corr(method=method)
     return data_corr.dropna(axis=0, how="all").dropna(axis=1, how="all")
 
 def _inbound(pairs):
