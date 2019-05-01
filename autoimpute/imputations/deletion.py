@@ -1,11 +1,4 @@
-"""Deletion strategies to handle the missing data in pandas DataFrame.
-
-This module provides mechanisms to handle missing data by simply deleting it.
-This strategy is generally not recommended because it can lead to biased
-outcomes unless the dataset is MCAR and large enough that a reduction in
-statistical power is negligible. Therefore, listwise deletion is provided for
-completion and thoroughness even though there are often preferred alternatives.
-"""
+"""Deletion strategies to handle the missing data in pandas DataFrame."""
 
 from autoimpute.utils import check_nan_columns
 
@@ -14,11 +7,10 @@ def listwise_delete(data, inplace=False, verbose=False):
     """Delete all rows from a DataFrame where any missing values exist.
 
     Deletion is one way to handle missing values. This method removes any
-    records that have a missing value in any of the features. Doing so
-    reduces the sample size but preserves the summary statistics (such as
-    moments) if and only if the dataset is MCAR. If the dataset is not
-    MCAR, listwise deletion can lead to bias and is NOT preferred method.
-    See Flexible Imputation of Missing Data, Van Buuren, for more info.
+    records that have a missing value in any of the features. This package
+    focuses on imputation, not deletion. That being said, listwise deletion
+    is a necessary component of any imputation package, as its the default
+    method most people (and software) use to handle missing data.
 
     Args:
         data (pd.DataFrame): DataFrame used to delete missing rows.

@@ -3,8 +3,8 @@
 This module is a wrapper around the excellent missingno library, which
 provides a number of plots to explore missingness within a dataset. This
 wrapper handles some basic plot style setting and error handling for the user
-that missingno handles seperately. The reason we wrap missingno is to fine
-tune the package and apply it directly to Autoimpute.
+that missingno handles differently. The reason we wrap missingno is to fine
+tune the package and apply it directly to autoimpute.
 """
 
 import missingno as msno
@@ -58,6 +58,7 @@ def plot_nullility_corr(data, **kwargs):
 
     Raises:
         TypeError: if data is not a DataFrame. Error raised through decorator.
+        ValueError: dataset fully observed. Raised through helper method.
     """
     _fully_complete(data)
     defaults = _default_plot_args(**kwargs)
@@ -76,6 +77,7 @@ def plot_nullility_dendogram(data, **kwargs):
 
     Raises:
         TypeError: if data is not a DataFrame. Error raised through decorator.
+        ValueError: dataset fully observed. Raised through helper method.
     """
     _fully_complete(data)
     defaults = _default_plot_args(**kwargs)

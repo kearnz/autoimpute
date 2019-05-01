@@ -53,6 +53,7 @@ class MiBaseRegressor:
             self. Instance of MiBaseRegressor class.
         """
         # Order Important. `mi_kwgs` validation first b/c it's used in `mi`
+        # also note - encoder is not argument, b/c one-hot only right now
         self.mi_kwgs = mi_kwgs
         self.mi = mi
         self.model_kwgs = model_kwgs
@@ -85,7 +86,7 @@ class MiBaseRegressor:
 
     @property
     def mi(self):
-        """Propoerty getter to return the value of mi."""
+        """Property getter to return the value of mi."""
         return self._mi
 
     @mi.setter
@@ -290,6 +291,7 @@ class MiBaseRegressor:
 
     def _degrees_freedom(self, imps, lambda_, v_com):
         """Private method to calculate degrees of freedom for estimates."""
+
         # note we nudge lambda if zero b/c need lambda for other stats
         # see source code barnard.rubin.R from MICE for more
         lambda_ = np.maximum(1e-04, lambda_)

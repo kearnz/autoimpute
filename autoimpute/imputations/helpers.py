@@ -1,4 +1,4 @@
-"""Helper methods for the imputations folder."""
+"""Private helper methods for the imputations folder."""
 
 import logging
 import numpy as np

@@ -1,24 +1,22 @@
 """Tests written to ensure the patterns in the utils package work correctly.
 
-The methods below check the results of the functions in the patterns module.
-These methods are essentially ports from Flexible Imputation of Missing Data,
-Van Buuren, Section 4.1. The `df_general` variable below is a simulation of
-the "general" pattern in section 4.1. The subsequent dataframes are hard coded
-results of patterns from Van Buuren's book. They are used to verify that this
-implementation in python is working as expected. The methods being tested
-(i.e. inbound, outbound, flux, etc.) all use `df_general` to calculate their
-respective statistic. This allows for comparison to results from Van Buuren.
+The methods tested below are ports from MICE, an excellent R package for
+handling missing data. The author of MICE (Van Buuren) is also the author of
+Flexible Imputation of Missing Data (FIMD). The `df_general` variable below
+is a simulation of the "general" pattern in section 4.1. The subsequent
+dataframes are hard coded results of patterns from FIMD. They are used to
+verify that this implementation in Python is working as expected. The methods
+being tested (i.e. inbound, outbound, flux, etc.) all use `df_general` to
+calculate their respective statistic. This allows for comparison to results
+from FIMD, section 4.1.
 
-Tests:
-    test_md_locations()
-    test_md_pattern()
-    test_md_pairs()
-    test_inbound()
-    test_outbound()
-    test_flux()
-
-Todo:
-    * Extend tests to DataFrame with categorical variables.
+Tests use the pytest library. The tests in this module ensure the following:
+- `test_md_locations` checks missingness identified properly as 1/0.
+- `test_md_pattern` checks against result from MICE md.pattern.
+- `test_md_pairs` checks against result from MICE md.pairs
+- `test_inbound` checks against inbound calc in 4.1 (no explicit method)
+- `test_outbound` checks against outbound calc in 4.1 (no explicit method)
+- `test_flux` checks against MICE flux.
 """
 
 import numpy as np

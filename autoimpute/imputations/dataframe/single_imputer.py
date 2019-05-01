@@ -95,6 +95,7 @@ class SingleImputer(BaseImputer, BaseEstimator, TransformerMixin):
         Checks whether strategies match with type of column they are applied
         to. If not, error is raised through `check_strategy_fit` method.
         """
+
         # remove nan columns and store colnames
         cols = X.columns.tolist()
         self._strats = check_strategy_fit(self.strategy, cols)
@@ -115,10 +116,9 @@ class SingleImputer(BaseImputer, BaseEstimator, TransformerMixin):
 
     def _transform_strategy_validator(self, X, new_data):
         """Private method to prep and validate before transformation."""
-        # initial checks before transformation
-        check_is_fitted(self, "statistics_")
 
-        # check columns are the same
+        # initial checks before transformation and check columns are the same
+        check_is_fitted(self, "statistics_")
         X_cols = X.columns.tolist()
         fit_cols = set(self._strats.keys())
         diff_fit = set(fit_cols).difference(X_cols)
@@ -165,6 +165,7 @@ class SingleImputer(BaseImputer, BaseEstimator, TransformerMixin):
             ValueError: error in specification of predictors. Raised through
                 `check_predictors_fit`. See its docstrings for more info.
         """
+
         # first, prep columns we plan to use and make sure they are valid
         self._fit_strategy_validator(X)
         self.statistics_ = {}
@@ -243,6 +244,7 @@ class SingleImputer(BaseImputer, BaseEstimator, TransformerMixin):
             ValueError: same columns must appear in fit and transform.
                 Raised through _transform_strategy_validator.
         """
+
         # copy the dataset if necessary, then prep predictors
         if self.copy:
             X = X.copy()

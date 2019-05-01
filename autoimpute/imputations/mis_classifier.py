@@ -5,7 +5,7 @@ missingness within a dataset using information derived from other features.
 The MissingnessClassifier also generates test cases for imputation. Often,
 we do not and will never have the true value of a missing data point,
 so its challenging to validate an imputation model's performance.
-The MissingnessClassifer is generates missing "test" samples from observed
+The MissingnessClassifer generates missing "test" samples from observed
 that have high likelihood of being missing, which a user can then "impute".
 This practice is useful to validate models that contain truly missing data.
 """
@@ -105,6 +105,7 @@ class MissingnessClassifier(BaseImputer, BaseEstimator, ClassifierMixin):
 
     def _fit_strategy_validator(self, X):
         """Internal helper method to validate behavior appropriate for fit."""
+
         # remove nan columns and store colnames
         cols = X.columns.tolist()
         self._preds = check_predictors_fit(self.predictors, cols)
@@ -198,6 +199,7 @@ class MissingnessClassifier(BaseImputer, BaseEstimator, ClassifierMixin):
         Returns:
             pd.DataFrame: DataFrame with class prediction for each observation.
         """
+
         # predictions for each column using respective fit classifier
         self._predictor_strategy_validator(X, new_data)
         if self.verbose:
@@ -307,7 +309,8 @@ class MissingnessClassifier(BaseImputer, BaseEstimator, ClassifierMixin):
         Returns:
             self: test_indice available from `self.test_indices`
         """
-        # ALWAYS fit_transform with dataset, as test vals can change
+
+        # always fit_transform with dataset, as test vals can change
         self.test_indices = {}
         if not use_exist:
             self.fit_predict_proba(X)

@@ -1,20 +1,19 @@
-# AutoImpute
+# Autoimpute
 [![Build Status](https://travis-ci.com/kearnz/autoimpute.svg?branch=master)](https://travis-ci.com/kearnz/autoimpute) [![MIT license](https://img.shields.io/badge/License-MIT-blue.svg)](https://lbesson.mit-license.org/) [![made-with-python](https://img.shields.io/badge/Made%20with-Python-1f425f.svg)](https://www.python.org/)
 
-  
 <span style="font-size:1.5em;">A Python package for analysis and implementation of <b>Imputation Methods!</b></span>
 
 ## Motivation
-Most machine learning algorithms expect clean and complete datasets, but most real-world data is messy and missing. Unfortunately, handling missing data is quite complex, so programming languages generally punt this responsibility to the end user. By default, R drops all records with missing data - a method that is easy to implement but often problematic in practice. For richer imputation strategies, R has multiple packages to deal with missing data (`MICE`, `Amelia`, `TSImpute`, etc.). Python users are not as fortunate. Python's `scikit-learn` throws a runtime error when an end user attempts to deploy models on datasets with missing records, and few 3rd-party packages exist to handle imputation.
+Most machine learning algorithms expect clean and complete datasets, but most real-world data is messy and missing. Unfortunately, handling missing data is quite complex, so programming languages generally punt this responsibility to the end user. By default, R drops all records with missing data - a method that is easy to implement but often problematic in practice. For richer imputation strategies, R has multiple packages to deal with missing data (`MICE`, `Amelia`, `TSImpute`, etc.). Python users are not as fortunate. Python's `scikit-learn` throws a runtime error when an end user deploys models on datasets with missing records, and few third-party packages exist to handle imputation end-to-end.
 
 Therefore, this package aids the Python user by providing more clarity to the imputation process, making imputation methods more accessible, and measuring the impact imputation methods have in supervised regression and classification. In doing so, this package brings missing data imputation methods to the Python world and makes them work nicely in Python machine learning projects (and specifically ones that utilize `scikit-learn`). Lastly, this package provides its own implementation of supervised machine learning methods that extend both `scikit-learn` and `statsmodels` to mutiply imputed datasets.
 
 ## Features
-* Utility functions to explore missingness patterns
+* Utility functions and basic visualizations to explore missingness patterns
 * Missingness classifier and automatic missing data test set generator
-* Single and Multiple Imputation
-* Analysis methods and parameter inference using multiply imputed datasets
-* Cross-sectional and time series imputation methods. Imputation methods currently supported:
+* Single and multiple imputation
+* Analysis methods and pooled parameter inference using multiply imputed datasets
+* Cross-sectional and time-series imputation methods. Imputation methods currently supported:
     - Mean
     - Median
     - Mode
@@ -23,11 +22,11 @@ Therefore, this package aids the Python user by providing more clarity to the im
     - Categorical
     - Linear interpolation
     - Time-weighted interpolation
-    - quadratic, cubic, and polynomial interpolation
+    - Quadratic, cubic, and polynomial interpolation
     - Spline interpolation
     - Last observation carried forward (LOCF)
     - Next observation carried backward (NOCB)
-    - Least squares (linear regression)
+    - Least squares (simple and multiple linear regression)
     - Binary logistic regression
     - Multinomial logistic regression
     - Linear regression with stochastic error
@@ -36,16 +35,17 @@ Therefore, this package aids the Python user by providing more clarity to the im
     - Predictive mean matching
 
 ## Todo
-* Additional cross-sectional methods, including random forest, multivariate sampling, copula sampling, and ML
-* Additional time-series methods, including ARIMA, Kalman filters, and state-space models
-* Native support for visualization of missing data patterns and imputation results
-* Additional support for analysis (bias, MI variance, etc.) after multiple imputation
-* Multiprocessing and GPU support for larger datasets, as well as integration with `dask` dataframes.
+* Additional cross-sectional methods, including random forest, KNN, local residual draws, EM, and maximum likelihood
+* Additional time-series methods, including EWMA, ARIMA, Kalman filters, and state-space models
+* Extended support for visualization of missing data patterns
+* Native support for visualization of imputation results and analysis of multiply imputed data
+* Additional support for analysis metrics and analyis models after multiple imputation
+* Multiprocessing and GPU support for larger datasets, as well as integration with `dask` DataFrames
 
 ## Example Usage
-Autoimpute is designed to be user friendly and flexible. When performing imputation, autoimpute fits directly into sklearn machine learning projects. Imputers inherit from sklearn's `BaseEstimator` and `TransformerMixin` and implement `fit` and `transform` methods, making them valid Transformers in an sklearn pipeline.
+Autoimpute is designed to be user friendly and flexible. When performing imputation, Autoimpute fits directly into `scikit-learn` machine learning projects. Imputers inherit from sklearn's `BaseEstimator` and `TransformerMixin` and implement `fit` and `transform` methods, making them valid Transformers in an sklearn pipeline.
 
-Right now, there are two imputer classes you'll work with:
+Right now, there are two `Imputer` classes we'll work with:
 ```python
 from autoimpute.imputations import SingleImputer, MultipleImputer
 si = SingleImputer() # imputation methods, passing through the data once
@@ -84,7 +84,7 @@ imp = MultipleImputer(
 imp.fit_transform(data)
 ```
 
-Autoimpute also extends supervised machine learning methods from `scikit-learn` and `statsmodels` to apply them to multiply imputed datasets (using the `MultipleImputer` under the hood). Right now, autoimpute supports linear regression and binary logistic regression. Additional supervised methods are currently under development.
+Autoimpute also extends supervised machine learning methods from `scikit-learn` and `statsmodels` to apply them to multiply imputed datasets (using the `MultipleImputer` under the hood). Right now, Autoimpute supports linear regression and binary logistic regression. Additional supervised methods are currently under development.
 
 As with Imputers, Autoimpute's analysis methods can be simple or complex:
 ```python
@@ -129,7 +129,7 @@ complex_lm.summary()
 predictions = complex_lm.predict(X_test)
 ```
 
-Note that we can also pass a pre-specified `MultipleImputer` to either analysis model instead of using `mi_kwgs`. The option is yours, and it's a matter of preference. If you pass a pre-specified `MultipleImputer`, anything in `mi_kwgs` is ignored, although the `mi_kwgs` argument is still validated.
+Note that we can also pass a pre-specified `MultipleImputer` to either analysis model instead of using `mi_kwgs`. The option is ours, and it's a matter of preference. If we pass a pre-specified `MultipleImputer`, anything in `mi_kwgs` is ignored, although the `mi_kwgs` argument is still validated.
 
 ```python
 from autoimpute.imputations import MultipleImputer
@@ -146,7 +146,7 @@ complex_lm.fit(X_train, y_train).predict(X_test)
 complex_lm.summary()
 ```
 
-For a deeper understanding of how the package works and its available features, see our [tutorials](https://kearnz.github.io/autoimpute-tutorials/).
+For a deeper understanding of how the package works and its available features, see our [tutorials website](https://kearnz.github.io/autoimpute-tutorials/).
 
 ## Versions and Dependencies
 * Python 3.6+
@@ -180,8 +180,7 @@ cd autoimpute
 python setup.py install
 ```
 
-Using a Virtual Environment:
-
+*Virtual Environment*:
 ```sh
 virtualenv imp
 source imp/bin/activate
@@ -190,8 +189,8 @@ cd autoimpute
 python setup.py install
 ```
 
-A note for Windows Users:
-* AutoImpute works on Windows but users may have trouble with pymc3 for bayesian methods. [(See discourse)](https://discourse.pymc.io/t/an-error-message-about-cant-pickle-fortran-objects/1073)
+*A note for Windows Users*:
+* Autoimpute works on Windows but users may have trouble with pymc3 for bayesian methods. [(See discourse)](https://discourse.pymc.io/t/an-error-message-about-cant-pickle-fortran-objects/1073)
 * Users may receive a runtime error `‘can’t pickle fortran objects’` when sampling using multiple chains.
 * There are a couple of things to do to try to overcome this error:
     - Reinstall theano and pymc3. Make sure to delete .theano cache in your home folder.

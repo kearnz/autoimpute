@@ -7,16 +7,6 @@ Tests use the pytest library. The tests in this module ensure the following:
 - `check_missingness` raises errors for fully missing datasets.
 - `check_missingness` raises errors for time series missing in datasets.
 - `remove_nan_columns` removes columns if the entire column is missing.
-
-Tests:
-    test_data_structures_not_allowed(ds)
-    test_data_structures_allowed(ds)
-    test_missingness_not_allowed(ds)
-    test_nan_columns()
-
-Todo:
-    * Rewrite tests when additional data types accepted.
-    * Extend missingness tests to additonal data types when accepted.
 """
 
 import pytest
