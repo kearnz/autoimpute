@@ -13,7 +13,7 @@ from .checks import check_nan_columns, check_strategy_allowed
 from .checks import check_strategy_fit, check_predictors_fit
 from .patterns import md_pairs, md_pattern, md_locations
 from .patterns import inbound, outbound, influx, outflux, flux
-from .patterns import proportions, feature_cov, feature_corr
+from .patterns import proportions, nullility_cov, nullility_corr
 
 __all__ = [
     "check_data_structure",
@@ -31,6 +31,6 @@ __all__ = [
     "outflux",
     "flux",
     "proportions",
-    "feature_cov",
-    "feature_corr"
+    "nullility_cov",
+    "nullility_corr"
 ]

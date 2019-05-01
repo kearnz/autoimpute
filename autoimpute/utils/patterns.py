@@ -104,43 +104,46 @@ def md_pattern(data):
     return sort_r_df[["count"] + cols + ["nmis"]]
 
 @check_missingness
-def feature_cov(data):
-    """Calculates the covariance between features in a DataFrame.
+def nullility_cov(data):
+    """Calculates the nullility covariance between features in a DataFrame.
 
-    Leverages pandas method to calculate covariance. Note that this method
-    drops NA values to compute covariance. It also employs `check_missingness`
-    decorator to ensure DataFrame not fully missing.
+    Leverages pandas method to calculate covariance of nullility. Note that
+    this method drops NA values to compute covariance. It also employs
+    `check_missingness` decorator to ensure DataFrame not fully missing. If
+    a DataFrame is fully observed, nothing is returned, as there is no
+    nullility.
 
     Args:
-        data (pd.DataFrame): DataFrame to calculate covariance matrix.
+        data (pd.DataFrame): DataFrame to calculate nullility covariance.
 
     Returns:
-        pd.DataFrame: DataFrame with covariance between each feature.
+        pd.DataFrame: DataFrame with nullility covariance b/w each feature.
 
     Raises:
         TypeError: If data not pd.DataFrame. Raised through decorator.
         ValueError: If DataFrame values all missing and none complete.
             Also raised through decorator.
     """
-    return data.cov()
+    data_cov = data.cov()
+    return data_cov.dropna(axis=0, how="all").dropna(axis=1, how="all")
 
 @check_missingness
-def feature_corr(data, method="pearson"):
-    """Calculates the correlation between features in a DataFrame.
+def nullility_corr(data, method="pearson"):
+    """Calculates the nullility correlation between features in a DataFrame.
 
-    Leverages pandas method to calculate correlation. Note that this method
-    drops NA values to compute correlation. It also employs `check_missingness`
-    decorator to ensure DataFrame not fully missing. Rerarding the correlation
-    method, the default is `pearson`. If dataset encodes discrete and / or
-    ordinal features, proper method to use is `spearman`.
+    Leverages pandas method to calculate correlation of nullility. Note that
+    this method drops NA values to compute correlation. It also employs
+    `check_missingness` decorator to ensure DataFrame not fully missing. If
+    a DataFrame is fully observed, nothing is returned, as there is no
+    nullility.
 
     Args:
-        data (pd.DataFrame): DataFrame to calculate correlation matrix.
+        data (pd.DataFrame): DataFrame to calculate nullility correlation.
         method (string, optional): correlation method to use. Default pearson,
             but spearman should be used with categorical or ordinal encoding.
 
     Returns:
-        pd.DataFrame: DataFrame with correlation between each feature.
+        pd.DataFrame: DataFrame with nullility correlation b/w each feature.
 
     Raises:
         TypeError: If data not pd.DataFrame. Raised through decorator.
@@ -152,7 +155,8 @@ def feature_corr(data, method="pearson"):
     if method not in accepted_methods:
         err = f"Correlation method must be in {accepted_methods}"
         raise ValueError(err)
-    return data.corr(method=method)
+    data_corr = data.corr(method=method)
+    return data_corr.dropna(axis=0, how="all").dropna(axis=1, how="all")
 
 def _inbound(pairs):
     """Private method to get inbound from pairs."""
