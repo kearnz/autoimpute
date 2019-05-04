@@ -17,7 +17,8 @@ from ..series import MeanImputer, MedianImputer, ModeImputer
 from ..series import NormImputer, CategoricalImputer
 from ..series import RandomImputer, InterpolateImputer
 from ..series import LOCFImputer, NOCBImputer
-from ..series import LeastSquaresImputer, StochasticImputer, PMMImputer
+from ..series import LeastSquaresImputer, StochasticImputer
+from ..series import PMMImputer, LRDImputer
 from ..series import BinaryLogisticImputer, MultinomialLogisticImputer
 from ..series import BayesianLeastSquaresImputer
 from ..series import BayesianBinaryLogisticImputer
@@ -69,6 +70,8 @@ class BaseImputer:
                 distribution for each missing value, using logistic model.
             `pmm` imputes series using predictive mean matching. PMM is a
                 semi-supervised method using bayesian & hot-deck imputation.
+            `lrd` imputes series using local residual draws. LRD is a
+                semi-supervised method using bayesian & hot-deck imputation.
         strategies (dict): univariate and predictive strategies merged.
         visit_sequences: tuple of supported sequences for visiting columns.
             Right now, default = left-to-right. Only sequence supported.
@@ -95,7 +98,8 @@ class BaseImputer:
         methods.MULTI_LOGISTIC: MultinomialLogisticImputer,
         methods.BAYESIAN_LS: BayesianLeastSquaresImputer,
         methods.BAYESIAN_BINARY_LOGISTIC: BayesianBinaryLogisticImputer,
-        methods.PMM: PMMImputer
+        methods.PMM: PMMImputer,
+        methods.LRD: LRDImputer
     }
 
     strategies = {**predictive_strategies, **univariate_strategies}

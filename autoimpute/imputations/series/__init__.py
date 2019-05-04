@@ -28,6 +28,7 @@ from .logistic_regression import MultinomialLogisticImputer
 from .bayesian_regression import BayesianLeastSquaresImputer
 from .bayesian_regression import BayesianBinaryLogisticImputer
 from .pmm import PMMImputer
+from .lrd import LRDImputer
 
 __all__ = [
     "DefaultUnivarImputer",
@@ -48,5 +49,6 @@ __all__ = [
     "MultinomialLogisticImputer",
     "BayesianLeastSquaresImputer",
     "BayesianBinaryLogisticImputer",
-    "PMMImputer"
+    "PMMImputer",
+    "LRDImputer"
 ]

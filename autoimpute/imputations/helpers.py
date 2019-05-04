@@ -34,6 +34,17 @@ def _neighbors(x, n, df, choose):
     neighbs = df.loc[indexarr, "y"].values
     return choose(neighbs)
 
+def _local_residuals(x, n, df, choose):
+    al = len(df.index)
+    if n > al:
+        err = "# neighbors greater than # predictions. Reduce neighbor count."
+        raise ValueError(err)
+    indexarr = np.argpartition(abs(df["y_pred"] - x), n)[:n]
+    neighbs = df.loc[indexarr, "y"].values
+    distances = df.loc[indexarr, "y_pred"].values - x
+    resids = neighbs + distances
+    return choose(resids)
+
 def _pymc3_logger(verbose):
     """Private method to handle pymc3 logging."""
     progress = 1

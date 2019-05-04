@@ -221,6 +221,12 @@ class MultipleImputer(BaseImputer, BaseEstimator, TransformerMixin):
         # call transform strategy validator before applying transform
         self._transform_strategy_validator()
 
+        # make it easy to access the location of the imputed values
+        self.imputed_ = {}
+        for column in self._strats.keys():
+            imp_ix = X[column][X[column].isnull()].index
+            self.imputed_[column] = imp_ix.tolist()
+
         # right now, return a generator by default
         # sequential only for now
         imputed = ((i[0], i[1].transform(X, new_data))

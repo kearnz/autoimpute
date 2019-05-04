@@ -33,9 +33,10 @@ Therefore, this package aids the Python user by providing more clarity to the im
     - Bayesian linear regression
     - Bayesian binary logistic regression
     - Predictive mean matching
+    - Local Residual Draws
 
 ## Todo
-* Additional cross-sectional methods, including random forest, KNN, local residual draws, EM, and maximum likelihood
+* Additional cross-sectional methods, including random forest, KNN, EM, and maximum likelihood
 * Additional time-series methods, including EWMA, ARIMA, Kalman filters, and state-space models
 * Extended support for visualization of missing data patterns
 * Native support for visualization of imputation results and analysis of multiply imputed data
