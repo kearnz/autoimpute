@@ -1,9 +1,11 @@
 # Autoimpute
-[![PyPI version](https://badge.fury.io/py/autoimpute.svg)](https://badge.fury.io/py/autoimpute) [![Build Status](https://travis-ci.com/kearnz/autoimpute.svg?branch=master)](https://travis-ci.com/kearnz/autoimpute) [![MIT license](https://img.shields.io/badge/License-MIT-blue.svg)](https://lbesson.mit-license.org/) [![made-with-python](https://img.shields.io/badge/Made%20with-Python-1f425f.svg)](https://www.python.org/)
+[![PyPI version](https://badge.fury.io/py/autoimpute.svg)](https://badge.fury.io/py/autoimpute) [![Build Status](https://travis-ci.com/kearnz/autoimpute.svg?branch=master)](https://travis-ci.com/kearnz/autoimpute) [![MIT license](https://img.shields.io/badge/License-MIT-blue.svg)](https://lbesson.mit-license.org/) [![Python 3.6](https://img.shields.io/badge/python-3.6-blue.svg)](https://www.python.org/downloads/release/python-360/)
 
 <span style="font-size:1.5em;">A Python package for analysis and implementation of <b>Imputation Methods!</b></span>
 
-<span style="font-size:1.5em;">Download the package and get started: `pip install autoimpute`</span>
+<span style="font-size:1.5em;">Download the package: `pip install autoimpute`</span>
+
+<span style="font-size:1.5em;">View our website to learn more: [Autoimpute Tutorials](https://kearnz.github.io/autoimpute-tutorials/)</span>
 
 ## Motivation
 Most machine learning algorithms expect clean and complete datasets, but most real-world data is messy and missing. Unfortunately, handling missing data is quite complex, so programming languages generally punt this responsibility to the end user. By default, R drops all records with missing data - a method that is easy to implement but often problematic in practice. For richer imputation strategies, R has multiple packages to deal with missing data (`MICE`, `Amelia`, `TSImpute`, etc.). Python users are not as fortunate. Python's `scikit-learn` throws a runtime error when an end user deploys models on datasets with missing records, and few third-party packages exist to handle imputation end-to-end.
@@ -13,29 +15,21 @@ Therefore, this package aids the Python user by providing more clarity to the im
 ## Features
 * Utility functions and basic visualizations to explore missingness patterns
 * Missingness classifier and automatic missing data test set generator
-* Single and multiple imputation
+* Single and multiple imputation for `pandas` `DataFrames`
 * Analysis methods and pooled parameter inference using multiply imputed datasets
-* Cross-sectional and time-series imputation methods. Imputation methods currently supported:
-    - Mean
-    - Median
-    - Mode
-    - Random
-    - Norm
-    - Categorical
-    - Linear interpolation
-    - Time-weighted interpolation
-    - Quadratic, cubic, and polynomial interpolation
-    - Spline interpolation
-    - Last observation carried forward (LOCF)
-    - Next observation carried backward (NOCB)
-    - Least squares (simple and multiple linear regression)
-    - Binary logistic regression
-    - Multinomial logistic regression
-    - Linear regression with stochastic error
-    - Bayesian linear regression
-    - Bayesian binary logistic regression
-    - Predictive mean matching
-    - Local Residual Draws
+
+## Imputation Methods
+
+| Univariate                  | Multivariate                        | Time Series / Interpolation
+| :-------------------------- | :---------------------------------- | ---------------------------
+| Mean                        | Linear Regression                   | Linear 
+| Median                      | Binomial Logistic Regression        | Quadratic 
+| Mode                        | Multinomial Logistic Regression     | Cubic
+| Random                      | Stochastic Regression               | Polynomial
+| Norm                        | Bayesian Linear Regression          | Spline
+| Categorical                 | Bayesian Binary Logistic Regression | Time-weighted
+| Linear interpolation        | Predictive Mean Matching            | Next Obs Carried Backward
+|                             | Local Residual Draws                | Last Obs Carried Forward
 
 ## Todo
 * Additional cross-sectional methods, including random forest, KNN, EM, and maximum likelihood
