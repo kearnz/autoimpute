@@ -1,7 +1,9 @@
 # Autoimpute
-[![Build Status](https://travis-ci.com/kearnz/autoimpute.svg?branch=master)](https://travis-ci.com/kearnz/autoimpute) [![MIT license](https://img.shields.io/badge/License-MIT-blue.svg)](https://lbesson.mit-license.org/) [![made-with-python](https://img.shields.io/badge/Made%20with-Python-1f425f.svg)](https://www.python.org/)
+[![PyPI version](https://badge.fury.io/py/autoimpute.svg)](https://badge.fury.io/py/autoimpute)[![Build Status](https://travis-ci.com/kearnz/autoimpute.svg?branch=master)](https://travis-ci.com/kearnz/autoimpute) [![MIT license](https://img.shields.io/badge/License-MIT-blue.svg)](https://lbesson.mit-license.org/) [![made-with-python](https://img.shields.io/badge/Made%20with-Python-1f425f.svg)](https://www.python.org/)
 
 <span style="font-size:1.5em;">A Python package for analysis and implementation of <b>Imputation Methods!</b></span>
+
+<span style="font-size:1.5em;">Download the package and get started: `pip install autoimpute`</span>
 
 ## Motivation
 Most machine learning algorithms expect clean and complete datasets, but most real-world data is messy and missing. Unfortunately, handling missing data is quite complex, so programming languages generally punt this responsibility to the end user. By default, R drops all records with missing data - a method that is easy to implement but often problematic in practice. For richer imputation strategies, R has multiple packages to deal with missing data (`MICE`, `Amelia`, `TSImpute`, etc.). Python users are not as fortunate. Python's `scikit-learn` throws a runtime error when an end user deploys models on datasets with missing records, and few third-party packages exist to handle imputation end-to-end.
@@ -164,28 +166,12 @@ For a deeper understanding of how the package works and its available features, 
     - `missingno` >= 0.4.1
 
 ## Installation
-* Autoimpute will be registered with PyPI soon after its first release, so `pip install` coming soon!
-* In the meantime, the following work for Mac OS & Linux as well as Windows (with a couple caveats).
-
-*Master*
-```sh
-git clone https://github.com/kearnz/autoimpute.git
-cd autoimpute
-python setup.py install
-```
+* Autoimpute is now **registered with PyPI!** Use `pip install autoimpute` to download the package.
+* If you want to work with the development branch, use the script below:
 
 *Development*
 ```sh
 git clone -b dev --single-branch https://github.com/kearnz/autoimpute.git
-cd autoimpute
-python setup.py install
-```
-
-*Virtual Environment*:
-```sh
-virtualenv imp
-source imp/bin/activate
-git clone https://github.com/kearnz/autoimpute.git
 cd autoimpute
 python setup.py install
 ```
