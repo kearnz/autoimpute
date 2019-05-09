@@ -1,24 +1,25 @@
 # Autoimpute
 [![PyPI version](https://badge.fury.io/py/autoimpute.svg)](https://badge.fury.io/py/autoimpute) [![Build Status](https://travis-ci.com/kearnz/autoimpute.svg?branch=master)](https://travis-ci.com/kearnz/autoimpute) [![MIT license](https://img.shields.io/badge/License-MIT-blue.svg)](https://lbesson.mit-license.org/) [![Python 3.6](https://img.shields.io/badge/python-3.6-blue.svg)](https://www.python.org/downloads/release/python-360/)
 
-<span style="font-size:1.5em;">A Python package for analysis and implementation of <b>Imputation Methods!</b></span>
+<span style="font-size:1.5em;">Autoimpute is a Python package for analysis and implementation of <b>Imputation Methods!</b></span>
 
 <span style="font-size:1.5em;">Download the package: `pip install autoimpute`</span>
 
-<span style="font-size:1.5em;">View our website to learn more: [Autoimpute Tutorials](https://kearnz.github.io/autoimpute-tutorials/)</span>
+<span style="font-size:1.5em;">[View our website](https://kearnz.github.io/autoimpute-tutorials/) to explore Autoimpute in more detail.</span>
 
 ## Motivation
 Most machine learning algorithms expect clean and complete datasets, but most real-world data is messy and missing. Unfortunately, handling missing data is quite complex, so programming languages generally punt this responsibility to the end user. By default, R drops all records with missing data - a method that is easy to implement but often problematic in practice. For richer imputation strategies, R has multiple packages to deal with missing data (`MICE`, `Amelia`, `TSImpute`, etc.). Python users are not as fortunate. Python's `scikit-learn` throws a runtime error when an end user deploys models on datasets with missing records, and few third-party packages exist to handle imputation end-to-end.
 
 Therefore, this package aids the Python user by providing more clarity to the imputation process, making imputation methods more accessible, and measuring the impact imputation methods have in supervised regression and classification. In doing so, this package brings missing data imputation methods to the Python world and makes them work nicely in Python machine learning projects (and specifically ones that utilize `scikit-learn`). Lastly, this package provides its own implementation of supervised machine learning methods that extend both `scikit-learn` and `statsmodels` to mutiply imputed datasets.
 
-## Features
+## Main Features
 * Utility functions and basic visualizations to explore missingness patterns
 * Missingness classifier and automatic missing data test set generator
-* Single and multiple imputation for `pandas` `DataFrames`
+* Single and multiple imputation classes for `pandas` `DataFrames`
 * Analysis methods and pooled parameter inference using multiply imputed datasets
+* Numerous imputation methods, as specified in the table below
 
-## Imputation Methods
+## Imputation Methods Supported
 
 | Univariate                  | Multivariate                        | Time Series / Interpolation
 | :-------------------------- | :---------------------------------- | ---------------------------
@@ -28,7 +29,7 @@ Therefore, this package aids the Python user by providing more clarity to the im
 | Random                      | Stochastic Regression               | Polynomial
 | Norm                        | Bayesian Linear Regression          | Spline
 | Categorical                 | Bayesian Binary Logistic Regression | Time-weighted
-| Linear interpolation        | Predictive Mean Matching            | Next Obs Carried Backward
+|                             | Predictive Mean Matching            | Next Obs Carried Backward
 |                             | Local Residual Draws                | Last Obs Carried Forward
 
 ## Todo
@@ -179,15 +180,16 @@ python setup.py install
     - Set `cores=1` in `pm.sample`. This should be a last resort, as it means posterior sampling will use 1 core only. Not using multiprocessing will slow down bayesian imputation methods significantly.
 * Reach out and let us know if you've worked through this issue successfully on Windows and have a better solution!
 
-## Contact
+## Creators and Maintainers
 Joseph Kearney – [@kearnz](https://github.com/kearnz)  
-Shahid Barkat - [@shabarka](https://github.com/shabarka)
+Shahid Barkat - [@shabarka](https://github.com/shabarka)  
+See the [Authors](https://github.com/kearnz/autoimpute/blob/master/AUTHORS.rst) page to get in touch!
 
 ## License
 Distributed under the MIT license. See [LICENSE](https://github.com/kearnz/autoimpute/blob/master/LICENSE) for more information.
 
 ## Contributing
-Guidelines for contributing to our project. See [CONTRIBUTING](https://github.com/kearnz/autoimpute/blob/master/CONTRIBUTING.md)
+Guidelines for contributing to our project. See [CONTRIBUTING](https://github.com/kearnz/autoimpute/blob/master/CONTRIBUTING.md) for more information.
 
 ## Contributor Code of Conduct
-Adapted from Contributor Covenant, version 1.0.0. See [Code of Conduct](https://github.com/kearnz/autoimpute/blob/master/CODE_OF_CONDUCT.md)
+Adapted from Contributor Covenant, version 1.0.0. See [Code of Conduct](https://github.com/kearnz/autoimpute/blob/master/CODE_OF_CONDUCT.md) for more information.
