@@ -262,7 +262,11 @@ class SingleImputer(BaseImputer, BaseEstimator, TransformerMixin):
                     x_ = X[preds]
 
                 # isolate missingness
-                x_ = x_.loc[imp_ix, :]
+                if isinstance(x_, pd.Series):
+                    x_ = x_.to_frame()
+                    x_ = x_.loc[imp_ix]
+                else:
+                    x_ = x_.loc[imp_ix, :]
 
                 # default univariate impute for missing covariates
                 mis_cov = pd.isnull(x_).sum()
