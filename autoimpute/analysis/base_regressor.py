@@ -5,8 +5,8 @@ import numpy as np
 import pandas as pd
 from statsmodels.api import add_constant
 from sklearn.utils.validation import check_is_fitted
-from category_encoders import OneHotEncoder
 from autoimpute.imputations import MultipleImputer
+
 # pylint:disable=attribute-defined-outside-init
 
 class MiBaseRegressor:
@@ -58,7 +58,6 @@ class MiBaseRegressor:
         self.mi = mi
         self.model_kwgs = model_kwgs
         self.model_lib = model_lib
-        self.encoder = OneHotEncoder(handle_unknown="error")
 
     @property
     def mi_kwgs(self):
@@ -206,17 +205,20 @@ class MiBaseRegressor:
         # return the multiply imputed datasets
         return self.mi.fit_transform(X)
 
+    def _one_hot_encode(self, X):
+        """Private method to handle one hot encoding for categoricals."""
+        cats = X.select_dtypes(include=(np.object,)).columns.size
+        if cats > 0:
+            X = pd.get_dummies(X, drop_first=True)
+        return X
+
     def _fit_model(self, model_type, regressor, X, y):
         """Private method to fit a model using sklearn or statsmodels."""
 
         # encoding for predictor variable
         # we enforce that predictors were imputed in imputation phase.
-        try:
-            X = self.encoder.fit_transform(X)
-            self.new_X_columns = X.columns.tolist()
-        except ValueError as ve:
-            me = "Must impute columns used as predictors in analysis model."
-            raise ValueError(me) from ve
+        X = self._one_hot_encode(X)
+        self.new_X_columns = X.columns.tolist()
 
         # encoding for response variable
         if model_type == "logistic":
@@ -278,11 +280,10 @@ class MiBaseRegressor:
 
         # encoding for predictor variable
         # we enforce that predictors were imputed in imputation phase.
-        try:
-            X = self.encoder.fit_transform(X)
-        except ValueError as ve:
+        if X.isnull().sum().any():
             me = "Data passed to make predictions can't contain missingness."
-            raise ValueError(me) from ve
+            raise ValueError(me)
+        X = self._one_hot_encode(X)
         return X
 
     def _var_ratios(self, imps, num, denom):

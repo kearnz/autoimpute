@@ -8,6 +8,7 @@ from sklearn.utils.validation import check_is_fitted
 from statsmodels.discrete.discrete_model import Logit
 from autoimpute.utils import check_nan_columns
 from .base_regressor import MiBaseRegressor
+
 # pylint:disable=attribute-defined-outside-init
 # pylint:disable=too-many-locals
 
