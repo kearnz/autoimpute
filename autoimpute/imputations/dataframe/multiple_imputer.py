@@ -15,6 +15,7 @@ from autoimpute.utils import check_strategy_fit
 from .base_imputer import BaseImputer
 from .single_imputer import SingleImputer
 methods = method_names
+
 # pylint:disable=attribute-defined-outside-init
 # pylint:disable=protected-access
 # pylint:disable=too-many-arguments
@@ -37,8 +38,8 @@ class MultipleImputer(BaseImputer, BaseEstimator, TransformerMixin):
     """
 
     def __init__(self, n=5, strategy="default predictive", predictors="all",
-                 imp_kwgs=None, scaler=None, verbose=False, seed=None,
-                 visit="default", return_list=False):
+                 imp_kwgs=None, verbose=False, seed=None, visit="default",
+                 return_list=False):
         """Create an instance of the MultipleImputer class.
 
         As with sklearn classes, all arguments take default values. Therefore,
@@ -60,8 +61,6 @@ class MultipleImputer(BaseImputer, BaseEstimator, TransformerMixin):
                 strategies. If strategies, each column given that strategy is
                 instantiated with same arguments. When strategy is `default`,
                 imp_kwgs is ignored.
-            scaler (scaler, optional): scale variables before transformation.
-                Default is None, although StandardScaler recommended.
             verbose (bool, optional): print more information to console.
                 Default value is False.
             seed (int, optional): seed setting for reproducible results.
@@ -74,7 +73,6 @@ class MultipleImputer(BaseImputer, BaseEstimator, TransformerMixin):
             self,
             strategy=strategy,
             imp_kwgs=imp_kwgs,
-            scaler=scaler,
             verbose=verbose,
             visit=visit
         )
@@ -187,7 +185,6 @@ class MultipleImputer(BaseImputer, BaseEstimator, TransformerMixin):
                 predictors=self._preds[i-1],
                 imp_kwgs=self.imp_kwgs,
                 copy=self.copy,
-                scaler=self.scaler,
                 verbose=self.verbose,
                 seed=self._seeds[i-1],
                 visit=self.visit
@@ -198,7 +195,7 @@ class MultipleImputer(BaseImputer, BaseEstimator, TransformerMixin):
         return self
 
     @check_nan_columns
-    def transform(self, X, new_data=True):
+    def transform(self, X):
         """Impute each column within a DataFrame using fit imputation methods.
 
         The transform step performs the actual imputations. Given a dataset
@@ -208,8 +205,6 @@ class MultipleImputer(BaseImputer, BaseEstimator, TransformerMixin):
 
         Args:
             X (pd.DataFrame): fit DataFrame to impute.
-            new_data (bool, Optional): whether or not new data is used.
-                Default is True.
 
         Returns:
             X (pd.DataFrame): imputed in place or copy of original.
@@ -229,7 +224,7 @@ class MultipleImputer(BaseImputer, BaseEstimator, TransformerMixin):
 
         # right now, return a generator by default
         # sequential only for now
-        imputed = ((i[0], i[1].transform(X, new_data))
+        imputed = ((i[0], i[1].transform(X))
                    for i in self.statistics_.items())
         if self.return_list:
             imputed = list(imputed)
@@ -237,4 +232,4 @@ class MultipleImputer(BaseImputer, BaseEstimator, TransformerMixin):
 
     def fit_transform(self, X, y=None):
         """Convenience method to fit then transform the same dataset."""
-        return self.fit(X, y).transform(X, False)
+        return self.fit(X, y).transform(X)

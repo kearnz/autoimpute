@@ -3,12 +3,10 @@
 import logging
 import numpy as np
 import pandas as pd
-from autoimpute.imputations.errors import _not_num_matrix
 from autoimpute.imputations.deletion import listwise_delete
 
-def _get_observed(method, predictors, series, verbose):
+def _get_observed(predictors, series, verbose):
     """Private method to test datasets and get observed data."""
-    _not_num_matrix(method, predictors)
     conc = pd.concat([predictors, series], axis=1)
     if verbose:
         null_pred = pd.isnull(predictors)

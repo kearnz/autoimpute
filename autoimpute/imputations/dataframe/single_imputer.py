@@ -16,6 +16,7 @@ from autoimpute.utils import check_strategy_fit
 from autoimpute.imputations.helpers import _get_observed
 from .base_imputer import BaseImputer
 from ..series import DefaultUnivarImputer
+
 # pylint:disable=attribute-defined-outside-init
 # pylint:disable=arguments-differ
 # pylint:disable=protected-access
@@ -43,8 +44,8 @@ class SingleImputer(BaseImputer, BaseEstimator, TransformerMixin):
     """
 
     def __init__(self, strategy="default predictive", predictors="all",
-                 imp_kwgs=None, copy=True, scaler=None, verbose=False,
-                 seed=None, visit="default"):
+                 imp_kwgs=None, copy=True, verbose=False, seed=None,
+                 visit="default"):
         """Create an instance of the SingleImputer class.
 
         As with sklearn classes, all arguments take default values. Therefore,
@@ -68,9 +69,6 @@ class SingleImputer(BaseImputer, BaseEstimator, TransformerMixin):
                 `imp_kwgs` is ignored.
             copy (bool, optional): create copy of DataFrame or operate inplace.
                 Default value is True. Copy created.
-            scaler (scaler, optional): scale variables before transformation.
-                Default is None, although StandardScaler recommended if using
-                predictive imputation methods.
             verbose (bool, optional): print more information to console.
                 Default value is False.
             seed (int, optional): seed setting for reproducible results.
@@ -80,7 +78,6 @@ class SingleImputer(BaseImputer, BaseEstimator, TransformerMixin):
             self,
             strategy=strategy,
             imp_kwgs=imp_kwgs,
-            scaler=scaler,
             verbose=verbose,
             visit=visit
         )
@@ -101,20 +98,7 @@ class SingleImputer(BaseImputer, BaseEstimator, TransformerMixin):
         self._strats = check_strategy_fit(self.strategy, cols)
         self._preds = check_predictors_fit(self.predictors, cols)
 
-        # next, prep the categorical / numerical split
-        # only necessary for classes that use other features during imputation
-        # not required if all imputation methods are univariate
-        pred_strats = [strat in self.predictive_strategies for
-                       strat in self._strats.values()]
-        if any(pred_strats):
-            self._prep_fit_dataframe(X)
-
-        # if scaler passed, need scaler to fit AND transform
-        # we want to fit predictive imputer on correctly scaled dataset
-        if self.scaler:
-            self._scaler_fit_transform()
-
-    def _transform_strategy_validator(self, X, new_data):
+    def _transform_strategy_validator(self, X):
         """Private method to prep and validate before transformation."""
 
         # initial checks before transformation and check columns are the same
@@ -125,17 +109,6 @@ class SingleImputer(BaseImputer, BaseEstimator, TransformerMixin):
         if diff_fit:
             err = "Same columns that were fit must appear in transform."
             raise ValueError(err)
-
-        # if not error, check if new data and perform scale if necessary
-        # note that this step is crucial if using fit and transform separately
-        # when used separately, new data needs to be prepped again
-        if new_data:
-            pred_strats = [strat in self.predictive_strategies for
-                           strat in self._strats.values()]
-            if any(pred_strats):
-                self._prep_fit_dataframe(X)
-            if self.scaler:
-                self._scaler_transform()
 
     @check_nan_columns
     def fit(self, X, y=None):
@@ -199,7 +172,7 @@ class SingleImputer(BaseImputer, BaseEstimator, TransformerMixin):
             if self.verbose:
                 print(f"Column: {column}, Strategy: {method}")
 
-            # if instantiation succeeds, fit the imputer to the dataset.
+            # identify the column for imputation
             ys = X[column]
 
             # the fit depends on what type of strategy we use.
@@ -209,12 +182,17 @@ class SingleImputer(BaseImputer, BaseEstimator, TransformerMixin):
 
             # now, fit on predictive methods, which are more complex.
             if method in self.predictive_strategies:
-                xs, _ = self._prep_predictor_cols(column, self._preds)
+                preds = self._preds[column]
+                if preds == "all":
+                    xs = X.drop(column, axis=1)
+                else:
+                    xs = X[preds]
 
                 # fit the data on observed values only.
-                x_, y_ = _get_observed(
-                    self.strategy, xs, ys, self.verbose
-                )
+                x_, y_ = _get_observed(xs, ys, self.verbose)
+
+                # before imputing, need to encode categoricals
+                x_ = self._one_hot_encode(x_)
 
                 imputer.fit(x_, y_)
 
@@ -223,7 +201,7 @@ class SingleImputer(BaseImputer, BaseEstimator, TransformerMixin):
         return self
 
     @check_nan_columns
-    def transform(self, X, new_data=True):
+    def transform(self, X):
         """Impute each column within a DataFrame using fit imputation methods.
 
         The transform step performs the actual imputations. Given a dataset
@@ -233,9 +211,6 @@ class SingleImputer(BaseImputer, BaseEstimator, TransformerMixin):
 
         Args:
             X (pd.DataFrame): DataFrame to impute (same as fit or new data).
-            new_data (bool, Optional): whether or not new data is used.
-                Default is True IF transform method used in isolation.
-                Note that fit_transform sets new_data to False.
 
         Returns:
             X (pd.DataFrame): imputed in place or copy of original.
@@ -248,7 +223,7 @@ class SingleImputer(BaseImputer, BaseEstimator, TransformerMixin):
         # copy the dataset if necessary, then prep predictors
         if self.copy:
             X = X.copy()
-        self._transform_strategy_validator(X, new_data)
+        self._transform_strategy_validator(X)
         if self.verbose:
             trans = "PERFORMING IMPUTATIONS ON DATA BASED ON FIT..."
             print(f"{trans}\n{'-'*len(trans)}")
@@ -280,36 +255,38 @@ class SingleImputer(BaseImputer, BaseEstimator, TransformerMixin):
 
             # implement transform logic for predictive
             if imputer.strategy in self.predictive_strategies:
-                x_, _ = self._prep_predictor_cols(column, self._preds)
+                preds = self._preds[column]
+                if preds == "all":
+                    x_ = X.drop(column, axis=1)
+                else:
+                    x_ = X[preds]
 
-                # if dealing with new data, need to reset the index to missing
-                if new_data:
-                    x_.index = self._X_idx
+                # isolate missingness
                 x_ = x_.loc[imp_ix, :]
 
                 # default univariate impute for missing covariates
                 mis_cov = pd.isnull(x_).sum()
+                mis_cov = mis_cov[mis_cov > 0]
                 if any(mis_cov):
+                    x_m = mis_cov.index
                     if self.verbose:
                         print(f"Missing Covariates:\n{mis_cov}\n")
                         print("Using single imputer for missing covariates...")
-                    for col in x_:
+                    for col in x_m:
                         d = DefaultUnivarImputer()
-                        x_[col] = d.fit_impute(x_[col], None)
+                        d_imps = d.fit_impute(x_[col], None)
+                        x_null = x_[col][x_[col].isnull()].index
+                        x_.loc[x_null, col] = d_imps
+
+                # handling encoding again for prediction of imputations
+                x_ = self._one_hot_encode(x_)
 
             # perform imputation given the specified imputer and value for x_
             X.loc[imp_ix, column] = imputer.impute(x_)
-            # update predictive columns used for fitting with new imputed vals
-            if hasattr(self, "data_mi"):
-                self._update_dataframes(X)
         return X
 
     def fit_transform(self, X, y=None):
         """Convenience method to fit then transform the same dataset.
-
-        Note that the `fit_transform` method privately sets new_data = False.
-        This behavior is intentional. `fit_transform` utilizes the same data
-        in each step, so the value of new_data is never not False.
 
         Args:
             X (pd.DataFrame): DataFrame used for fit and transform steps.
@@ -319,4 +296,4 @@ class SingleImputer(BaseImputer, BaseEstimator, TransformerMixin):
         Returns:
             X (pd.DataFrame): imputed in place or copy of original.
         """
-        return self.fit(X, y).transform(X, False)
+        return self.fit(X, y).transform(X)

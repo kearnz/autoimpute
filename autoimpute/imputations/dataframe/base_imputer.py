@@ -1,14 +1,13 @@
-"""Module for BaseImputer - a base class for classifiers/dataframe imputers.
+"""Module for BaseImputer - a base class for DataFrame imputers.
 
 This module contains the `BaseImputer`, which is used to abstract away
-functionality in both missingness classifiers and dataframe imputers.
+functionality in both DataFrame imputers. The `BaseImputer` also holds the
+methods available for imputation analysis.
 """
 
 import warnings
-import itertools
 import numpy as np
 import pandas as pd
-from sklearn.base import clone
 from autoimpute.utils import check_strategy_allowed
 from autoimpute.imputations import method_names
 from ..series import DefaultUnivarImputer, DefaultPredictiveImputer
@@ -23,6 +22,7 @@ from ..series import BinaryLogisticImputer, MultinomialLogisticImputer
 from ..series import BayesianLeastSquaresImputer
 from ..series import BayesianBinaryLogisticImputer
 methods = method_names
+
 # pylint:disable=attribute-defined-outside-init
 # pylint:disable=too-many-arguments
 # pylint:disable=too-many-instance-attributes
@@ -30,14 +30,14 @@ methods = method_names
 
 
 class BaseImputer:
-    """Building blocks for more advanced imputers and missingness classifiers.
+    """Building blocks for more advanced DataFrame imputers.
 
     The BaseImputer is not a stand-alone class and thus serves no purpose
-    other than as a parent to Imputers and MissingnessClassifiers. Therefore,
-    the BaseImputer should not be used directly unless creating an Imputer.
-    That being said, all dataframe Imputers should inherit from BaseImputer.
-    It contains base functionality for any new dataframe Imputer, and it holds
-    the set of strategies that make up this imputation library.
+    other than as a parent to Imputers. Therefore, the BaseImputer should not
+    be used directly unless creating an Imputer. That being said, all
+    DataFrame Imputers should inherit from BaseImputer. It contains base
+    functionality for any new DataFrame Imputer, and it holds the set of
+    strategies that make up this imputation library.
 
     Attributes:
         univariate_strategies (dict): univariate imputation methods.
@@ -109,7 +109,7 @@ class BaseImputer:
         "left-to-right"
     )
 
-    def __init__(self, strategy, imp_kwgs, scaler, verbose, visit):
+    def __init__(self, strategy, imp_kwgs, verbose, visit):
         """Initialize the BaseImputer.
 
         Args:
@@ -127,8 +127,6 @@ class BaseImputer:
                 specific strategy. imp_kwgs keys can be either columns or
                 strategies. If strategies, each column given that strategy is
                 instantiated with same arguments.
-            scaler (sklearn scaler, optional): A scaler supported by sklearn.
-                Default to None. Otherwise, must be sklearn-compliant scaler.
             verbose (bool, optional): Print information to the console.
                 Defaults to False.
             visit (str, None): order to visit columns for imputation.
@@ -137,7 +135,6 @@ class BaseImputer:
         """
         self.strategy = strategy
         self.imp_kwgs = imp_kwgs
-        self.scaler = scaler
         self.verbose = verbose
         self.visit = visit
 
@@ -190,34 +187,6 @@ class BaseImputer:
         self._imp_kwgs = kwgs
 
     @property
-    def scaler(self):
-        """Property getter to return the value of the scaler property."""
-        return self._scaler
-
-    @scaler.setter
-    def scaler(self, s):
-        """Validate the scaler property and set default parameters.
-
-        The BaseImputer provides the option to scale data from within the
-        imputer. The scaler is optional, and the default value is None. If
-        a scaler is passed, the scaler must be a valid sklearn transformer.
-        Therefore, it must implement the `fit_transform` method.
-
-        Args:
-            s (scaler): if None, no scaler used, nothing to verify.
-
-        Raises:
-            ValueError: scaler does not implement `fit_transform` method.
-        """
-        if s is None:
-            self._scaler = s
-        else:
-            m = "fit_transform"
-            if not hasattr(s, m):
-                raise ValueError(f"Scaler must implement {m} method.")
-            self._scaler = s
-
-    @property
     def visit(self):
         """Property getter to return the value of the visit property."""
         return self._visit
@@ -251,35 +220,6 @@ class BaseImputer:
         # otherwise, set property for visit
         self._visit = v
 
-    def _scaler_fit(self):
-        """Private method to scale data based on scaler provided."""
-
-        # scale numerical data and dummy data if it exists
-        if self._len_num > 0:
-            sc = clone(self.scaler)
-            self._scaled_num = sc.fit(self._data_num.values)
-        else:
-            self._scaled_num = None
-        if self._len_dum > 0:
-            sc = clone(self.scaler)
-            self._scaled_dum = sc.fit(self._data_dum.values)
-        else:
-            self._scaled_dum = None
-
-    def _scaler_transform(self):
-        """Private method to transform data using scaled fit."""
-        if self._scaled_num:
-            sn = self._scaled_num.transform(self._data_num.values)
-            self._data_num = pd.DataFrame(sn, columns=self._cols_num)
-        if self._scaled_dum:
-            sd = self._scaled_dum.transform(self._data_dum.values)
-            self._data_dum = pd.DataFrame(sd, columns=self._cols_dum)
-
-    def _scaler_fit_transform(self):
-        """Private method to perform fit and transform of scaler"""
-        self._scaler_fit()
-        self._scaler_transform()
-
     def _fit_init_params(self, column, method, kwgs):
         """Private method to supply imputation model fit params if any."""
 
@@ -309,143 +249,9 @@ class BaseImputer:
             cons = f"Consider removing {col} from dataset."
             warnings.warn(f"{msg} {cons}")
 
-    def _update_dataframes(self, X):
-        """Private method to update processed dataframes."""
-
-        # note that this method can be further optimized
-        # numerical columns first
-        self._data_num = X.select_dtypes(include=(np.number,))
-        self._cols_num = self._data_num.columns.tolist()
-        self._len_num = len(self._cols_num)
-
-        # datetime columns next
-        self._data_time = X.select_dtypes(include=(np.datetime64,))
-        self._cols_time = self._data_time.columns.tolist()
-        self._len_time = len(self._cols_time)
-
-        # check categorical columns last
-        # right now, only support for one-hot encoding
-        orig_dum = X.select_dtypes(include=(np.object,))
-        self._orig_dum = orig_dum.columns.tolist()
-        if not orig_dum.columns.tolist():
-            self._dum_dict = {}
-            self._data_dum = pd.DataFrame()
-        else:
-            dummies = []
-            self._dum_dict = {}
-            self._data_dum = pd.DataFrame()
-            for col in orig_dum:
-                col_dum = pd.get_dummies(orig_dum[col], prefix=col)
-                self._dum_dict[col] = col_dum.columns.tolist()
-                self._check_if_single_dummy(col, col_dum)
-                dummies.append(col_dum)
-            ld = len(dummies)
-            if ld == 1:
-                self._data_dum = dummies[0]
-            else:
-                self._data_dum = pd.concat(dummies, axis=1)
-        self._cols_dum = self._data_dum.columns.tolist()
-        self._len_dum = len(self._cols_dum)
-
-    def _prep_fit_dataframe(self, X):
-        """Private method to process numeric & categorical data for fit."""
-        self._X_idx = X.index
-        self.data_mi = pd.isnull(X)*1
-        if self.verbose:
-            prep = "PREPPING DATAFRAME FOR IMPUTATION ANALYSIS..."
-            print(f"{prep}\n{'-'*len(prep)}")
-
-        # call the update, which sets initial columns for fitting
-        self._update_dataframes(X)
-
-        # print categorical and numeric columns if verbose true
-        if self.verbose:
-            nm = "Number of numeric columns in X: "
-            cm = "Number of categorical columns after one-hot encoding: "
-            print(f"{nm}{self._len_num}")
-            print(f"{cm}{self._len_dum}")
-
-    def _use_all_cols(self, c):
-        """Private method to pedict using all columns."""
-
-        # set numerical columns first
-        if c in self._cols_num:
-            num_cols = self._data_num.drop(c, axis=1)
-        else:
-            num_cols = self._data_num
-
-        # set categorical columns second
-        if c in self._orig_dum:
-            d_c = [v for k, v in self._dum_dict.items() if k != c]
-            d_fc = list(itertools.chain.from_iterable(d_c))
-            d = [k for k in self._data_dum.columns if k in d_fc]
-            dum_cols = self._data_dum[d]
-        else:
-            dum_cols = self._data_dum
-
-        # return all predictors and target for predictor
-        return num_cols, dum_cols, self._data_time
-
-    def _use_iter_cols(self, c, preds):
-        """Private method to predict using some columns."""
-
-        # set numerical columns first
-        if c in self._cols_num:
-            cn = self._data_num.drop(c, axis=1)
-        else:
-            cn = self._data_num
-        cols = list(set(preds).intersection(cn.columns.tolist()))
-        num_cols = cn[cols]
-
-        # set categorical columns second
-        if c in self._orig_dum:
-            d_c = [v for k, v in self._dum_dict.items()
-                   if k != c and k in preds]
-        else:
-            d_c = [v for k, v in self._dum_dict.items()
-                   if k in preds]
-        d_fc = list(itertools.chain.from_iterable(d_c))
-        d = [k for k in self._data_dum.columns
-             if k in d_fc]
-        dum_cols = self._data_dum[d]
-
-        # set the time columns last
-        ct = list(set(preds).intersection(self._data_time.columns.tolist()))
-        time_cols = self._data_time[ct]
-
-        return num_cols, dum_cols, time_cols
-
-    def _prep_predictor_cols(self, c, predictors):
-        """Private method to prep cols for prediction."""
-        preds = predictors[c]
-        if isinstance(preds, str):
-            if preds == "all":
-                if self.verbose:
-                    print(f"No predictors given for {c}, using all columns.")
-                num, dum, time = self._use_all_cols(c)
-            else:
-                if self.verbose:
-                    print(f"Using single column {preds} to predict {c}.")
-                num, dum, time = self._use_iter_cols(c, [preds])
-        if isinstance(preds, (list, tuple)):
-            if self.verbose:
-                print(f"Using {preds} as covariates for {c}.")
-            num, dum, time = self._use_iter_cols(c, preds)
-
-        # error handling and printing to console
-        predictors = [num, dum, time]
-        predictor_str = list(map(lambda df: df.columns.tolist(), predictors))
-        if not any(predictor_str):
-            err = f"Need at least one predictor column to fit {c}."
-            raise ValueError(err)
-        if self.verbose:
-            print(f"Columns used for {c}:")
-            print(f"Numeric: {predictor_str[0]}")
-            print(f"Categorical: {predictor_str[1]}")
-            print(f"Datetime: {predictor_str[2]}")
-
-        # final columns to return for x and y
-        predictors = [p for p in predictors if p.size > 0]
-        x = pd.concat(predictors, axis=1)
-        y = self.data_mi[c]
-        return x, y
+    def _one_hot_encode(self, X):
+        """Private method to handle one hot encoding for categoricals."""
+        cats = X.select_dtypes(include=(np.object,)).columns.size
+        if cats > 0:
+            X = pd.get_dummies(X, drop_first=True)
+        return X

@@ -17,14 +17,13 @@ from xgboost import XGBClassifier
 from sklearn.base import clone, BaseEstimator, ClassifierMixin
 from sklearn.utils.validation import check_is_fitted
 from autoimpute.utils import check_nan_columns, check_predictors_fit
-from autoimpute.imputations import BaseImputer
 
 # pylint:disable=attribute-defined-outside-init
 # pylint:disable=arguments-differ
 # pylint:disable=too-many-arguments
 # pylint:disable=too-many-instance-attributes
 
-class MissingnessClassifier(BaseImputer, BaseEstimator, ClassifierMixin):
+class MissingnessClassifier(BaseEstimator, ClassifierMixin):
     """Classify values as missing or not, based on missingness patterns.
 
     The class has has numerous use cases. First, it fits columns of a DataFrame
@@ -38,18 +37,13 @@ class MissingnessClassifier(BaseImputer, BaseEstimator, ClassifierMixin):
     to unsupervised. A user never knows the true value of missing data but can
     verify imputation methods on test cases for which the true value is known.
     """
-    def __init__(self, classifier=None, predictors="all",
-                 scaler=None, verbose=False):
+    def __init__(self, classifier=None, predictors="all"):
         """Create an instance of the MissingnessClassifier.
 
         The MissingnessClassifier inherits from sklearn BaseEstimator and
         ClassifierMixin. This inheritence and this class' implementation
         ensure that the MissingnessClassifier is a valid classifier that will
         work in an sklearn pipeline.
-
-        The MissingnessClassifier also inherits from this packages'
-        `BaseImputer`, a class that contains the basic structure and building
-        blocks for a predictive imputer or missing data classifier.
 
         Args:
             classifier (classifier, optional): valid classifier from sklearn.
@@ -62,21 +56,7 @@ class MissingnessClassifier(BaseImputer, BaseEstimator, ClassifierMixin):
                 all predictions. If a dict, specify which columns to use as
                 predictors for each imputation. Columns not specified in dict
                 will receive `all` by default.
-            scaler (scaler, optional): valid scaler from sklearn.
-                If None, default is None. Note that scaler must conform to
-                sklearn style. This means it must implement the `transform`
-                method and act as a proper scaler.
-            verbose (bool, optional): print information to the console.
-                Default is False.
         """
-        BaseImputer.__init__(
-            self,
-            strategy="mean",
-            imp_kwgs=None,
-            scaler=scaler,
-            verbose=verbose,
-            visit="default"
-        )
         self.classifier = classifier
         self.predictors = predictors
 
@@ -113,17 +93,13 @@ class MissingnessClassifier(BaseImputer, BaseEstimator, ClassifierMixin):
         # next, prep the categorical / numerical split
         # only necessary for classes that use other features
         # wont see this requirement in the single imputer
-        self._prep_fit_dataframe(X)
+        self.data_mi = X.isnull().astype(int)
 
-        # scale if necessary (again only for classes using other features)
-        if self.scaler:
-            self._scaler_fit_transform()
-        return X
-
-    def _predictor_strategy_validator(self, X, new_data):
+    def _predictor_strategy_validator(self, X):
         """Private method to prep for prediction."""
+
         # initial checks before transformation
-        check_is_fitted(self, 'statistics_')
+        check_is_fitted(self, "statistics_")
 
         # check dataset features are the same for both fit and transform
         X_cols = X.columns.tolist()
@@ -132,14 +108,6 @@ class MissingnessClassifier(BaseImputer, BaseEstimator, ClassifierMixin):
         diff_mi = set(mi_cols).difference(X_cols)
         if diff_X or diff_mi:
             raise ValueError("Same columns must appear in fit and predict.")
-
-        # if not error, check if new data and perform scale if necessary
-        # note that this step is crucial if using fit and transform separately
-        # when used separately, new data needs to be prepped again
-        if new_data:
-            self._prep_fit_dataframe(X)
-            if self.scaler:
-                self._scaler_transform()
 
     @check_nan_columns
     def fit(self, X, **kwargs):
@@ -158,30 +126,28 @@ class MissingnessClassifier(BaseImputer, BaseEstimator, ClassifierMixin):
         Returns:
             self: instance of MissingnessClassifier
         """
+
         # start with fit checks
         self._fit_strategy_validator(X)
         self.statistics_ = {}
 
-        if self.verbose:
-            if hasattr(self.classifier, "__name__"):
-                self._c_name = self.classifier.__name__
-            else:
-                self._c_name = self.classifier.__class__.__name__
-            st = f"FITTING {self._c_name} TO COLUMNS OF X..."
-            print(f"{st}\n{'-'*len(st)}")
-
         # iterate missingness fit using classifier and all remaining columns
-        for c in self.data_mi:
+        for column in self.data_mi:
             # only fit non time-based columns...
-            if c not in self._cols_time:
-                x, y = self._prep_predictor_cols(c, self._preds)
+            if not np.issubdtype(column, np.datetime64):
+                y = self.data_mi[column]
+                preds = self._preds[column]
+                if preds == "all":
+                    x = X.drop(column, axis=1)
+                else:
+                    x = X[preds]
                 clf = clone(self.classifier)
                 cls_fit = clf.fit(x.values, y.values, **kwargs)
-                self.statistics_[c] = cls_fit
+                self.statistics_[column] = cls_fit
         return self
 
     @check_nan_columns
-    def predict(self, X, new_data=True, **kwargs):
+    def predict(self, X, **kwargs):
         """Predict class of each feature. 1 for missing; 0 for not missing.
 
         First checks to ensure data has been fit. If fit, `predict` method
@@ -192,8 +158,6 @@ class MissingnessClassifier(BaseImputer, BaseEstimator, ClassifierMixin):
 
         Args:
             X (pd.DataFrame): DataFrame used to create predictions.
-            new_data (bool, optional): whether or not new data is used.
-                Default is True.
             kwargs: kewword arguments. Used by the classifer.
 
         Returns:
@@ -201,15 +165,16 @@ class MissingnessClassifier(BaseImputer, BaseEstimator, ClassifierMixin):
         """
 
         # predictions for each column using respective fit classifier
-        self._predictor_strategy_validator(X, new_data)
-        if self.verbose:
-            st = f"PREDICTING CLASS MEMBERSHIP USING FIT {self._c_name}..."
-            print(f"{st}\n{'-'*len(st)}")
+        self._predictor_strategy_validator(X)
         preds_mat = []
-        for c in self.data_mi:
-            if c not in self._cols_time:
-                x, _ = self._prep_predictor_cols(c, self._preds)
-                cls_fit = self.statistics_[c]
+        for column in self.data_mi:
+            if not np.issubdtype(column, np.datetime64):
+                preds = self._preds[column]
+                if preds == "all":
+                    x = X.drop(column, axis=1)
+                else:
+                    x = X[preds]
+                cls_fit = self.statistics_[column]
                 y_pred = cls_fit.predict(x.values, **kwargs)
                 preds_mat.append(y_pred)
             else:
@@ -223,7 +188,7 @@ class MissingnessClassifier(BaseImputer, BaseEstimator, ClassifierMixin):
         return self.data_mi_preds
 
     @check_nan_columns
-    def predict_proba(self, X, new_data=True, **kwargs):
+    def predict_proba(self, X, **kwargs):
         """Predict probability of missing class membership of each feature.
 
         First checks to ensure data has been fit. If fit, `predict_proba`
@@ -235,22 +200,21 @@ class MissingnessClassifier(BaseImputer, BaseEstimator, ClassifierMixin):
 
         Args:
             X (pd.DataFrame): DataFrame used to create probabilities.
-            new_data (bool, Optional): whether or not new data is used.
-                Default is True.
 
         Returns:
             pd.DataFrame: DataFrame with probability of missing class for
                 each observation.
         """
-        self._predictor_strategy_validator(X, new_data)
-        if self.verbose:
-            st = f"PREDICTING CLASS PROBABILITY USING FIT {self._c_name}..."
-            print(f"{st}\n{'-'*len(st)}")
+        self._predictor_strategy_validator(X)
         preds_mat = []
-        for c in self.data_mi:
-            if c not in self._cols_time:
-                x, _ = self._prep_predictor_cols(c, self._preds)
-                cls_fit = self.statistics_[c]
+        for column in self.data_mi:
+            if not np.issubdtype(column, np.datetime64):
+                preds = self._preds[column]
+                if preds == "all":
+                    x = X.drop(column, axis=1)
+                else:
+                    x = X[preds]
+                cls_fit = self.statistics_[column]
                 y_pred = cls_fit.predict_proba(x.values, **kwargs)[:, 1]
                 preds_mat.append(y_pred)
             else:
@@ -272,7 +236,7 @@ class MissingnessClassifier(BaseImputer, BaseEstimator, ClassifierMixin):
         Returns:
             pd.DataFrame: DataFrame of class predictions.
         """
-        return self.fit(X).predict(X, False)
+        return self.fit(X).predict(X)
 
     def fit_predict_proba(self, X):
         """Convenience method for fit and class probability prediction.
@@ -283,7 +247,7 @@ class MissingnessClassifier(BaseImputer, BaseEstimator, ClassifierMixin):
         Returns:
             pd.DataFrame: DataFrame of class probability predictions.
         """
-        return self.fit(X).predict_proba(X, False)
+        return self.fit(X).predict_proba(X)
 
     @check_nan_columns
     def gen_test_indices(self, X, thresh=0.5, use_exist=False):
@@ -301,8 +265,6 @@ class MissingnessClassifier(BaseImputer, BaseEstimator, ClassifierMixin):
             thresh (float, optional): Threshhold for generating false positive.
                 If raw value is observed and P(missing) >= thresh, then the
                 observation is considered a false positive and index is stored.
-            new_data (bool, optional): Whether or not new data is used.
-                Default is False.
             use_exist (bool, optional): Whether or not to use existing fit and
                 classifiers. Default is False.
 
@@ -322,8 +284,6 @@ class MissingnessClassifier(BaseImputer, BaseEstimator, ClassifierMixin):
             pred_not_mi = self.data_mi_proba.loc[not_mi, f"{c}_pred"]
             pred_wrong = pred_not_mi[pred_not_mi > thresh].index
             self.test_indices[c] = pred_wrong
-            if self.verbose:
-                print(f"Test indices for {c}:\n{pred_wrong.values.tolist()}")
         return self
 
     def gen_test_df(self, X, thresh=0.5, m=0.05,

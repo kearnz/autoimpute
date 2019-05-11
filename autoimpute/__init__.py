@@ -19,6 +19,8 @@ This module handles `from autoimpute import *` with the __all__ variable below.
 This command imports the major directories from autoimpute.
 """
 
+from .__version__ import __version__
+
 __all__ = [
     "utils",
     "visuals",
