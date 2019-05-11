@@ -3,9 +3,19 @@
 
 <span style="font-size:1.5em;">Autoimpute is a Python package for analysis and implementation of <b>Imputation Methods!</b></span>
 
-<span style="font-size:1.5em;">Download the package: `pip install autoimpute`</span>
-
 <span style="font-size:1.5em;">[View our website](https://kearnz.github.io/autoimpute-tutorials/) to explore Autoimpute in more detail.</span>
+
+## Installation
+* Autoimpute is now **registered with PyPI!** Download with `pip install autoimpute`. The latest version is `0.11.0`.
+* If your `pip` has cached an older version, try `pip install --no-cache-dir --upgrade autoimpute` to stay up-to-date.
+* If you want to work with the development branch, use the script below:
+
+*Development*
+```sh
+git clone -b dev --single-branch https://github.com/kearnz/autoimpute.git
+cd autoimpute
+python setup.py install
+```
 
 ## Motivation
 Most machine learning algorithms expect clean and complete datasets, but most real-world data is messy and missing. Unfortunately, handling missing data is quite complex, so programming languages generally punt this responsibility to the end user. By default, R drops all records with missing data - a method that is easy to implement but often problematic in practice. For richer imputation strategies, R has multiple packages to deal with missing data (`MICE`, `Amelia`, `TSImpute`, etc.). Python users are not as fortunate. Python's `scikit-learn` throws a runtime error when an end user deploys models on datasets with missing records, and few third-party packages exist to handle imputation end-to-end.
@@ -158,17 +168,6 @@ For a deeper understanding of how the package works and its available features, 
     - `pymc3` >= 3.5
     - `seaborn` >= 0.9.0
     - `missingno` >= 0.4.1
-
-## Installation
-* Autoimpute is now **registered with PyPI!** Use `pip install autoimpute` to download the package.
-* If you want to work with the development branch, use the script below:
-
-*Development*
-```sh
-git clone -b dev --single-branch https://github.com/kearnz/autoimpute.git
-cd autoimpute
-python setup.py install
-```
 
 *A note for Windows Users*:
 * Autoimpute works on Windows but users may have trouble with pymc3 for bayesian methods. [(See discourse)](https://discourse.pymc.io/t/an-error-message-about-cant-pickle-fortran-objects/1073)
