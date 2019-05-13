@@ -25,9 +25,10 @@ Therefore, this package aids the Python user by providing more clarity to the im
 ## Main Features
 * Utility functions and basic visualizations to explore missingness patterns
 * Missingness classifier and automatic missing data test set generator
+* Native handling for categorical variables (as predictors and targets of imputation)
 * Single and multiple imputation classes for `pandas` `DataFrames`
 * Analysis methods and pooled parameter inference using multiply imputed datasets
-* Numerous imputation methods, as specified in the table below
+* Numerous imputation methods, as specified in the table below:
 
 ## Imputation Methods Supported
 
@@ -71,8 +72,6 @@ imp.fit_transform(data)
 
 Or quite complex, such as:
 ```python
-from sklearn.preprocessing import StandardScaler
-
 # create a complex instance of the MultipleImputer
 # Here, we specify strategies by column and predictors for each column
 # We also specify what additional arguments any `pmm` strategies should take
@@ -81,10 +80,8 @@ imp = MultipleImputer(
     strategy={"salary": "pmm", "gender": "bayesian binary logistic", "age": "norm"},
     predictors={"salary": "all", "gender": ["salary", "education", "weight"]},
     imp_kwgs={"pmm": {"fill_value": "random"}},
-    scaler=StandardScaler(),
     visit="left-to-right",
     return_list=True
-    verbose=True
 )
 
 # Because we set return_list=True, imputations are done all at once, not evaluated lazily.

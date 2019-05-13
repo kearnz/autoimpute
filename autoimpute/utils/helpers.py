@@ -1,6 +1,7 @@
 """Helper functions used throughout other methods in automipute.utils."""
 
 import warnings
+import numpy as np
 import pandas as pd
 
 def _sq_output(data, cols, square=False):
@@ -27,3 +28,10 @@ def _nan_col_dropper(data):
         wrn = f"{cdiff} dropped from DataFrame because all rows missing."
         warnings.warn(wrn)
     return data, cdiff
+
+def _one_hot_encode(X):
+    """Private method to handle one hot encoding for categoricals."""
+    cats = X.select_dtypes(include=(np.object,)).columns.size
+    if cats > 0:
+        X = pd.get_dummies(X, drop_first=True)
+    return X

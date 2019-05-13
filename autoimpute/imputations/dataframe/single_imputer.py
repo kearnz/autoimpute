@@ -13,6 +13,7 @@ from sklearn.base import BaseEstimator, TransformerMixin
 from sklearn.utils.validation import check_is_fitted
 from autoimpute.utils import check_nan_columns, check_predictors_fit
 from autoimpute.utils import check_strategy_fit
+from autoimpute.utils.helpers import _one_hot_encode
 from autoimpute.imputations.helpers import _get_observed
 from .base_imputer import BaseImputer
 from ..series import DefaultUnivarImputer
@@ -192,7 +193,7 @@ class SingleImputer(BaseImputer, BaseEstimator, TransformerMixin):
                 x_, y_ = _get_observed(xs, ys, self.verbose)
 
                 # before imputing, need to encode categoricals
-                x_ = self._one_hot_encode(x_)
+                x_ = _one_hot_encode(x_)
 
                 imputer.fit(x_, y_)
 
@@ -283,7 +284,7 @@ class SingleImputer(BaseImputer, BaseEstimator, TransformerMixin):
                         x_.loc[x_null, col] = d_imps
 
                 # handling encoding again for prediction of imputations
-                x_ = self._one_hot_encode(x_)
+                x_ = _one_hot_encode(x_)
 
             # perform imputation given the specified imputer and value for x_
             X.loc[imp_ix, column] = imputer.impute(x_)

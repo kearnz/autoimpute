@@ -6,8 +6,6 @@ methods available for imputation analysis.
 """
 
 import warnings
-import numpy as np
-import pandas as pd
 from autoimpute.utils import check_strategy_allowed
 from autoimpute.imputations import method_names
 from ..series import DefaultUnivarImputer, DefaultPredictiveImputer
@@ -248,10 +246,3 @@ class BaseImputer:
             msg = f"{c} only category for feature {col}."
             cons = f"Consider removing {col} from dataset."
             warnings.warn(f"{msg} {cons}")
-
-    def _one_hot_encode(self, X):
-        """Private method to handle one hot encoding for categoricals."""
-        cats = X.select_dtypes(include=(np.object,)).columns.size
-        if cats > 0:
-            X = pd.get_dummies(X, drop_first=True)
-        return X
