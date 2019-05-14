@@ -1,12 +1,12 @@
 # Autoimpute
 [![PyPI version](https://badge.fury.io/py/autoimpute.svg)](https://badge.fury.io/py/autoimpute) [![Build Status](https://travis-ci.com/kearnz/autoimpute.svg?branch=master)](https://travis-ci.com/kearnz/autoimpute) [![MIT license](https://img.shields.io/badge/License-MIT-blue.svg)](https://lbesson.mit-license.org/) [![Python 3.6](https://img.shields.io/badge/python-3.6-blue.svg)](https://www.python.org/downloads/release/python-360/)
 
-<span style="font-size:1.5em;">Autoimpute is a Python package for analysis and implementation of <b>Imputation Methods!</b></span>
+<span style="font-size:1.5em;">[`Autoimpute`](https://pypi.org/project/autoimpute/) is a Python package for analysis and implementation of <b>Imputation Methods!</b></span>
 
-<span style="font-size:1.5em;">[View our website](https://kearnz.github.io/autoimpute-tutorials/) to explore Autoimpute in more detail.</span>
+<span style="font-size:1.5em;">[View our website](https://kearnz.github.io/autoimpute-tutorials/) to explore `Autoimpute` in more detail.</span>
 
 ## Installation
-* Autoimpute is now **registered with PyPI!** Download with `pip install autoimpute`. The latest version is `0.11.0`.
+* `Autoimpute` is now **registered with PyPI!** Download with `pip install autoimpute`. The latest version is `0.11.0`.
 * If `pip` cached an older version, try `pip install --no-cache-dir --upgrade autoimpute` to get the latest.
 * If you want to work with the development branch, use the script below:
 
