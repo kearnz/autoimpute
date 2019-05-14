@@ -17,7 +17,6 @@
 import os
 import sys
 import mock
-from autoimpute import __version__
 sys.path.insert(0, os.path.abspath("../.."))
 MOCK_MODULES = [
     "numpy",
@@ -44,9 +43,9 @@ copyright = '2019, Joseph Kearney, Shahid Barkat'
 author = 'Joseph Kearney, Shahid Barkat'
 
 # The short X.Y version
-version = __version__
+version = "0.11.0"
 # The full version, including alpha/beta/rc tags
-release = __version__
+release = ""
 
 
 # -- General configuration ---------------------------------------------------
