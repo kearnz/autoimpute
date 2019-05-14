@@ -16,8 +16,26 @@
 #
 import os
 import sys
+import mock
 from autoimpute import __version__
-sys.path.insert(0, os.path.abspath('../..'))
+sys.path.insert(0, os.path.abspath("../.."))
+MOCK_MODULES = [
+    "numpy",
+    "pandas",
+    "pandas.api.types",
+    "scipy",
+    "scipy.stats",
+    "sklearn",
+    "sklearn.base",
+    "sklearn.utils.validation",
+    "sklearn.linear_model",
+    "statsmodels",
+    "statsmodels.api",
+    "pymc3",
+    "xgboost"
+]
+for mod_name in MOCK_MODULES:
+    sys.modules[mod_name] = mock.Mock()
 
 # -- Project information -----------------------------------------------------
 
