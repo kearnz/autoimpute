@@ -1,23 +1,39 @@
-.. Autoimpute documentation master file, created by
-   sphinx-quickstart on Mon May 13 22:51:38 2019.
-   You can adapt this file completely to your liking, but it should at least
-   contain the root `toctree` directive.
-
 Welcome to Autoimpute!
 ======================
 
-.. toctree::
-   :maxdepth: 2
-   :caption: Contents:
+.. image:: https://badge.fury.io/py/autoimpute.svg
+   :target: https://badge.fury.io/py/autoimpute
+   :alt: PyPI version
+ 
+.. image:: https://travis-ci.com/kearnz/autoimpute.svg?branch=master
+   :target: https://travis-ci.com/kearnz/autoimpute
+   :alt: Build Status
+ 
+.. image:: https://readthedocs.org/projects/autoimpute/badge/?version=latest
+   :target: https://autoimpute.readthedocs.io/en/latest/?badge=latest
+   :alt: Documentation Status
+ 
+.. image:: https://img.shields.io/badge/License-MIT-blue.svg
+   :target: https://lbesson.mit-license.org/
+   :alt: MIT license
+ 
+.. image:: https://img.shields.io/badge/python-3.6-blue.svg
+   :target: https://www.python.org/downloads/release/python-360/
+   :alt: Python 3.6
 
-The authors are currently writing the documentation for :code:`Autoimpute`.
+Autoimpute is a Python package for analysis and implementation of Imputation Methods!
 
-Until documentation is complete, get started with our README_
+This page introduces users to the package and documents its features.
 
-.. _README: https://github.com/kearnz/autoimpute/blob/master/README.md
-
-Then check out tutorials on our website_
+For Autoimpute tutorials, check out our website_
 
 .. _website: https://kearnz.github.io/autoimpute-tutorials/
 
-And when you're ready to start using the package, :code:`pip install autoimpute`
+.. toctree::
+    :caption: User Guide
+    :titlesonly:
+    
+    Getting Started <user_guide/getting_started>
+    Utility Methods <user_guide/utils>
+
+The authors are currently writing the documentation for :code:`Autoimpute`. Therefore, this page is a work in progress and does not yet document many of the methods and classes within the package. Continuously check back as we add more information. 
