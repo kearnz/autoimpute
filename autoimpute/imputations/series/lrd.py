@@ -12,7 +12,6 @@ import numpy as np
 import pymc3 as pm
 from pandas import DataFrame
 from scipy.stats import multivariate_normal
-from sklearn.base import BaseEstimator
 from sklearn.linear_model import LinearRegression
 from sklearn.utils.validation import check_is_fitted
 from autoimpute.imputations import method_names
@@ -24,7 +23,7 @@ methods = method_names
 # pylint:disable=no-member
 # pylint:disable=unused-variable
 
-class LRDImputer(ISeriesImputer, BaseEstimator):
+class LRDImputer(ISeriesImputer):
     """Impute missing values using local residual draws.
 
     The LRDImputer produces predictions using a combination of bayesian

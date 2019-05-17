@@ -35,5 +35,8 @@ For Autoimpute tutorials, check out our website_
     
     Getting Started <user_guide/getting_started>
     Utility Methods <user_guide/utils>
+    Deletion and Imputation Strategies <user_guide/strategies>
+    Single and Multiple Imputers <user_guide/imputers>
+    Missingness Classifier <user_guide/missingness>
 
 The authors are currently writing the documentation for :code:`Autoimpute`. Therefore, this page is a work in progress and does not yet document many of the methods and classes within the package. Continuously check back as we add more information. 

@@ -18,6 +18,8 @@ import os
 import sys
 import mock
 sys.path.insert(0, os.path.abspath("../.."))
+
+# must mock modules that contain C code or autodoc won't install libs
 MOCK_MODULES = [
     "numpy",
     "pandas",
@@ -26,6 +28,7 @@ MOCK_MODULES = [
     "scipy.stats",
     "sklearn",
     "sklearn.base",
+    "sklearn.metrics",
     "sklearn.utils.validation",
     "sklearn.linear_model",
     "statsmodels",
@@ -35,6 +38,20 @@ MOCK_MODULES = [
 ]
 for mod_name in MOCK_MODULES:
     sys.modules[mod_name] = mock.Mock()
+
+# dealing with mock metaclass issue
+class BaseEstimatorClass(object):
+    pass
+
+class TransformerMixinClass(object):
+    pass
+
+class ClassifierMixinClass(object):
+    pass
+
+setattr(sys.modules['sklearn.base'], 'BaseEstimator', BaseEstimatorClass)
+setattr(sys.modules['sklearn.base'], 'TransformerMixin', TransformerMixinClass)
+setattr(sys.modules['sklearn.base'], 'ClassifierMixin', ClassifierMixinClass)
 
 # -- Project information -----------------------------------------------------
 

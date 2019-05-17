@@ -8,7 +8,6 @@ dataframe, or specify this strategy for a given column.
 """
 
 import numpy as np
-from sklearn.base import BaseEstimator
 from sklearn.utils.validation import check_is_fitted
 from autoimpute.imputations import method_names
 from .base import ISeriesImputer
@@ -16,7 +15,7 @@ methods = method_names
 # pylint:disable=attribute-defined-outside-init
 # pylint:disable=unnecessary-pass
 
-class RandomImputer(ISeriesImputer, BaseEstimator):
+class RandomImputer(ISeriesImputer):
     """Impute missing data using random draws from observed data.
 
     The RandomImputer samples with replacement from observed data. The imputer

@@ -10,7 +10,6 @@ inherit from DefaultBaseImputer.
 
 from pandas.api.types import is_string_dtype
 from pandas.api.types import is_numeric_dtype
-from sklearn.base import BaseEstimator
 from sklearn.utils.validation import check_is_fitted
 from autoimpute.imputations import method_names
 from .pmm import PMMImputer
@@ -219,7 +218,7 @@ class DefaultBaseImputer(ISeriesImputer):
         """Convenience method to perform fit and imputation in one go."""
         return self.fit(X, y).impute(X)
 
-class DefaultUnivarImputer(DefaultBaseImputer, BaseEstimator):
+class DefaultUnivarImputer(DefaultBaseImputer):
     """Impute missing data using default methods for univariate imputation.
 
     This imputer is the default for univariate imputation. The imputer
@@ -279,7 +278,7 @@ class DefaultUnivarImputer(DefaultBaseImputer, BaseEstimator):
         X_ = super().impute(X)
         return X_
 
-class DefaultTimeSeriesImputer(DefaultBaseImputer, BaseEstimator):
+class DefaultTimeSeriesImputer(DefaultBaseImputer):
     """Impute missing data using default methods for time series.
 
     This imputer is the default imputer for time series imputation. The
@@ -339,7 +338,7 @@ class DefaultTimeSeriesImputer(DefaultBaseImputer, BaseEstimator):
         X_ = super().impute(X)
         return X_
 
-class DefaultPredictiveImputer(DefaultBaseImputer, BaseEstimator):
+class DefaultPredictiveImputer(DefaultBaseImputer):
     """Impute missing data using default methods for prediction.
 
     This imputer is the default imputer for the MultipleImputer class. When

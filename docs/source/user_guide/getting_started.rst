@@ -23,12 +23,35 @@ Installation
    cd autoimpute
    python setup.py install
 
-Motivation
-----------
+Versions and Dependencies
+-------------------------
 
-Most machine learning algorithms expect clean and complete datasets, but most real-world data is messy and missing. Unfortunately, handling missing data is quite complex, so programming languages generally punt this responsibility to the end user. By default, R drops all records with missing data - a method that is easy to implement but often problematic in practice. For richer imputation strategies, R has multiple packages to deal with missing data (\ ``MICE``\ , ``Amelia``\ , ``TSImpute``\ , etc.). Python users are not as fortunate. Python's ``scikit-learn`` throws a runtime error when an end user deploys models on datasets with missing records, and few third-party packages exist to handle imputation end-to-end.
 
-Therefore, this package aids the Python user by providing more clarity to the imputation process, making imputation methods more accessible, and measuring the impact imputation methods have in supervised regression and classification. In doing so, this package brings missing data imputation methods to the Python world and makes them work nicely in Python machine learning projects (and specifically ones that utilize ``scikit-learn``\ ). Lastly, this package provides its own implementation of supervised machine learning methods that extend both ``scikit-learn`` and ``statsmodels`` to mutiply imputed datasets.
+* Python 3.6+
+* Dependencies:
+
+  * ``numpy`` >= 1.15.4
+  * ``scipy`` >= 1.2.1
+  * ``pandas`` >= 0.20.3
+  * ``statsmodels`` >= 0.8.0
+  * ``scikit-learn`` >= 0.20.2
+  * ``xgboost`` >= 0.83
+  * ``pymc3`` >= 3.5
+  * ``seaborn`` >= 0.9.0
+  * ``missingno`` >= 0.4.1
+
+*A note for Windows Users*\ :
+
+
+* Autoimpute works on Windows but users may have trouble with pymc3 for bayesian methods. `(See discourse) <https://discourse.pymc.io/t/an-error-message-about-cant-pickle-fortran-objects/1073>`_
+* Users may receive a runtime error ``‘can’t pickle fortran objects’`` when sampling using multiple chains.
+* There are a couple of things to do to try to overcome this error:
+
+  * Reinstall theano and pymc3. Make sure to delete .theano cache in your home folder.
+  * Upgrade joblib in the process, which is reponsible for generating the error (pymc3 uses joblib under the hood).
+  * Set ``cores=1`` in ``pm.sample``. This should be a last resort, as it means posterior sampling will use 1 core only. Not using multiprocessing will slow down bayesian imputation methods significantly.
+
+* Reach out and let us know if you've worked through this issue successfully on Windows and have a better solution!
 
 Main Features
 -------------
@@ -74,18 +97,6 @@ Imputation Methods Supported
    * - 
      - Local Residual Draws
      - Last Obs Carried Forward
-
-
-Todo
-----
-
-
-* Additional cross-sectional methods, including random forest, KNN, EM, and maximum likelihood
-* Additional time-series methods, including EWMA, ARIMA, Kalman filters, and state-space models
-* Extended support for visualization of missing data patterns
-* Native support for visualization of imputation results and analysis of multiply imputed data
-* Additional support for analysis metrics and analyis models after multiple imputation
-* Multiprocessing and GPU support for larger datasets, as well as integration with ``dask`` DataFrames
 
 Example Usage
 -------------
@@ -194,36 +205,6 @@ Note that we can also pass a pre-specified ``MultipleImputer`` to either analysi
    complex_lm.summary()
 
 For a deeper understanding of how the package works and its available features, see our `tutorials website <https://kearnz.github.io/autoimpute-tutorials/>`_.
-
-Versions and Dependencies
--------------------------
-
-
-* Python 3.6+
-* Dependencies:
-
-  * ``numpy`` >= 1.15.4
-  * ``scipy`` >= 1.2.1
-  * ``pandas`` >= 0.20.3
-  * ``statsmodels`` >= 0.8.0
-  * ``scikit-learn`` >= 0.20.2
-  * ``xgboost`` >= 0.83
-  * ``pymc3`` >= 3.5
-  * ``seaborn`` >= 0.9.0
-  * ``missingno`` >= 0.4.1
-
-*A note for Windows Users*\ :
-
-
-* Autoimpute works on Windows but users may have trouble with pymc3 for bayesian methods. `(See discourse) <https://discourse.pymc.io/t/an-error-message-about-cant-pickle-fortran-objects/1073>`_
-* Users may receive a runtime error ``‘can’t pickle fortran objects’`` when sampling using multiple chains.
-* There are a couple of things to do to try to overcome this error:
-
-  * Reinstall theano and pymc3. Make sure to delete .theano cache in your home folder.
-  * Upgrade joblib in the process, which is reponsible for generating the error (pymc3 uses joblib under the hood).
-  * Set ``cores=1`` in ``pm.sample``. This should be a last resort, as it means posterior sampling will use 1 core only. Not using multiprocessing will slow down bayesian imputation methods significantly.
-
-* Reach out and let us know if you've worked through this issue successfully on Windows and have a better solution!
 
 Creators and Maintainers
 ------------------------

@@ -9,7 +9,6 @@ columns in a dataframe, or specify either strategy for a given column.
 """
 
 import pandas as pd
-from sklearn.base import BaseEstimator
 from sklearn.utils.validation import check_is_fitted
 from autoimpute.imputations import method_names
 from .base import ISeriesImputer
@@ -18,7 +17,7 @@ methods = method_names
 # pylint:disable=unnecessary-pass
 # pylint:disable=unused-argument
 
-class LOCFImputer(ISeriesImputer, BaseEstimator):
+class LOCFImputer(ISeriesImputer):
     """Impute missing values by carrying the last observation forward.
 
     LOCFImputer carries the last observation forward to impute missing data.
@@ -95,7 +94,7 @@ class LOCFImputer(ISeriesImputer, BaseEstimator):
         """Convenience method to perform fit and imputation in one go."""
         return self.fit(X, y).impute(X)
 
-class NOCBImputer(ISeriesImputer, BaseEstimator):
+class NOCBImputer(ISeriesImputer):
     """Impute missing data by carrying the next observation backward.
 
     NOCBImputer carries the next observation backward to impute missing data.

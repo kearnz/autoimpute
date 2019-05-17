@@ -9,7 +9,6 @@ for a given column.
 """
 
 import numpy as np
-from sklearn.base import BaseEstimator
 from sklearn.utils.validation import check_is_fitted
 from autoimpute.imputations import method_names
 from autoimpute.imputations.errors import _not_cat_series
@@ -18,7 +17,7 @@ methods = method_names
 # pylint:disable=attribute-defined-outside-init
 # pylint:disable=unnecessary-pass
 
-class CategoricalImputer(ISeriesImputer, BaseEstimator):
+class CategoricalImputer(ISeriesImputer):
     """Impute missing data w/ draw from dataset's categorical distribution.
 
     The categorical imputer computes the proportion of observed values for

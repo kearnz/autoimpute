@@ -12,7 +12,6 @@ columns in a dataframe, or specify either strategy for a given column.
 import numpy as np
 import pymc3 as pm
 from pandas import Series
-from sklearn.base import BaseEstimator
 from sklearn.utils.validation import check_is_fitted
 from autoimpute.imputations import method_names
 from autoimpute.imputations.errors import _not_num_series
@@ -24,7 +23,7 @@ methods = method_names
 # pylint:disable=no-member
 # pylint:disable=too-many-instance-attributes
 
-class BayesianLeastSquaresImputer(ISeriesImputer, BaseEstimator):
+class BayesianLeastSquaresImputer(ISeriesImputer):
     """Impute missing values using bayesian least squares regression.
 
     The BayesianLeastSquaresImputer produces predictions using the bayesian
@@ -161,7 +160,7 @@ class BayesianLeastSquaresImputer(ISeriesImputer, BaseEstimator):
         miss_y_ix = y[y.isnull()].index
         return self.fit(X, y).impute(X.loc[miss_y_ix])
 
-class BayesianBinaryLogisticImputer(ISeriesImputer, BaseEstimator):
+class BayesianBinaryLogisticImputer(ISeriesImputer):
     """Impute missing values using bayesian binary losgistic regression.
 
     The BayesianBinaryLogisticImputer produces predictions using the bayesian

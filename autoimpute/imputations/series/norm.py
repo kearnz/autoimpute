@@ -8,7 +8,6 @@ strategy for a given column.
 """
 
 from scipy.stats import norm
-from sklearn.base import BaseEstimator
 from sklearn.utils.validation import check_is_fitted
 from autoimpute.imputations import method_names
 from autoimpute.imputations.errors import _not_num_series
@@ -17,7 +16,7 @@ methods = method_names
 # pylint:disable=attribute-defined-outside-init
 # pylint:disable=unnecessary-pass
 
-class NormImputer(ISeriesImputer, BaseEstimator):
+class NormImputer(ISeriesImputer):
     """Impute missing data with draws from normal distribution.
 
     The NormImputer constructs a normal distribution using the sample mean and

@@ -7,7 +7,7 @@ this base class to be considered valid Imputers.
 
 import abc
 
-class ISeriesImputer(metaclass=abc.ABCMeta):
+class ISeriesImputer():
     """ISeriesImputer implements the abstract base class for series-imputers.
 
     All series imputers should have a fit, impute, and fit_impute method to be

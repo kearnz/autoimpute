@@ -7,7 +7,6 @@ strategy across all the columns in a dataframe, or specify this strategy
 for a given column.
 """
 
-from sklearn.base import BaseEstimator
 from sklearn.utils.validation import check_is_fitted
 from autoimpute.imputations import method_names
 from autoimpute.imputations.errors import _not_num_series
@@ -16,7 +15,7 @@ methods = method_names
 # pylint:disable=attribute-defined-outside-init
 # pylint:disable=unnecessary-pass
 
-class MeanImputer(ISeriesImputer, BaseEstimator):
+class MeanImputer(ISeriesImputer):
     """Impute missing values with the mean of the observed data.
 
     This imputer imputes missing values with the mean of observed data.

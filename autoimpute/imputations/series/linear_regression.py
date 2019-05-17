@@ -11,7 +11,6 @@ for a given column.
 
 from numpy import sqrt
 from scipy.stats import norm
-from sklearn.base import BaseEstimator
 from sklearn.utils.validation import check_is_fitted
 from sklearn.linear_model import LinearRegression
 from sklearn.metrics import mean_squared_error
@@ -22,7 +21,7 @@ methods = method_names
 # pylint:disable=attribute-defined-outside-init
 # pylint:
 
-class LeastSquaresImputer(ISeriesImputer, BaseEstimator):
+class LeastSquaresImputer(ISeriesImputer):
     """Impute missing values using predictions from least squares regression.
 
     The LeastSquaresImputer produces predictions using the least squares
@@ -94,7 +93,7 @@ class LeastSquaresImputer(ISeriesImputer, BaseEstimator):
         miss_y_ix = y[y.isnull()].index
         return self.fit(X, y).impute(X.loc[miss_y_ix])
 
-class StochasticImputer(ISeriesImputer, BaseEstimator):
+class StochasticImputer(ISeriesImputer):
     """Impute missing values adding error to least squares regression preds.
 
     The StochasticImputer predicts using the least squares methodology. The

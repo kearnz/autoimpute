@@ -9,7 +9,6 @@ dataframe, or specify this strategy for a given column.
 """
 
 import pandas as pd
-from sklearn.base import BaseEstimator
 from sklearn.utils.validation import check_is_fitted
 from autoimpute.imputations import method_names
 from .base import ISeriesImputer
@@ -18,7 +17,7 @@ methods = method_names
 # pylint:disable=unnecessary-pass
 # pylint:disable=unused-argument
 
-class InterpolateImputer(ISeriesImputer, BaseEstimator):
+class InterpolateImputer(ISeriesImputer):
     """Impute missing values using interpolation techniques.
 
     The InterpolateImputer imputes missing values uses a valid pd.Series

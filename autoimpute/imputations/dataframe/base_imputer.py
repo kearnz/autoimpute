@@ -26,7 +26,6 @@ methods = method_names
 # pylint:disable=too-many-instance-attributes
 # pylint:disable=inconsistent-return-statements
 
-
 class BaseImputer:
     """Building blocks for more advanced DataFrame imputers.
 
