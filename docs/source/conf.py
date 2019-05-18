@@ -33,6 +33,8 @@ MOCK_MODULES = [
     "sklearn.linear_model",
     "statsmodels",
     "statsmodels.api",
+    "statsmodels.discrete",
+    "statsmodels.discrete.discrete_model",
     "pymc3",
     "xgboost"
 ]

@@ -21,12 +21,15 @@ Welcome to Autoimpute!
    :target: https://www.python.org/downloads/release/python-360/
    :alt: Python 3.6
 
-Autoimpute is a Python package for analysis and implementation of Imputation Methods!
+Autoimpute_ is a Python package for analysis and implementation of Imputation Methods!
+
+.. _Autoimpute: https://pypi.org/project/autoimpute/
 
 This page introduces users to the package and documents its features.
 
-For Autoimpute tutorials, check out our website_
+Check out the package on github_, or head to our website_ to walk through some tutorials.
 
+.. _github: https://github.com/kearnz/autoimpute
 .. _website: https://kearnz.github.io/autoimpute-tutorials/
 
 .. toctree::
@@ -38,5 +41,6 @@ For Autoimpute tutorials, check out our website_
     Deletion and Imputation Strategies <user_guide/strategies>
     Single and Multiple Imputers <user_guide/imputers>
     Missingness Classifier <user_guide/missingness>
+    Analysis Models <user_guide/analysis>
 
-The authors are currently writing the documentation for :code:`Autoimpute`. Therefore, this page is a work in progress and does not yet document many of the methods and classes within the package. Continuously check back as we add more information. 
+The authors are currently writing the documentation for ``Autoimpute``. Therefore, this page is a work in progress and does not yet document all of the methods and classes within the package. Continuously check back as we add more information. 

@@ -1,10 +1,7 @@
-.. role:: raw-html-m2r(raw)
-   :format: html
-
 Getting Started
 ===============
 
-The sections below provide a high level overview of the ``Autoimpute`` package. This page takes you through installation, motivation, main features, imputation methods supported, and basic usage of the package. It also provides links to get in touch with the authors, review our lisence, and review how to contribute.
+The sections below provide a high level overview of the ``Autoimpute`` package. This page takes you through installation, dependencies, main features, imputation methods supported, and basic usage of the package. It also provides links to get in touch with the authors, review our lisence, and review how to contribute.
 
 Installation
 ------------
@@ -204,13 +201,15 @@ Note that we can also pass a pre-specified ``MultipleImputer`` to either analysi
    complex_lm.fit(X_train, y_train).predict(X_test)
    complex_lm.summary()
 
-For a deeper understanding of how the package works and its available features, see our `tutorials website <https://kearnz.github.io/autoimpute-tutorials/>`_.
+For a deeper understanding of how the package works and its features, see our `tutorials website <https://kearnz.github.io/autoimpute-tutorials/>`_.
 
 Creators and Maintainers
 ------------------------
 
-Joseph Kearney – `@kearnz <https://github.com/kearnz>`_\ :raw-html-m2r:`<br>`
-Shahid Barkat - `@shabarka <https://github.com/shabarka>`_\ :raw-html-m2r:`<br>`
+
+* Joseph Kearney – `@kearnz <https://github.com/kearnz>`_
+* Shahid Barkat - `@shabarka <https://github.com/shabarka>`_
+
 See the `Authors <https://github.com/kearnz/autoimpute/blob/master/AUTHORS.rst>`_ page to get in touch!
 
 License

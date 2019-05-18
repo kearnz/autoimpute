@@ -5,7 +5,7 @@
 
 <span style="font-size:1.5em;">[View our website](https://kearnz.github.io/autoimpute-tutorials/) to explore `Autoimpute` in more detail.</span>
 
-<span style="font-size:1.5em;">[Check out our Docs](https://autoimpute.readthedocs.io/en/latest/) to get the developer guide to `Autoimpute`</span>
+<span style="font-size:1.5em;">[Check out our Docs](https://autoimpute.readthedocs.io/en/latest/) to get the developer guide to `Autoimpute`.</span>
 
 ## Installation
 * `Autoimpute` is now **registered with PyPI!** Download with `pip install autoimpute`. The latest version is `0.11.0`.
