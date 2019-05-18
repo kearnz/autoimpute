@@ -6,8 +6,9 @@ this base class to be considered valid Imputers.
 """
 
 import abc
+from sklearn.base import BaseEstimator
 
-class ISeriesImputer():
+class ISeriesImputer(BaseEstimator, metaclass=abc.ABCMeta):
     """ISeriesImputer implements the abstract base class for series-imputers.
 
     All series imputers should have a fit, impute, and fit_impute method to be
