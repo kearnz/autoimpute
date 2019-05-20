@@ -12,6 +12,7 @@ autoimpute.visuals.
 from .utils import plot_md_locations, plot_md_percent
 from .utils import plot_nullility_corr, plot_nullility_dendogram
 from .imputations import plot_imp_dists, plot_imp_boxplots
+from .imputations import plot_imp_swarm, plot_imp_strip
 
 __all__ = [
     "plot_md_locations",
@@ -19,5 +20,7 @@ __all__ = [
     "plot_nullility_corr",
     "plot_nullility_dendogram",
     "plot_imp_dists",
-    "plot_imp_boxplots"
+    "plot_imp_boxplots",
+    "plot_imp_swarm",
+    "plot_imp_strip"
 ]

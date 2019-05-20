@@ -19,14 +19,29 @@ def _default_plot_args(**kwargs):
     return defaults
 
 def _validate_data(d, mi, imp_col=None):
-    """Private helper method to validate data vs multiple imputations."""
+    """Private helper method to validate data vs multiple imputations.
+
+    Args:
+        d (list): dataset returned from multiple imputation.
+        mi (MultipleImputer): multiple imputer used to generate d.
+        imp_col (str): column to plot. Should be a column with imputations.
+
+    Raises:
+        ValueError: d should be list of tuples returned from mi transform.
+        ValueError: mi should be instance of MultipleImputer used to produce d.
+        ValueError: mi should have imputed_ attribute after transformation.
+        ValueError: Number of imputations should equal length of the dataset.
+        ValueError: Columns in each imputed data should be the same.
+        ValueError: Colums in each imputed data should be same as mi.imputed_.
+        ValueError: imp_col must be in both datasets and mi.imputed_ keys.
+    """
 
     if not isinstance(d, list):
         err = "d should be list of tuples returned from mi transform."
         raise ValueError(err)
 
     if not isinstance(mi, MultipleImputer):
-        err = "mi should be instance of MultipleImputer used to generate d."
+        err = "mi should be instance of MultipleImputer used to produce d."
         raise ValueError(err)
 
     if not hasattr(mi, "imputed_"):
@@ -57,7 +72,7 @@ def _validate_data(d, mi, imp_col=None):
         imp_in_d = imp_col in sets_[0]
         imp_in_mi = imp_col in imp_cols
         if not all([imp_in_d, imp_in_mi]):
-            err = "imp col must be in both datasets and mi.imputed_ keys."
+            err = "imp_col must be in both datasets and mi.imputed_ keys."
             raise ValueError(err)
 
 def _get_observed(d, mi, imp_col):

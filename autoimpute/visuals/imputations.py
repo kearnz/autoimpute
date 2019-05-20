@@ -22,7 +22,7 @@ def plot_imp_dists(d, mi, imp_col, include_observed=True,
     Args:
         d (list): dataset returned from multiple imputation.
         mi (MultipleImputer): multiple imputer used to generate d.
-        imp_col (str): column to plot. Should be a column with imputations
+        imp_col (str): column to plot. Should be a column with imputations.
         include_observed (bool, Optional): whether or not to include observed
             data in the plot. Default is True. If False, observed data for
             imp_col will not be included as a distribution for density.
@@ -113,6 +113,9 @@ def plot_imp_boxplots(d, mi, imp_col, side_by_side=False,
         imp_kwgs (dict, Optional): dictionary of arguments to unpack for
             imputed boxplots. Default is None, so no additional tailoring.
         **plot_kwgs: keyword arguments used by sns.set.
+
+    Raises:
+        ValueError: see _validate_data method.
     """
 
     # set plot type and define names necessary
@@ -164,3 +167,59 @@ def plot_imp_boxplots(d, mi, imp_col, side_by_side=False,
         sns.boxplot(
             x=xi, y=yi, data=datasets_merged, ax=ax[1]
         ).set(xlabel="Imputed")
+
+def plot_imp_swarm(d, mi, imp_col, palette=None, **plot_kwgs):
+    """Create the swarm plot for multiply imputed data.
+
+    Args:
+        d (list): dataset returned from multiple imputation.
+        mi (MultipleImputer): multiple imputer used to generate d.
+        imp_col (str): column to plot. Should be a column with imputations.
+        palette (list, tuple, Optional): colors for the imps and observed.
+            Default is None. if None, colors default to ["r","c"].
+        **plot_kwgs: keyword arguments used by sns.set.
+
+    Raises:
+        ValueError: see _validate_data method.
+    """
+
+    # set plot type, validate, and define names necessary
+    sns.set(rc=_default_plot_args(**plot_kwgs))
+    _validate_data(d, mi, imp_col)
+    datasets_merged = _melt_df(d, mi, imp_col)
+    if palette is None:
+        palette = ["r", "c"]
+
+    # swarmplot example
+    sns.swarmplot(
+        x="imp_num", y=imp_col, hue="imputed", palette=palette,
+        data=datasets_merged, hue_order=["yes", "no"]
+    )
+
+def plot_imp_strip(d, mi, imp_col, palette=None, **plot_kwgs):
+    """Create the strip plot for multiply imputed data.
+
+    Args:
+        d (list): dataset returned from multiple imputation.
+        mi (MultipleImputer): multiple imputer used to generate d.
+        imp_col (str): column to plot. Should be a column with imputations.
+        palette (list, tuple, Optional): colors for the imps and observed.
+            Default is None. if None, colors default to ["r","c"].
+        **plot_kwgs: keyword arguments used by sns.set.
+
+    Raises:
+        ValueError: see _validate_data method.
+    """
+
+    # set plot type, validate, and define names necessary
+    sns.set(rc=_default_plot_args(**plot_kwgs))
+    _validate_data(d, mi, imp_col)
+    datasets_merged = _melt_df(d, mi, imp_col)
+    if palette is None:
+        palette = ["r", "c"]
+
+    # stripplot example
+    sns.stripplot(
+        x="imp_num", y=imp_col, hue="imputed", palette=palette,
+        data=datasets_merged, jitter=True, hue_order=["yes", "no"], dodge=True
+    )
