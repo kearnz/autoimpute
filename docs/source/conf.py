@@ -30,6 +30,7 @@ MOCK_MODULES = [
     "matplotlib.pyplot",
     "matplotlib.pylab",
     "seaborn",
+    "missingno",
     "scipy",
     "scipy.stats",
     "scipy.cluster",
