@@ -23,10 +23,16 @@ sys.path.insert(0, os.path.abspath("../.."))
 # must mock modules that contain C code or autodoc won't install libs
 MOCK_MODULES = [
     "numpy",
+    "numpy.ma",
     "pandas",
     "pandas.api.types",
+    "matplotlib",
+    "matplotlib.pyplot",
+    "matplotlib.pylab",
+    "seaborn",
     "scipy",
     "scipy.stats",
+    "scipy.cluster",
     "sklearn",
     "sklearn.base",
     "sklearn.metrics",
@@ -55,6 +61,8 @@ class ClassifierMixinClass:
 setattr(sys.modules["sklearn.base"], "BaseEstimator", BaseEstimatorClass)
 setattr(sys.modules["sklearn.base"], "TransformerMixin", TransformerMixinClass)
 setattr(sys.modules["sklearn.base"], "ClassifierMixin", ClassifierMixinClass)
+setattr(sys.modules["numpy"], "__version__", "1.15.4")
+
 
 # -- Project information -----------------------------------------------------
 

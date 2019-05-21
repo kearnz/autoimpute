@@ -42,5 +42,6 @@ Check out the package on github_, or head to our website_ to walk through some t
     Single and Multiple Imputers <user_guide/imputers>
     Missingness Classifier <user_guide/missingness>
     Analysis Models <user_guide/analysis>
+    Visualization Methods <user_guide/visuals>
 
 The authors are currently writing the documentation for ``Autoimpute``. Therefore, this page is a work in progress and does not yet document all of the methods and classes within the package. Continuously check back as we add more information. 

@@ -114,6 +114,9 @@ def plot_imp_boxplots(d, mi, imp_col, side_by_side=False,
             imputed boxplots. Default is None, so no additional tailoring.
         **plot_kwgs: keyword arguments used by sns.set.
 
+    Returns:
+        sns.distplot: boxplots for observed and imputed data
+
     Raises:
         ValueError: see _validate_data method.
     """
@@ -179,6 +182,9 @@ def plot_imp_swarm(d, mi, imp_col, palette=None, **plot_kwgs):
             Default is None. if None, colors default to ["r","c"].
         **plot_kwgs: keyword arguments used by sns.set.
 
+    Returns:
+        sns.distplot: swarmplot for imputed data
+
     Raises:
         ValueError: see _validate_data method.
     """
@@ -206,6 +212,9 @@ def plot_imp_strip(d, mi, imp_col, palette=None, **plot_kwgs):
         palette (list, tuple, Optional): colors for the imps and observed.
             Default is None. if None, colors default to ["r","c"].
         **plot_kwgs: keyword arguments used by sns.set.
+
+    Returns:
+        sns.distplot: stripplot for imputed data
 
     Raises:
         ValueError: see _validate_data method.

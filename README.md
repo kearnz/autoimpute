@@ -25,10 +25,11 @@ Most machine learning algorithms expect clean and complete datasets, but most re
 Therefore, this package aids the Python user by providing more clarity to the imputation process, making imputation methods more accessible, and measuring the impact imputation methods have in supervised regression and classification. In doing so, this package brings missing data imputation methods to the Python world and makes them work nicely in Python machine learning projects (and specifically ones that utilize `scikit-learn`). Lastly, this package provides its own implementation of supervised machine learning methods that extend both `scikit-learn` and `statsmodels` to mutiply imputed datasets.
 
 ## Main Features
-* Utility functions and basic visualizations to explore missingness patterns
+* Utility functions to examine patterns in missing data and decide on relevant features for imputation
 * Missingness classifier and automatic missing data test set generator
 * Native handling for categorical variables (as predictors and targets of imputation)
 * Single and multiple imputation classes for `pandas` `DataFrames`
+* Custom visualization support for utility functions and imputation methods
 * Analysis methods and pooled parameter inference using multiply imputed datasets
 * Numerous imputation methods, as specified in the table below:
 
@@ -48,8 +49,7 @@ Therefore, this package aids the Python user by providing more clarity to the im
 ## Todo
 * Additional cross-sectional methods, including random forest, KNN, EM, and maximum likelihood
 * Additional time-series methods, including EWMA, ARIMA, Kalman filters, and state-space models
-* Extended support for visualization of missing data patterns
-* Native support for visualization of imputation results and analysis of multiply imputed data
+* Extended support for visualization of missing data patterns, imputation methods, and analysis models
 * Additional support for analysis metrics and analyis models after multiple imputation
 * Multiprocessing and GPU support for larger datasets, as well as integration with `dask` DataFrames
 
