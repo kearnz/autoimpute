@@ -23,8 +23,6 @@ Imputation
 
 Two main classes within ``Autoimpute`` are the :doc:`SingleImputer and MultipleImputer<imputers>`. The visualization module within this package contains a number of techniques to visually assess the quality and performance of these imputers. The important methods appear below:
 
-.. autofunction:: autoimpute.visuals.helpers._validate_data
-
 .. autofunction:: autoimpute.visuals.plot_imp_dists
 
 .. autofunction:: autoimpute.visuals.plot_imp_boxplots
