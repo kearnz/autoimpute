@@ -2,11 +2,79 @@
 
 import matplotlib.pylab as plt
 import seaborn as sns
+from autoimpute.utils import check_data_structure
+from autoimpute.imputations import SingleImputer
 from .helpers import _validate_data, _validate_kwgs, _get_observed, _melt_df
 from .helpers import _default_plot_args, _plot_imp_dists_helper
 
 #pylint:disable=unused-variable
 #pylint:disable=too-many-arguments
+#plyint:disable=too-many-locals
+
+@check_data_structure
+def plot_imp_scatter(d, x, y, strategy, title="Jointplot after Imputation",
+                     h=8.27, imp_kwgs=None, a=0.5, marginals=None,
+                     obs_color="navy", imp_color="red", **plot_kwgs):
+    """Plot the joint scatter and density plot after single imputation.
+
+    Use this method to visualize a scatterplot between two features, x and y,
+    where y is imputed and x is a predictor used to impute y. This method
+    performs single imputation and is useful to determine how an imputation
+    method looks under the hood.
+
+    Args:
+        d (pd.DataFrame): DataFrame with data to impute and plot.
+        x (str): column to plot on x axis.
+        y (str): column to plot on y axis and set color for imputation.
+        strategy (str): imputation method for SingleImputer.
+        title (str, Optional): title of plot.
+            "Defualt is Jointplot after Imputation".
+        h (float, Optional): height of the jointplot. Default is 8.27
+        imp_kwgs (dict, Optional): imp kwgs for SingleImputer procedure.
+            Default is None.
+        a (float, Optional): alpha for plot color. Default is 0.5
+        marginals (dict, Optional): dictionary of marginal plot args.
+            Default is None, configured in code below.
+        obs_color (str, Optional): color of observed. Default is navy.
+        imp_color (str, Optional): color of imputations. Default is red.
+        **plot_kwgs: keyword arguments used by sns.set.
+
+    Raises:
+        ValueError: x and y must be names of columns in data
+    """
+
+    # plot setup and arg validation
+    _default_plot_args(**plot_kwgs)
+    _validate_kwgs(marginals)
+    _validate_kwgs(imp_kwgs)
+    if marginals is None:
+        marginals = dict(rug=True, kde=True)
+
+    # validate x and y selection
+    if not x in d.columns or not y in d.columns:
+        err = "x and y must be names of columns in data"
+        raise ValueError(err)
+
+    # create imputer with strategy and optional imp kwgs
+    if imp_kwgs is None:
+        imp = SingleImputer(strategy=strategy)
+    else:
+        imp = SingleImputer(strategy=strategy, imp_kwgs=imp_kwgs)
+
+    # configure and apply the imputer
+    impute = imp.fit_transform(d)
+    impute["colors"] = obs_color
+    impute.loc[imp.imputed_[y], "colors"] = imp_color
+    joints_color = impute["colors"]
+
+    # create the joint plot
+    joint_kws = dict(facecolor=joints_color, edgecolor=joints_color)
+    g = sns.jointplot(x=x, y=y, data=impute, alpha=a, height=h,
+                      joint_kws=joint_kws, marginal_kws=marginals)
+
+    # final plot config and title
+    plt.subplots_adjust(top=0.925)
+    g.fig.suptitle(title)
 
 def plot_imp_dists(d, mi, imp_col, title="Distributions after Imputation",
                    include_observed=True, separate_observed=True,
