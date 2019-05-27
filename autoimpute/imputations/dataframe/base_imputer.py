@@ -106,7 +106,7 @@ class BaseImputer:
         "left-to-right"
     )
 
-    def __init__(self, strategy, imp_kwgs, verbose, visit):
+    def __init__(self, strategy, imp_kwgs, visit):
         """Initialize the BaseImputer.
 
         Args:
@@ -124,15 +124,12 @@ class BaseImputer:
                 specific strategy. imp_kwgs keys can be either columns or
                 strategies. If strategies, each column given that strategy is
                 instantiated with same arguments.
-            verbose (bool, optional): Print information to the console.
-                Defaults to False.
             visit (str, None): order to visit columns for imputation.
                 Default is `default`, which implements `left-to-right`.
                 More strategies (random, monotone, etc.) TBD.
         """
         self.strategy = strategy
         self.imp_kwgs = imp_kwgs
-        self.verbose = verbose
         self.visit = visit
 
     @property

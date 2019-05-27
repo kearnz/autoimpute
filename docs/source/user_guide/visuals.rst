@@ -5,6 +5,8 @@ This section documents visualization methods within ``Autoimpute``.
 
 Visualization methods support all functionality within ``Autoimpute``, from missing data exploration to imputation analysis. The documentation below breaks down each visualization method and groups them into their respsective categories. The categories represent other modules within ``Autoimpute``.
 
+NOTE: The visualization module is currently under development. While the functions outlined below are stable in ``0.11.0``, they will likely chage in ``>=0.12``.
+
 Utility
 -------
 
@@ -22,6 +24,8 @@ Imputation
 ----------
 
 Two main classes within ``Autoimpute`` are the :doc:`SingleImputer and MultipleImputer<imputers>`. The visualization module within this package contains a number of techniques to visually assess the quality and performance of these imputers. The important methods appear below:
+
+.. autofunction:: autoimpute.visuals.helpers._validate_data
 
 .. autofunction:: autoimpute.visuals.plot_imp_dists
 

@@ -17,9 +17,9 @@ Welcome to Autoimpute!
    :target: https://lbesson.mit-license.org/
    :alt: MIT license
  
-.. image:: https://img.shields.io/badge/python-3.6-blue.svg
+.. image:: https://img.shields.io/badge/python-3.6+-blue.svg
    :target: https://www.python.org/downloads/release/python-360/
-   :alt: Python 3.6
+   :alt: Python 3.6+
 
 Autoimpute_ is a Python package for analysis and implementation of Imputation Methods!
 

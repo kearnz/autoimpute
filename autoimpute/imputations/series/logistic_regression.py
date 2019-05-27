@@ -39,7 +39,6 @@ class BinaryLogisticImputer(ISeriesImputer):
         """Create an instance of the BinaryLogisticImputer class.
 
         Args:
-            verbose (bool): print information to the console.
             **kwargs: keyword arguments passed to LogisticRegresion.
 
         """

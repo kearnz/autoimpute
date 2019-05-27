@@ -5,17 +5,9 @@ import numpy as np
 import pandas as pd
 from autoimpute.imputations.deletion import listwise_delete
 
-def _get_observed(predictors, series, verbose):
+def _get_observed(predictors, series, verbose=False):
     """Private method to test datasets and get observed data."""
     conc = pd.concat([predictors, series], axis=1)
-    if verbose:
-        null_pred = pd.isnull(predictors)
-        null_ser = pd.isnull(series)
-        for each in null_pred:
-            sum_null_pred = null_pred[each].sum()
-            print(f"Missing values in predictor {each}: {sum_null_pred}")
-        sum_null_ser = null_ser.sum()
-        print(f"Missing values in response {series.name}: {sum_null_ser}")
 
     # perform listwise delete on predictors and series
     # resulting data serves as the `observed` data for fit modeling
@@ -43,7 +35,7 @@ def _local_residuals(x, n, df, choose):
     resids = neighbs + distances
     return choose(resids)
 
-def _pymc3_logger(verbose):
+def _pymc3_logger(verbose=False):
     """Private method to handle pymc3 logging."""
     progress = 1
     if not verbose:

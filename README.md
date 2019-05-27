@@ -5,7 +5,7 @@
 
 <span style="font-size:1.5em;">[View our website](https://kearnz.github.io/autoimpute-tutorials/) to explore `Autoimpute` in more detail.</span>
 
-<span style="font-size:1.5em;">[Check out our Docs](https://autoimpute.readthedocs.io/en/latest/) to get the developer guide to `Autoimpute`.</span>
+<span style="font-size:1.5em;">[Check out our docs](https://autoimpute.readthedocs.io/en/latest/) to get the developer guide to `Autoimpute`.</span>
 
 ## Installation
 * `Autoimpute` is now **registered with PyPI!** Download with `pip install autoimpute`. The latest version is `0.11.0`.
@@ -116,9 +116,7 @@ multiple_imputer_arguments = dict(
     strategy={"salary": "pmm", "gender": "bayesian binary logistic", "age": "norm"},
     predictors={"salary": "all", "gender": ["salary", "education", "weight"]},
     imp_kwgs={"pmm": {"fill_value": "random"}},
-    scaler=StandardScaler(),
-    visit="left-to-right",
-    verbose=True
+    visit="left-to-right"
 )
 complex_lm = MiLinearRegression(
     model_lib="sklearn", # use sklearn linear regression

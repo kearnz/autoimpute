@@ -45,8 +45,7 @@ class SingleImputer(BaseImputer, BaseEstimator, TransformerMixin):
     """
 
     def __init__(self, strategy="default predictive", predictors="all",
-                 imp_kwgs=None, copy=True, verbose=False, seed=None,
-                 visit="default"):
+                 imp_kwgs=None, copy=True, seed=None, visit="default"):
         """Create an instance of the SingleImputer class.
 
         As with sklearn classes, all arguments take default values. Therefore,
@@ -70,8 +69,6 @@ class SingleImputer(BaseImputer, BaseEstimator, TransformerMixin):
                 `imp_kwgs` is ignored.
             copy (bool, optional): create copy of DataFrame or operate inplace.
                 Default value is True. Copy created.
-            verbose (bool, optional): print more information to console.
-                Default value is False.
             seed (int, optional): seed setting for reproducible results.
                 Defualt is None. No validation, but values should be integer.
         """
@@ -79,7 +76,6 @@ class SingleImputer(BaseImputer, BaseEstimator, TransformerMixin):
             self,
             strategy=strategy,
             imp_kwgs=imp_kwgs,
-            verbose=verbose,
             visit=visit
         )
         self.strategy = strategy
@@ -144,12 +140,6 @@ class SingleImputer(BaseImputer, BaseEstimator, TransformerMixin):
         self._fit_strategy_validator(X)
         self.statistics_ = {}
 
-        # header print statement if verbose = true
-        if self.verbose:
-            ft = "FITTING IMPUTATION METHODS TO DATA..."
-            st = "Strategies & Predictors used to fit each column:"
-            print(f"{ft}\n{st}\n{'-'*len(st)}")
-
         # perform fit on each column, depending on that column's strategy
         # note that right now, operations are COLUMN-by-COLUMN, iteratively
         if self.seed is not None:
@@ -169,10 +159,6 @@ class SingleImputer(BaseImputer, BaseEstimator, TransformerMixin):
                 err = f"Invalid arguments passed to {name} __init__ method."
                 raise ValueError(err) from te
 
-            # print strategies if verbose
-            if self.verbose:
-                print(f"Column: {column}, Strategy: {method}")
-
             # identify the column for imputation
             ys = X[column]
 
@@ -190,7 +176,7 @@ class SingleImputer(BaseImputer, BaseEstimator, TransformerMixin):
                     xs = X[preds]
 
                 # fit the data on observed values only.
-                x_, y_ = _get_observed(xs, ys, self.verbose)
+                x_, y_ = _get_observed(xs, ys)
 
                 # before imputing, need to encode categoricals
                 x_ = _one_hot_encode(x_)
@@ -225,9 +211,6 @@ class SingleImputer(BaseImputer, BaseEstimator, TransformerMixin):
         if self.copy:
             X = X.copy()
         self._transform_strategy_validator(X)
-        if self.verbose:
-            trans = "PERFORMING IMPUTATIONS ON DATA BASED ON FIT..."
-            print(f"{trans}\n{'-'*len(trans)}")
 
         # transformation logic
         self.imputed_ = {}
@@ -236,15 +219,6 @@ class SingleImputer(BaseImputer, BaseEstimator, TransformerMixin):
         for column, imputer in self.statistics_.items():
             imp_ix = X[column][X[column].isnull()].index
             self.imputed_[column] = imp_ix.tolist()
-
-            # print to console for transformation if self.verbose
-            if self.verbose:
-                strat = imputer.statistics_["strategy"]
-                print(f"Transforming {column} with strategy '{strat}'")
-                if not imp_ix.empty:
-                    print(f"Numer of imputations to perform: {imp_ix.size}")
-                else:
-                    print(f"No imputations, moving to next column...")
 
             # continue if there are no imputations to make
             if imp_ix.empty:
@@ -274,9 +248,6 @@ class SingleImputer(BaseImputer, BaseEstimator, TransformerMixin):
                 mis_cov = mis_cov[mis_cov > 0]
                 if any(mis_cov):
                     x_m = mis_cov.index
-                    if self.verbose:
-                        print(f"Missing Covariates:\n{mis_cov}\n")
-                        print("Using single imputer for missing covariates...")
                     for col in x_m:
                         d = DefaultUnivarImputer()
                         d_imps = d.fit_impute(x_[col], None)

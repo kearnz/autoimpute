@@ -38,7 +38,7 @@ class MultipleImputer(BaseImputer, BaseEstimator, TransformerMixin):
     """
 
     def __init__(self, n=5, strategy="default predictive", predictors="all",
-                 imp_kwgs=None, verbose=False, seed=None, visit="default",
+                 imp_kwgs=None, seed=None, visit="default",
                  return_list=False):
         """Create an instance of the MultipleImputer class.
 
@@ -61,8 +61,6 @@ class MultipleImputer(BaseImputer, BaseEstimator, TransformerMixin):
                 strategies. If strategies, each column given that strategy is
                 instantiated with same arguments. When strategy is `default`,
                 imp_kwgs is ignored.
-            verbose (bool, optional): print more information to console.
-                Default value is False.
             seed (int, optional): seed setting for reproducible results.
                 Defualt is None. No validation, but values should be integer.
             return_list (bool, optional): return m as list or generator.
@@ -73,7 +71,6 @@ class MultipleImputer(BaseImputer, BaseEstimator, TransformerMixin):
             self,
             strategy=strategy,
             imp_kwgs=imp_kwgs,
-            verbose=verbose,
             visit=visit
         )
         self.n = n
@@ -185,7 +182,6 @@ class MultipleImputer(BaseImputer, BaseEstimator, TransformerMixin):
                 predictors=self._preds[i-1],
                 imp_kwgs=self.imp_kwgs,
                 copy=self.copy,
-                verbose=self.verbose,
                 seed=self._seeds[i-1],
                 visit=self.visit
             )
