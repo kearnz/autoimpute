@@ -27,6 +27,8 @@ Two main classes within ``Autoimpute`` are the :doc:`SingleImputer and MultipleI
 
 .. autofunction:: autoimpute.visuals.helpers._validate_data
 
+.. autofunction:: autoimpute.visuals.plot_imp_scatter
+
 .. autofunction:: autoimpute.visuals.plot_imp_dists
 
 .. autofunction:: autoimpute.visuals.plot_imp_boxplots

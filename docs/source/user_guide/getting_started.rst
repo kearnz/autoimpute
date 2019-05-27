@@ -8,7 +8,6 @@ Installation
 
 
 * Download ``Autoimpute`` with ``pip install autoimpute``. 
-* The latest version is ``0.11.0``.
 * If ``pip`` cached an older version, try ``pip install --no-cache-dir --upgrade autoimpute``.
 * If you want to work with the development branch, use the script below:
 
