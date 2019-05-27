@@ -25,8 +25,8 @@ def plot_md_locations(data, **kwargs):
     Raises:
         TypeError: if data is not a DataFrame. Error raised through decorator.
     """
-    defaults = _default_plot_args(**kwargs)
-    msno.matrix(data, figsize=defaults["figure.figsize"], **kwargs)
+    _default_plot_args(**kwargs)
+    msno.matrix(data, **kwargs)
 
 @check_data_structure
 def plot_md_percent(data, **kwargs):
@@ -42,8 +42,8 @@ def plot_md_percent(data, **kwargs):
     Raises:
         TypeError: if data is not a DataFrame. Error raised through decorator.
     """
-    defaults = _default_plot_args(**kwargs)
-    msno.bar(data, figsize=defaults["figure.figsize"], **kwargs)
+    _default_plot_args(**kwargs)
+    msno.bar(data, **kwargs)
 
 @check_data_structure
 def plot_nullility_corr(data, **kwargs):
@@ -61,8 +61,8 @@ def plot_nullility_corr(data, **kwargs):
         ValueError: dataset fully observed. Raised through helper method.
     """
     _fully_complete(data)
-    defaults = _default_plot_args(**kwargs)
-    msno.heatmap(data, figsize=defaults["figure.figsize"], **kwargs)
+    _default_plot_args(**kwargs)
+    msno.heatmap(data, **kwargs)
 
 @check_data_structure
 def plot_nullility_dendogram(data, **kwargs):
@@ -80,5 +80,5 @@ def plot_nullility_dendogram(data, **kwargs):
         ValueError: dataset fully observed. Raised through helper method.
     """
     _fully_complete(data)
-    defaults = _default_plot_args(**kwargs)
-    msno.dendrogram(data, figsize=defaults["figure.figsize"], **kwargs)
+    _default_plot_args(**kwargs)
+    msno.dendrogram(data, **kwargs)

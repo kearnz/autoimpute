@@ -8,10 +8,10 @@ from .helpers import _default_plot_args, _plot_imp_dists_helper
 #pylint:disable=unused-variable
 #pylint:disable=too-many-arguments
 
-def plot_imp_dists(d, mi, imp_col, include_observed=True,
-                   separate_observed=True, side_by_side=False,
-                   hist_observed=False, hist_imputed=False,
-                   gw=(.5, .5), gh=(.5, .5), **plot_kwgs):
+def plot_imp_dists(d, mi, imp_col, title="Distributions after Imputation",
+                   include_observed=True, separate_observed=True,
+                   side_by_side=False, hist_observed=False,
+                   hist_imputed=False, gw=(.5, .5), gh=(.5, .5), **plot_kwgs):
     """Plot the density between imputations for a given column.
 
     Use this method to plot the density of a given column after multiple
@@ -23,6 +23,8 @@ def plot_imp_dists(d, mi, imp_col, include_observed=True,
         d (list): dataset returned from multiple imputation.
         mi (MultipleImputer): multiple imputer used to generate d.
         imp_col (str): column to plot. Should be a column with imputations.
+        title (str, Optional): title of plot. Default is
+            "Distributions after Imputation".
         include_observed (bool, Optional): whether or not to include observed
             data in the plot. Default is True. If False, observed data for
             imp_col will not be included as a distribution for density.
@@ -60,7 +62,7 @@ def plot_imp_dists(d, mi, imp_col, include_observed=True,
     """
 
     # start by setting plot kwgs
-    sns.set(rc=_default_plot_args(**plot_kwgs))
+    _default_plot_args(**plot_kwgs)
 
     # define the functionality if observed should be included
     if include_observed:
@@ -90,9 +92,13 @@ def plot_imp_dists(d, mi, imp_col, include_observed=True,
     else:
         _validate_data(d, mi, imp_col)
         _plot_imp_dists_helper(d, hist_imputed, imp_col)
+
+    # plot title and legend
+    plt.suptitle(title)
     plt.legend()
 
 def plot_imp_boxplots(d, mi, imp_col, side_by_side=False,
+                      title="Observed vs. Imputed Boxplots",
                       obs_kwgs=None, imp_kwgs=None, **plot_kwgs):
     """Plot the boxplots between observed and imputations for a given column.
 
@@ -108,6 +114,8 @@ def plot_imp_boxplots(d, mi, imp_col, side_by_side=False,
         side_by_side (bool, Optional): whether columns should be plotted next
             to each other or stacked vertically. Default is False. If True,
             plots will be plotted side-by-side.
+        title (str, Optional): title of boxplots. Default is
+            "Observed vs. Imputed Boxplots."
         obs_kwgs (dict, Optional): dictionary of arguments to unpack for
             observed boxplot. Default is None, so no additional tailoring.
         imp_kwgs (dict, Optional): dictionary of arguments to unpack for
@@ -122,7 +130,7 @@ def plot_imp_boxplots(d, mi, imp_col, side_by_side=False,
     """
 
     # set plot type and define names necessary
-    sns.set(rc=_default_plot_args(**plot_kwgs))
+    _default_plot_args(**plot_kwgs)
     obs = _get_observed(d, mi, imp_col)
     obs_ = d[0][1].loc[obs, imp_col].copy().to_frame()
     obs_["obs"] = "obs"
@@ -144,6 +152,7 @@ def plot_imp_boxplots(d, mi, imp_col, side_by_side=False,
         f, ax = plt.subplots(
             1, 2, gridspec_kw={"width_ratios": (ratio, 1-ratio)}
         )
+
     else:
         xo = imp_col
         yo = "obs"
@@ -157,27 +166,32 @@ def plot_imp_boxplots(d, mi, imp_col, side_by_side=False,
     if not obs_kwgs is None:
         sns.boxplot(
             x=xo, y=yo, data=obs_, ax=ax[0], **obs_kwgs
-        ).set(xlabel="Observed")
+        ).set(xlabel="", ylabel="")
     else:
         sns.boxplot(
             x=xo, y=yo, data=obs_, ax=ax[0]
-        ).set(xlabel="Observed")
+        ).set(xlabel="", ylabel="")
     if not imp_kwgs is None:
         sns.boxplot(
             x=xi, y=yi, data=datasets_merged, ax=ax[1], **imp_kwgs
-        ).set(xlabel="Imputed")
+        ).set(xlabel="", ylabel="")
     else:
         sns.boxplot(
             x=xi, y=yi, data=datasets_merged, ax=ax[1]
-        ).set(xlabel="Imputed")
+        ).set(xlabel="", ylabel="")
 
-def plot_imp_swarm(d, mi, imp_col, palette=None, **plot_kwgs):
+    # plot title
+    plt.suptitle(title)
+
+def plot_imp_swarm(d, mi, imp_col, palette=None,
+                   title="Imputation Swarm", **plot_kwgs):
     """Create the swarm plot for multiply imputed data.
 
     Args:
         d (list): dataset returned from multiple imputation.
         mi (MultipleImputer): multiple imputer used to generate d.
         imp_col (str): column to plot. Should be a column with imputations.
+        title (str, Optional): title of plot. Default is "Imputation Swarm".
         palette (list, tuple, Optional): colors for the imps and observed.
             Default is None. if None, colors default to ["r","c"].
         **plot_kwgs: keyword arguments used by sns.set.
@@ -190,7 +204,7 @@ def plot_imp_swarm(d, mi, imp_col, palette=None, **plot_kwgs):
     """
 
     # set plot type, validate, and define names necessary
-    sns.set(rc=_default_plot_args(**plot_kwgs))
+    _default_plot_args(**plot_kwgs)
     _validate_data(d, mi, imp_col)
     datasets_merged = _melt_df(d, mi, imp_col)
     if palette is None:
@@ -200,15 +214,17 @@ def plot_imp_swarm(d, mi, imp_col, palette=None, **plot_kwgs):
     sns.swarmplot(
         x="imp_num", y=imp_col, hue="imputed", palette=palette,
         data=datasets_merged, hue_order=["yes", "no"]
-    )
+    ).set(xlabel="Imputation Number", title=title)
 
-def plot_imp_strip(d, mi, imp_col, palette=None, **plot_kwgs):
+def plot_imp_strip(d, mi, imp_col, palette=None,
+                   title="Imputation Strip", **plot_kwgs):
     """Create the strip plot for multiply imputed data.
 
     Args:
         d (list): dataset returned from multiple imputation.
         mi (MultipleImputer): multiple imputer used to generate d.
         imp_col (str): column to plot. Should be a column with imputations.
+        title (str, Optional): title of plot. Default is "Imputation Strip".
         palette (list, tuple, Optional): colors for the imps and observed.
             Default is None. if None, colors default to ["r","c"].
         **plot_kwgs: keyword arguments used by sns.set.
@@ -221,7 +237,7 @@ def plot_imp_strip(d, mi, imp_col, palette=None, **plot_kwgs):
     """
 
     # set plot type, validate, and define names necessary
-    sns.set(rc=_default_plot_args(**plot_kwgs))
+    _default_plot_args(**plot_kwgs)
     _validate_data(d, mi, imp_col)
     datasets_merged = _melt_df(d, mi, imp_col)
     if palette is None:
@@ -231,4 +247,4 @@ def plot_imp_strip(d, mi, imp_col, palette=None, **plot_kwgs):
     sns.stripplot(
         x="imp_num", y=imp_col, hue="imputed", palette=palette,
         data=datasets_merged, jitter=True, hue_order=["yes", "no"], dodge=True
-    )
+    ).set(xlabel="Imputation Number", title=title)

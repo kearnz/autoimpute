@@ -14,9 +14,10 @@ def _fully_complete(data):
 
 def _default_plot_args(**kwargs):
     """Private method to set up the default plot style arguments."""
-    defaults = {}
-    defaults["figure.figsize"] = kwargs.pop("figsize", (12, 8))
-    return defaults
+    rc = {}
+    rc["figure.figsize"] = kwargs.pop("figsize", (12, 8))
+    context = kwargs.pop("context", "talk")
+    sns.set(context=context, rc=rc)
 
 def _validate_data(d, mi, imp_col=None):
     """Private helper method to validate data vs multiple imputations.
