@@ -29,7 +29,7 @@ Versions and Dependencies
   * ``numpy`` >= 1.15.4
   * ``scipy`` >= 1.2.1
   * ``pandas`` >= 0.20.3
-  * ``statsmodels`` >= 0.8.0
+  * ``statsmodels`` >= 0.9.0
   * ``scikit-learn`` >= 0.20.2
   * ``xgboost`` >= 0.83
   * ``pymc3`` >= 3.5
