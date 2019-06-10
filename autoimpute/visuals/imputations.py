@@ -12,7 +12,8 @@ from .helpers import _default_plot_args, _plot_imp_dists_helper
 #plyint:disable=too-many-locals
 
 @check_data_structure
-def plot_imp_scatter(d, x, y, strategy, title="Jointplot after Imputation",
+def plot_imp_scatter(d, x, y, strategy, color=None,
+                     title="Jointplot after Imputation",
                      h=8.27, imp_kwgs=None, a=0.5, marginals=None,
                      obs_color="navy", imp_color="red", **plot_kwgs):
     """Plot the joint scatter and density plot after single imputation.
@@ -27,6 +28,9 @@ def plot_imp_scatter(d, x, y, strategy, title="Jointplot after Imputation",
         x (str): column to plot on x axis.
         y (str): column to plot on y axis and set color for imputation.
         strategy (str): imputation method for SingleImputer.
+        color (str, Optional): which variable to color with imputations.
+            Deafult is none, which means y is colored. Other option is to
+            color "x". Color should be the same as "x" or "y".
         title (str, Optional): title of plot.
             "Defualt is Jointplot after Imputation".
         h (float, Optional): height of the jointplot. Default is 8.27
@@ -61,10 +65,22 @@ def plot_imp_scatter(d, x, y, strategy, title="Jointplot after Imputation",
     else:
         imp = SingleImputer(strategy=strategy, imp_kwgs=imp_kwgs)
 
+    # handling the color configuration
+    if color is None:
+        color = y
+    else:
+        if color == y:
+            color = y
+        elif color == x:
+            color = x
+        else:
+            err = "color must be the same as `y` or `x`"
+            raise ValueError(err)
+
     # configure and apply the imputer
     impute = imp.fit_transform(d)
     impute["colors"] = obs_color
-    impute.loc[imp.imputed_[y], "colors"] = imp_color
+    impute.loc[imp.imputed_[color], "colors"] = imp_color
     joints_color = impute["colors"]
 
     # create the joint plot

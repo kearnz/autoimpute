@@ -11,7 +11,7 @@
 
 ## Installation
 * `Autoimpute` is now **registered with PyPI!** Download with `pip install autoimpute`.
-* The latest version of `Autoimpute` is `0.11.3`.
+* The latest version of `Autoimpute` is `0.11.4`.
 * If `pip` cached an older version, try `pip install --no-cache-dir --upgrade autoimpute`.
 * If you want to work with the development branch, use the script below:
 
