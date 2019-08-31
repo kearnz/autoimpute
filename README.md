@@ -9,8 +9,13 @@
 
 <span style="font-size:1.5em;">[Check out our docs](https://autoimpute.readthedocs.io/en/latest/) to get the developer guide to `Autoimpute`.</span>
 
+## Note on Development
+* Earlier this summer, we completed what we feel is the first phase of the `Autoimpute`.
+* Since then, we've taken a break and began planning the next steps for the package.
+* If you'd like to get involved, feel free to reach out! We're looking to collaborate and happy to work with those interested!
+
 ## Installation
-* `Autoimpute` is now **registered with PyPI!** Download with `pip install autoimpute`.
+* `autoimpute` is now **registered with PyPI!** Download with `pip install autoimpute`.
 * The latest version of `Autoimpute` is `0.11.4`.
 * If `pip` cached an older version, try `pip install --no-cache-dir --upgrade autoimpute`.
 * If you want to work with the development branch, use the script below:

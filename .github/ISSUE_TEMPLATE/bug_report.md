@@ -1,5 +1,5 @@
 Name: **Bug Report**  
-About: **Create a bug report to help us fix what's broken in AutoImpute!**  
+About: **Create a bug report to help us fix what's broken in Autoimpute!**  
 Labels: **bug** 
 
 **Describe the bug**  

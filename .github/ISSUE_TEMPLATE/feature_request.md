@@ -1,5 +1,5 @@
 Name: **Feature Request**  
-About: **Suggest an idea for what would make AutoImpute even better!**  
+About: **Suggest an idea for what would make Autoimpute even better!**  
 Labels: **enhancement**  
 
 **Is your feature request related to a problem? Please describe.**  
