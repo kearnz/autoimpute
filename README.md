@@ -12,10 +12,11 @@
 ## Note on Development
 * Earlier this summer, we completed what we feel is the first phase of the `Autoimpute`.
 * Since then, we've taken a break and began planning the next steps for the package.
-* If you'd like to get involved, feel free to reach out! We're looking to collaborate and happy to work with those interested!
+* If you'd like to get involved, feel free to reach out! Our info is on the [Authors](https://github.com/kearnz/autoimpute/blob/master/AUTHORS.rst) page.
+* We're looking to collaborate and happy to work with those interested!
 
 ## Installation
-* `autoimpute` is now **registered with PyPI!** Download with `pip install autoimpute`.
+* `Autoimpute` is now **registered with PyPI!** Download with `pip install autoimpute`.
 * The latest version of `Autoimpute` is `0.11.4`.
 * If `pip` cached an older version, try `pip install --no-cache-dir --upgrade autoimpute`.
 * If you want to work with the development branch, use the script below:
