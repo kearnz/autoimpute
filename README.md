@@ -9,6 +9,11 @@
 
 <span style="font-size:1.5em;">[Check out our docs](https://autoimpute.readthedocs.io/en/latest/) to get the developer guide to `Autoimpute`.</span>
 
+## Conference Talks
+* We'll be presenting `Autoimpute` at a couple upcoming conferences!
+* **PyData NYC**: New and Upcoming slot, November 2019
+* **PyData LA**: Main talk slot, December 2019
+
 ## Note on Usage and Dependencies
 * `Autoimpute` will do its best to keep up with other packages that it depends on.
 * That being said, some packages evolve, and `Autoimpute` may break.
