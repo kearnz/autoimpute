@@ -3,6 +3,7 @@ language: python
 branches:
   only:
     - dev
+    - master
 # travis does not support windows yet. Need to add pre_install stuff for macOS
 os:
   - linux
