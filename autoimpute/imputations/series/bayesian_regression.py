@@ -22,6 +22,7 @@ methods = method_names
 # pylint:disable=unused-variable
 # pylint:disable=no-member
 # pylint:disable=too-many-instance-attributes
+# pylint:disable=unsubscriptable-object
 
 class BayesianLeastSquaresImputer(ISeriesImputer):
     """Impute missing values using bayesian least squares regression.
@@ -129,7 +130,7 @@ class BayesianLeastSquaresImputer(ISeriesImputer):
                 "mu_pred", model["alpha"]+model["beta"].dot(X.T)
             )
             tr = pm.sample(
-                sample=self.sample,
+                self.sample,
                 tune=self.tune,
                 init=self.init
             )
@@ -277,7 +278,7 @@ class BayesianBinaryLogisticImputer(ISeriesImputer):
                 "p_pred", pm.invlogit(model["alpha"] + model["beta"].dot(X.T))
             )
             tr = pm.sample(
-                sample=self.sample,
+                self.sample,
                 tune=self.tune,
                 init=self.init,
             )

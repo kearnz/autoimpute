@@ -14,14 +14,6 @@
 * **PyData NYC**: New and Upcoming slot, November 2019
 * **PyData LA**: Main talk slot, December 2019
 
-## Note on Usage and Dependencies
-* `Autoimpute` will do its best to keep up with other packages that it depends on.
-* That being said, some packages evolve, and `Autoimpute` may break.
-* Therefore, please **adhere to the versions specified in requirements.txt**.
-* These versions are tested, so `Autoimpute` is guaranteed to work.
-* As an example, `Autoimpute` works with **pymc3<=3.6**, but it breaks with pymc3==3.7
-* We are currently working on a fix to regain compatibility, although this will take some time.
-
 ## Note on Development
 * Earlier this summer, we completed what we feel is the first phase of the `Autoimpute`.
 * Since then, we've taken a break and began planning the next steps for the package.
@@ -30,7 +22,7 @@
 
 ## Installation
 * `Autoimpute` is now **registered with PyPI!** Download with `pip install autoimpute`.
-* The latest version of `Autoimpute` is `0.11.4`.
+* The latest version of `Autoimpute` is `0.11.5`.
 * If `pip` cached an older version, try `pip install --no-cache-dir --upgrade autoimpute`.
 * If you want to work with the development branch, use the script below:
 

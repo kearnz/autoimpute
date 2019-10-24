@@ -150,7 +150,7 @@ class PMMImputer(ISeriesImputer):
         # generate posterior distribution for alpha, beta coefficients
         with model:
             tr = pm.sample(
-                sample=self.sample,
+                self.sample,
                 tune=self.tune,
                 init=self.init,
             )
