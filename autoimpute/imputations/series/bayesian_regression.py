@@ -40,8 +40,7 @@ class BayesianLeastSquaresImputer(ISeriesImputer):
     # class variables
     strategy = methods.BAYESIAN_LS
 
-    def __init__(self, am=0, asd=10, bm=0, bsd=10, sig=1, sample=1000,
-                 tune=1000, init="auto", fill_value=None):
+    def __init__(self, **kwargs):
         """Create an instance of the BayesianLeastSquaresImputer class.
 
         The class requires multiple arguments necessary to create priors for
@@ -52,6 +51,9 @@ class BayesianLeastSquaresImputer(ISeriesImputer):
         include arguments used to sample the posterior distributions.
 
         Args:
+            **kwargs: default keyword arguments, which are all defined below.
+                Note - kwargs popped for arguments defined below.
+                Rest of kwargs passed as params to sampling (see pymc3).
             am (float, Optional): mean of alpha prior. Default 0.
             asd (float, Optional): std. deviation of alpha prior. Default 10.
             bm (float, Optional): mean of beta priors. Default 0.
@@ -68,15 +70,16 @@ class BayesianLeastSquaresImputer(ISeriesImputer):
                 create imputations. Default is None. 'random' and 'mean'
                 supported for explicit options.
         """
-        self.am = am
-        self.asd = asd
-        self.bm = bm
-        self.bsd = bsd
-        self.sig = sig
-        self.sample = sample
-        self.tune = tune
-        self.init = init
-        self.fill_value = fill_value
+        self.am = kwargs.pop("am", 0)
+        self.asd = kwargs.pop("asd", 10)
+        self.bm = kwargs.pop("bm", 0)
+        self.bsd = kwargs.pop("bsd", 10)
+        self.sig = kwargs.pop("sig", 1)
+        self.sample = kwargs.pop("sample", 1000)
+        self.tune = kwargs.pop("tune", 1000)
+        self.init = kwargs.pop("init", "auto")
+        self.fill_value = kwargs.pop("fill_value", None)
+        self.sample_kwargs = kwargs
 
     def fit(self, X, y):
         """Fit the Imputer to the dataset by fitting bayesian model.
@@ -132,7 +135,8 @@ class BayesianLeastSquaresImputer(ISeriesImputer):
             tr = pm.sample(
                 self.sample,
                 tune=self.tune,
-                init=self.init
+                init=self.init,
+                **self.sample_kwargs
             )
         self.trace_ = tr
 
@@ -177,8 +181,7 @@ class BayesianBinaryLogisticImputer(ISeriesImputer):
     # class variables
     strategy = methods.BAYESIAN_BINARY_LOGISTIC
 
-    def __init__(self, am=0, asd=10, bm=0, bsd=10, thresh=0.5, sample=1000,
-                 tune=1000, init="auto", fill_value=None):
+    def __init__(self, **kwargs):
         """Create an instance of the BayesianBinaryLogisticImputer class.
 
         The class requires multiple arguments necessary to create priors for
@@ -190,6 +193,9 @@ class BayesianBinaryLogisticImputer(ISeriesImputer):
         include arguments used to sample the posterior distributions.
 
         Args:
+            **kwargs: default keyword arguments, which are defined below.
+                Note - kwargs popped for arguments defined below.
+                Rest of kwargs passed as params to sampling (see pymc3).
             am (float, Optional): mean of alpha prior. Default 0.
             asd (float, Optional): std. deviation of alpha prior. Default 10.
             bm (float, Optional): mean of beta priors. Default 0.
@@ -208,15 +214,16 @@ class BayesianBinaryLogisticImputer(ISeriesImputer):
                 create imputations. Default is None. 'random' and 'mean'
                 supported for explicit options.
         """
-        self.am = am
-        self.asd = asd
-        self.bm = bm
-        self.bsd = bsd
-        self.thresh = thresh
-        self.sample = sample
-        self.tune = tune
-        self.init = init
-        self.fill_value = fill_value
+        self.am = kwargs.pop("am", 0)
+        self.asd = kwargs.pop("asd", 10)
+        self.bm = kwargs.pop("bm", 0)
+        self.bsd = kwargs.pop("bsd", 10)
+        self.thresh = kwargs.pop("thresh", 0.5)
+        self.sample = kwargs.pop("sample", 1000)
+        self.tune = kwargs.pop("tune", 1000)
+        self.init = kwargs.pop("init", "auto")
+        self.fill_value = kwargs.pop("fill_value", None)
+        self.sample_kwargs = kwargs
 
     def fit(self, X, y):
         """Fit the Imputer to the dataset by fitting bayesian model.
@@ -281,6 +288,7 @@ class BayesianBinaryLogisticImputer(ISeriesImputer):
                 self.sample,
                 tune=self.tune,
                 init=self.init,
+                **self.sample_kwargs
             )
         self.trace_ = tr
 

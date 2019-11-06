@@ -111,8 +111,10 @@ def test_stochastic_predictive_imputer():
 
 def test_bayesian_reg_imputer():
     """Test bayesian works for numerical column of PredictiveImputer."""
-    # test designed first
-    imp_b = SingleImputer(strategy={"y":"bayesian least squares"})
+    # test designed first - test kwargs and params
+    imp_b = SingleImputer(strategy={"y":"bayesian least squares"},
+                          imp_kwgs={"y":{"fill_value": "random",
+                                         "am": 11, "cores": 2}})
     imp_b.fit_transform(dfs.df_bayes_reg)
     # test on numerical in general
     imp_n = SingleImputer(strategy="bayesian least squares")

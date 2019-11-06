@@ -11,8 +11,8 @@
 
 ## Conference Talks
 * We'll be presenting `Autoimpute` at a couple upcoming conferences!
-* **PyData NYC**: New and Upcoming slot, November 2019
-* **PyData LA**: Main talk slot, December 2019
+* **[PyData NYC](https://pydata.org/nyc2019/schedule/presentation/96/up-and-coming/)**: New and Upcoming slot, November 2019
+* **[PyData LA](https://pydata.org/la2019/schedule/presentation/22/introducing-autoimpute-a-python-package-for-grappling-with-missing-data/)**: Main talk slot, December 2019
 
 ## Note on Development
 * Earlier this summer, we completed what we feel is the first phase of the `Autoimpute`.
