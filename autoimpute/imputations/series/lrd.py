@@ -41,9 +41,7 @@ class LRDImputer(ISeriesImputer):
     # class variables
     strategy = methods.LRD
 
-    def __init__(self, am=None, asd=10, bm=None, bsd=10, sig=1, sample=1000,
-                 tune=1000, init="auto", fill_value="random", neighbors=5,
-                 **kwargs):
+    def __init__(self, **kwargs):
         """Create an instance of the LRDImputer class.
 
         The class requires multiple arguments necessary to create priors for
@@ -53,6 +51,10 @@ class LRDImputer(ISeriesImputer):
         or the number of neighbors that LRD uses to sample observed.
 
         Args:
+            **kwargs: default keyword arguments for lm & bayesian analysis.
+                Note - kwargs popped for default arguments defined below.
+                Next set of kwargs popped and sent to linear regression.
+                Rest of kwargs passed as params to sampling (see pymc3).
             am (float, Optional): mean of alpha prior. Default 0.
             asd (float, Optional): std. deviation of alpha prior. Default 10.
             bm (float, Optional): mean of beta priors. Default 0.
@@ -72,19 +74,32 @@ class LRDImputer(ISeriesImputer):
                 Value should be greater than 0 and less than # observed,
                 although anything greater than 10-20 generally too high
                 unless dataset is massive.
-            **kwargs: key value arguments passed to linear regression
+            fit_intercept (bool, Optional): sklearn LinearRegression param.
+            normalize (bool, Optional): sklearn LinearRegression param.
+            copy_x (bool, Optional): sklearn LinearRegression param.
+            n_jobs (int, Optional): sklearn LinearRegression param.
         """
-        self.am = am
-        self.asd = asd
-        self.bm = bm
-        self.bsd = bsd
-        self.sig = sig
-        self.sample = sample
-        self.tune = tune
-        self.init = init
-        self.fill_value = fill_value
-        self.neighbors = neighbors
-        self.lm = LinearRegression(**kwargs)
+        self.am = kwargs.pop("am", None)
+        self.asd = kwargs.pop("asd", 10)
+        self.bm = kwargs.pop("bm", None)
+        self.bsd = kwargs.pop("bsd", 10)
+        self.sig = kwargs.pop("sig", 1)
+        self.sample = kwargs.pop("sample", 1000)
+        self.tune = kwargs.pop("tune", 1000)
+        self.init = kwargs.pop("init", "auto")
+        self.fill_value = kwargs.pop("fill_value", "random")
+        self.neighbors = kwargs.pop("neighbors", 5)
+        self.fit_intercept = kwargs.pop("fit_intercept", True)
+        self.normalize = kwargs.pop("normalize", False)
+        self.copy_x = kwargs.pop("copy_x", True)
+        self.n_jobs = kwargs.pop("n_jobs", None)
+        self.lm = LinearRegression(
+            self.fit_intercept,
+            self.normalize,
+            self.copy_x,
+            self.n_jobs
+        )
+        self.sample_kwargs = kwargs
 
     def fit(self, X, y):
         """Fit the Imputer to the dataset by fitting bayesian and LS model.
@@ -151,9 +166,10 @@ class LRDImputer(ISeriesImputer):
         # generate posterior distribution for alpha, beta coefficients
         with model:
             tr = pm.sample(
-                sample=self.sample,
+                self.sample,
                 tune=self.tune,
                 init=self.init,
+                **self.sample_kwargs
             )
         self.trace_ = tr
 

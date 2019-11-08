@@ -12,6 +12,7 @@ Tests use the pytest library. The tests in this module ensure the following:
 - `test_stochastic_predictive_imputer` test stochastic strategy.
 - `test_bayesian_reg_imputer` test bayesian regression strategy.
 - `test_bayesian_logistic_imputer` test bayesian logistic strategy.
+- `test_pmm_lrd_imputer` test pmm and lrd strategy.
 """
 
 import pytest
@@ -125,3 +126,17 @@ def test_bayesian_logistic_imputer():
     imp_b = SingleImputer(strategy={"y":"bayesian binary logistic"},
                           imp_kwgs={"y":{"fill_value": "random"}})
     imp_b.fit_transform(dfs.df_bayes_log)
+
+def test_pmm_lrd_imputer():
+    """Test pmm and lrd work for numerical column of PredictiveImputer."""
+    # test pmm first - test kwargs and params
+    imp_pmm = SingleImputer(strategy={"y":"pmm"},
+                            imp_kwgs={"y": {"fill_value": "random",
+                                      "copy_x": False}})
+    imp_pmm.fit_transform(dfs.df_bayes_reg)
+
+    # test lrd second - test kwargs and params
+    imp_lrd = SingleImputer(strategy={"y":"lrd"},
+                            imp_kwgs={"y": {"fill_value": "random",
+                                      "copy_x": False}})
+    imp_lrd.fit_transform(dfs.df_bayes_reg)

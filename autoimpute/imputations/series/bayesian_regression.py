@@ -51,8 +51,8 @@ class BayesianLeastSquaresImputer(ISeriesImputer):
         include arguments used to sample the posterior distributions.
 
         Args:
-            **kwargs: default keyword arguments, which are all defined below.
-                Note - kwargs popped for arguments defined below.
+            **kwargs: default keyword arguments used for bayesian analysis.
+                Note - kwargs popped for default arguments defined below.
                 Rest of kwargs passed as params to sampling (see pymc3).
             am (float, Optional): mean of alpha prior. Default 0.
             asd (float, Optional): std. deviation of alpha prior. Default 10.
@@ -193,8 +193,8 @@ class BayesianBinaryLogisticImputer(ISeriesImputer):
         include arguments used to sample the posterior distributions.
 
         Args:
-            **kwargs: default keyword arguments, which are defined below.
-                Note - kwargs popped for arguments defined below.
+            **kwargs: default keyword arguments used for bayesian analysis.
+                Note - kwargs popped for default arguments defined below.
                 Rest of kwargs passed as params to sampling (see pymc3).
             am (float, Optional): mean of alpha prior. Default 0.
             asd (float, Optional): std. deviation of alpha prior. Default 10.
