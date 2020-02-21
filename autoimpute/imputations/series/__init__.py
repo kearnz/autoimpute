@@ -29,6 +29,7 @@ from .bayesian_regression import BayesianLeastSquaresImputer
 from .bayesian_regression import BayesianBinaryLogisticImputer
 from .pmm import PMMImputer
 from .lrd import LRDImputer
+from .norm_unit_variance_imputation import NormUnitVarianceImputer
 
 __all__ = [
     "DefaultUnivarImputer",
@@ -50,5 +51,6 @@ __all__ = [
     "BayesianLeastSquaresImputer",
     "BayesianBinaryLogisticImputer",
     "PMMImputer",
-    "LRDImputer"
+    "LRDImputer",
+    "NormUnitVarianceImputer",
 ]
