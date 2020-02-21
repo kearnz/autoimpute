@@ -22,3 +22,4 @@ BAYESIAN_BINARY_LOGISTIC = "bayesian binary logistic"
 PMM = "pmm"
 LRD = "lrd"
 NONE = "none"
+NORM_UNIT_VARIANCE = 'normal unit variance'

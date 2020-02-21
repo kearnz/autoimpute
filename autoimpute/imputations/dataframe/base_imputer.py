@@ -19,6 +19,7 @@ from ..series import PMMImputer, LRDImputer
 from ..series import BinaryLogisticImputer, MultinomialLogisticImputer
 from ..series import BayesianLeastSquaresImputer
 from ..series import BayesianBinaryLogisticImputer
+from ..series import NormUnitVarianceImputer
 methods = method_names
 
 # pylint:disable=attribute-defined-outside-init
@@ -84,7 +85,8 @@ class BaseImputer:
         methods.CATEGORICAL: CategoricalImputer,
         methods.INTERPOLATE: InterpolateImputer,
         methods.LOCF: LOCFImputer,
-        methods.NOCB: NOCBImputer
+        methods.NOCB: NOCBImputer,
+        methods.NORM_UNIT_VARIANCE: NormUnitVarianceImputer,
     }
 
     predictive_strategies = {
