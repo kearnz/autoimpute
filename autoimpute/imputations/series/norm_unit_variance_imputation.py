@@ -63,7 +63,7 @@ class NormUnitVarianceImputer(ISeriesImputer):
         omu = self.statistics_["param"] # mean of observed data
         idx = X.isna()                  # missing data
         nO = sum(idx)                   # number of observed
-        m = len(X)-nO # number to impute
+        m = len(X)-nO                   # number to impute
         muhatk = stats.norm(omu,np.sqrt(1/nO))
         # imputation cross-terms *NOT* uncorrelated
         Ymi=stats.multivariate_normal(np.ones(m)*muhatk.rvs(),
@@ -79,9 +79,7 @@ class NormUnitVarianceImputer(ISeriesImputer):
 if __name__ == '__main__':
     from autoimpute.imputations import SingleImputer
     si=SingleImputer('normal unit variance')
-
     Yo=stats.norm(0,1).rvs(100)
-    df = pd.DataFrame(columns=['Yo'],index=range(200))
+    df = pd.DataFrame(columns=['Yo'],index=range(200),dtype=float)
     df.loc[range(100),'Yo'] = Yo
-    df = df.astype(float)
     si.fit_transform(df)
