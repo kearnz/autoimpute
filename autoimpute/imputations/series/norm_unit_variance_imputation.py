@@ -61,7 +61,7 @@ class NormUnitVarianceImputer(ISeriesImputer):
         check_is_fitted(self, "statistics_")
         _not_num_series(self.strategy, X)
         omu = self.statistics_["param"] # mean of observed data
-        idx = X.isna()                  # missing data
+        idx = X.isnull()                  # missing data
         nO = sum(idx)                   # number of observed
         m = len(X)-nO                   # number to impute
         muhatk = stats.norm(omu,np.sqrt(1/nO))
