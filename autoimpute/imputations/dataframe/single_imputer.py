@@ -251,6 +251,8 @@ class SingleImputer(BaseImputer, BaseEstimator, TransformerMixin):
                     for col in x_m:
                         d = DefaultUnivarImputer()
                         d_imps = d.fit_impute(x_[col], None)
+                        if mis_cov[col] == x_.shape[0]:
+                            d_imps = 0
                         x_null = x_[col][x_[col].isnull()].index
                         x_.loc[x_null, col] = d_imps
 
