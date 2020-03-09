@@ -91,3 +91,12 @@ def trans_binary(c):
 
 df_bayes_log = df_bayes_reg.copy()
 df_bayes_log.y = df_bayes_log.y.apply(trans_binary)
+
+# partial dependence test
+df_partial_dependence = pd.DataFrame(
+    {'A':np.random.uniform(0,1,100), 
+        'B':np.random.uniform(0,1,100)}
+)
+df_partial_dependence['B'][df_partial_dependence['B'] < 0.25] = np.nan
+df_partial_dependence['C'] = df_partial_dependence['B'] * 2
+df_partial_dependence['C'][df_partial_dependence['C'] < 0.7] = np.nan
