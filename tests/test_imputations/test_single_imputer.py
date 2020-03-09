@@ -147,3 +147,7 @@ def test_normal_unit_variance_imputer():
     imp_pmm = SingleImputer(strategy={"y":"normal unit variance"},)
     imp_pmm.fit_transform(dfs.df_bayes_reg)
 
+def test_partial_dependence_imputer():
+    """Test to ensure that edge case for partial dependence whandled"""
+    imp = SingleImputer(strategy='stochastic')
+    imp.fit_transform(dfs.df_partial_dependence)

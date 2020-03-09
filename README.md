@@ -10,19 +10,18 @@
 <span style="font-size:1.5em;">[Check out our docs](https://autoimpute.readthedocs.io/en/latest/) to get the developer guide to `Autoimpute`.</span>
 
 ## Conference Talks
-* We'll be presenting `Autoimpute` at a couple upcoming conferences!
-* **[PyData NYC](https://pydata.org/nyc2019/schedule/presentation/96/up-and-coming/)**: New and Upcoming slot, November 2019
-* **[PyData LA](https://pydata.org/la2019/schedule/presentation/22/introducing-autoimpute-a-python-package-for-grappling-with-missing-data/)**: Main talk slot, December 2019
+* We presented `Autoimpute` at a couple of PyData conferences!
+* **[PyData NYC](https://pydata.org/nyc2019/schedule/presentation/96/up-and-coming/)**: New and Upcoming slot in November 2019
+* **[PyData LA](https://pydata.org/la2019/schedule/presentation/22/introducing-autoimpute-a-python-package-for-grappling-with-missing-data/)**: Main talk slot in December 2019. See the video [here!](https://www.youtube.com/watch?v=QZRwg1NHB_Y&t=2041s)
 
 ## Note on Development
-* Earlier this summer, we completed what we feel is the first phase of the `Autoimpute`.
-* Since then, we've taken a break and began planning the next steps for the package.
+* Summer 2019, we completed what we feel is the first phase of the `Autoimpute`.
+* Since then, we've focused on maintenance and began planning the next steps for the package.
 * If you'd like to get involved, feel free to reach out! Our info is on the [Authors](https://github.com/kearnz/autoimpute/blob/master/AUTHORS.rst) page.
 * We're looking to collaborate and happy to work with those interested!
 
 ## Installation
 * `Autoimpute` is now **registered with PyPI!** Download with `pip install autoimpute`.
-* The latest version of `Autoimpute` is `0.11.5`.
 * If `pip` cached an older version, try `pip install --no-cache-dir --upgrade autoimpute`.
 * If you want to work with the development branch, use the script below:
 
