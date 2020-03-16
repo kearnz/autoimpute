@@ -13,6 +13,7 @@ Tests use the pytest library. The tests in this module ensure the following:
 - `test_bayesian_reg_imputer` test bayesian regression strategy.
 - `test_bayesian_logistic_imputer` test bayesian logistic strategy.
 - `test_pmm_lrd_imputer` test pmm and lrd strategy.
+- `test_normal_unit_variance_imputer` test unit variance imputer
 """
 
 import pytest
@@ -140,3 +141,13 @@ def test_pmm_lrd_imputer():
                             imp_kwgs={"y": {"fill_value": "random",
                                       "copy_x": False}})
     imp_lrd.fit_transform(dfs.df_bayes_reg)
+
+def test_normal_unit_variance_imputer():
+    """Test normal unit variance imputer for numerical column"""
+    imp_pmm = SingleImputer(strategy={"y":"normal unit variance"},)
+    imp_pmm.fit_transform(dfs.df_bayes_reg)
+
+def test_partial_dependence_imputer():
+    """Test to ensure that edge case for partial dependence whandled"""
+    imp = SingleImputer(strategy='stochastic')
+    imp.fit_transform(dfs.df_partial_dependence)

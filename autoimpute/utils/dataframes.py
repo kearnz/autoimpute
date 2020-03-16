@@ -10,7 +10,7 @@ eq_miss = lambda x: np.random.choice([x, np.nan], 1)[0]
 val_miss = lambda x: np.random.choice([x, np.nan], 1, p=[x/100, 1-x/100])[0]
 
 # strategies used for imputation
-num_strategies = ["mean", "median", "mode", "random", "norm", "interpolate"]
+num_strategies = ["mean", "median", "mode", "random", "norm", "interpolate",'normal unit variance']
 cat_strategies = ["mode", "categorical"]
 time_strategies = ["interpolate", "locf", "nocb"]
 
@@ -91,3 +91,12 @@ def trans_binary(c):
 
 df_bayes_log = df_bayes_reg.copy()
 df_bayes_log.y = df_bayes_log.y.apply(trans_binary)
+
+# partial dependence test
+df_partial_dependence = pd.DataFrame(
+    {'A':np.random.uniform(0,1,100), 
+        'B':np.random.uniform(0,1,100)}
+)
+df_partial_dependence['B'][df_partial_dependence['B'] < 0.25] = np.nan
+df_partial_dependence['C'] = df_partial_dependence['B'] * 2
+df_partial_dependence['C'][df_partial_dependence['C'] < 0.7] = np.nan
