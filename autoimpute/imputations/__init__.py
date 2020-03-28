@@ -13,6 +13,7 @@ from .dataframe import BaseImputer
 from .mis_classifier import MissingnessClassifier
 from .dataframe import SingleImputer
 from .dataframe import MultipleImputer
+from .dataframe import SeriesImputer
 from .deletion import listwise_delete
 
 __all__ = [
@@ -20,5 +21,6 @@ __all__ = [
     "MissingnessClassifier",
     "SingleImputer",
     "MultipleImputer",
+    "SeriesImputer",
     "listwise_delete"
 ]
