@@ -1,27 +1,128 @@
-from sklearn.base import BaseEstimator, TransformerMixin
-from sklearn.utils.validation import check_is_fitted
-from autoimpute.imputations import method_names
-from autoimpute.utils import check_nan_columns, check_predictors_fit
-from autoimpute.utils import check_strategy_fit
-from .base_imputer import BaseImputer
-from .single_imputer import SingleImputer
+"""This module performs a series of multiple imputations of missing features
+in a dataset.
 
+This module contains one class - the SeriesImputer. Use this class to
+impute each Series within a DataFrame multiple times using an iteration of fits
+and transformations to reach a stable state of imputation each time. This
+extension of MultipleImputer makes the same imputation methods available as its
+parent class - both univariate and multivatiate. Each method runs `n` times on
+its specified column. When `n` passes through the columns are complete, the
+MultipleImputer returns the `n` imputed datasets. For each of these `n`
+imputations, the method (re)fits and applies imputation to the dataset `k`
+times. Typically `k` should be at least 3 to reach a stable state.
+"""
+
+from autoimpute.utils import check_nan_columns
 from .multiple_imputer import MultipleImputer
 
 
 class SeriesImputer(MultipleImputer):
+    """Techniques to impute Series with missing values multiple times using
+    repeated fits and applications to reach a stable imputation.
+
+    The SeriesImputer class implements multiple imputation, i.e., a series
+    or repetition of applications of imputation to reach a stable imputation.
+    It leverages the methods found in the BaseImputer. This imputer passes
+    all the work for each imputation to the SingleImputer, but it controls
+    the arguments each imputer receives. The args are flexible depending on
+    what the user specifies for each imputation.
+
+    Note that the Imputer allows for one imputation method per column only.
+    Therefore, the behavior of `strategy` is the same as the SingleImputer,
+    but the predictors are allowed to change for each imputation.
+    """
+
     def __init__(self, k=3, n=5, strategy="default predictive", predictors="all",
                  imp_kwgs=None, seed=None, visit="default",
                  return_list=False):
+        """Create an instance of the SeriesImputer class.
+
+        As with sklearn classes, all arguments take default values. Therefore,
+        SeriesImputer() creates a valid class instance. The instance is
+        used to set up an imputer and perform checks on arguments.
+
+        Args:
+            k (int, optional): number of repeated fits and transformations to
+                apply to reach a stable impution. Sefault is 3.
+                Value must be greater than or equal to 1.
+            n (int, optional): number of imputations to perform. Default is 5.
+                Value must be greater than or equal to 1.
+            predictors (str, iter, dict, optional): defaults to all, i.e.
+                use all predictors. If all, every column will be used for
+                every class prediction. If a list, subset of columns used for
+                all predictions. If a dict, specify which columns to use as
+                predictors for each imputation. Columns not specified in dict
+                but present in `strategy` receive `all` other cols as preds.
+            imp_kwgs (dict, optional): keyword arguments for each imputer.
+                Default is None, which means default imputer created to match
+                specific strategy. imp_kwgs keys can be either columns or
+                strategies. If strategies, each column given that strategy is
+                instantiated with same arguments. When strategy is `default`,
+                imp_kwgs is ignored.
+            seed (int, optional): seed setting for reproducible results.
+                Defualt is None. No validation, but values should be integer.
+            return_list (bool, optional): return m as list or generator.
+                Default is False. m imputations returned as generator. More
+                memory efficient. return as list if return_list=True
+        """
         self.k = k
         super(SeriesImputer, self).__init__(n=n, strategy=strategy, predictors=predictors, imp_kwgs = imp_kwgs, seed=seed, visit=visit, return_list=return_list)
 
+    @property
+    def k(self):
+        """Property getter to return the value of the k property."""
+        return self._k
+
+    @k.setter
+    def k(self, k_):
+        """Validate the k property to ensure it's Type and Value.
+
+        Args:
+            k_ (int): k passed as arg to class instance.
+
+        Raises:
+            TypeError: k must be an integer.
+            ValueError: k must be greater than zero.
+        """
+
+        # deal with type first
+        if not isinstance(k_, int):
+            err = "k must be an integer specifying number of repeated fits and transformations in a series of imputations."
+            raise TypeError(err)
+
+        # then check the value is greater than zero
+        if k_ < 1:
+            err = "k > 0. Cannot perform fewer than 1 imputation."
+            raise ValueError(err)
+
+        # otherwise set the property value for k
+        self._k = k_
+
+    def iterate_imputation(self, X, imp):
+        """Helper function that iterates self.k times to create a stable imputation
+        by repeated application and retraining of the imputation models.
+        Used by transform()
+
+        Args:
+            X (pd.DataFrame): fit DataFrame to impute
+            imp: Imputer to apply to X
+        """
+        X2 = imp.transform(X, imp_ixs=self.imputed_)
+        for k in range(self.k - 1):
+            imp.fit(X2, imp_ixs=self.imputed_)
+            X2 = imp.transform(X, imp_ixs=self.imputed_)
+        return X2
 
     @check_nan_columns
     def transform(self, X):
         """Impute each column within a DataFrame using fit imputation methods.
 
-        TODO
+        The transform step performs the actual imputations. Given a dataset
+        previously fit, `transform` imputes each column with it's respective
+        imputed values from fit (in the case of inductive) or performs new fit
+        and transform in one sweep (in the case of transductive).
+        The transformations and fits are repeatedly applied and refitted self.k
+        times to reach a stable imputation.
 
         Args:
             X (pd.DataFrame): fit DataFrame to impute.
@@ -42,13 +143,10 @@ class SeriesImputer(MultipleImputer):
             imp_ix = X[column][X[column].isnull()].index
             self.imputed_[column] = imp_ix.tolist()
 
-        imputed = []
-        for i in self.statistics_.items():
-            X2 = i[1].transform(X, imp_ixs=self.imputed_)
-            for k in range(self.k-1):
-                i[1].fit(X2, imp_ixs=self.imputed_)
-                X2 = i[1].transform(X, imp_ixs=self.imputed_)
-            imputed.append((i[0], X2))
+        # right now, return a generator by default
+        # sequential only for now
+        imputed = ((i[0], self.iterate_imputation(X, i[1]))
+                   for i in self.statistics_.items())
 
         if self.return_list:
             imputed = list(imputed)
