@@ -12,11 +12,11 @@ from autoimpute.imputations.dataframe.
 from .base_imputer import BaseImputer
 from .single_imputer import SingleImputer
 from .multiple_imputer import MultipleImputer
-from .series_imputer import SeriesImputer
+from .mice_imputer import MiceImputer
 
 __all__ = [
     "BaseImputer",
     "SingleImputer",
     "MultipleImputer",
-    "SeriesImputer"
+    "MiceImputer"
 ]

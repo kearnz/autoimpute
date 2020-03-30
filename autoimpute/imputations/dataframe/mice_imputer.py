@@ -1,7 +1,7 @@
 """This module performs a series of multiple imputations of missing features
 in a dataset.
 
-This module contains one class - the SeriesImputer. Use this class to
+This module contains one class - the MiceImputer. Use this class to
 impute each Series within a DataFrame multiple times using an iteration of fits
 and transformations to reach a stable state of imputation each time. This
 extension of MultipleImputer makes the same imputation methods available as its
@@ -10,18 +10,21 @@ its specified column. When `n` passes through the columns are complete, the
 MultipleImputer returns the `n` imputed datasets. For each of these `n`
 imputations, the method (re)fits and applies imputation to the dataset `k`
 times. Typically `k` should be at least 3 to reach a stable state.
+Its functioning is based upon the R package MICE
+(https://cran.r-project.org/web/packages/mice/)
 """
 
 from autoimpute.utils import check_nan_columns
 from .multiple_imputer import MultipleImputer
 
 
-class SeriesImputer(MultipleImputer):
+class MiceImputer(MultipleImputer):
     """Techniques to impute Series with missing values multiple times using
     repeated fits and applications to reach a stable imputation.
 
-    The SeriesImputer class implements multiple imputation, i.e., a series
-    or repetition of applications of imputation to reach a stable imputation.
+    The MiceImputer class implements multiple imputation, i.e., a series
+    or repetition of applications of imputation to reach a stable imputation,
+    similar to the functioning of the R package MICE.
     It leverages the methods found in the BaseImputer. This imputer passes
     all the work for each imputation to the SingleImputer, but it controls
     the arguments each imputer receives. The args are flexible depending on
@@ -66,7 +69,7 @@ class SeriesImputer(MultipleImputer):
                 memory efficient. return as list if return_list=True
         """
         self.k = k
-        super(SeriesImputer, self).__init__(n=n, strategy=strategy, predictors=predictors, imp_kwgs = imp_kwgs, seed=seed, visit=visit, return_list=return_list)
+        super(MiceImputer, self).__init__(n=n, strategy=strategy, predictors=predictors, imp_kwgs = imp_kwgs, seed=seed, visit=visit, return_list=return_list)
 
     @property
     def k(self):
@@ -98,14 +101,14 @@ class SeriesImputer(MultipleImputer):
         # otherwise set the property value for k
         self._k = k_
 
-    def iterate_imputation(self, X, imp):
+    def _iterate_imputation(self, X, imp):
         """Helper function that iterates self.k times to create a stable imputation
         by repeated application and retraining of the imputation models.
         Used by transform()
 
         Args:
             X (pd.DataFrame): fit DataFrame to impute
-            imp: Imputer to apply to X
+            imp (Imputer): Imputer to apply to X
         """
         X2 = imp.transform(X, imp_ixs=self.imputed_)
         for k in range(self.k - 1):
@@ -145,7 +148,7 @@ class SeriesImputer(MultipleImputer):
 
         # right now, return a generator by default
         # sequential only for now
-        imputed = ((i[0], self.iterate_imputation(X, i[1]))
+        imputed = ((i[0], self._iterate_imputation(X, i[1]))
                    for i in self.statistics_.items())
 
         if self.return_list:

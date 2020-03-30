@@ -125,6 +125,9 @@ class SingleImputer(BaseImputer, BaseEstimator, TransformerMixin):
             y (pd.Series, pd.DataFrame Optional): response. Default is None.
                 Determined interally in fit method. Arg is present to remain
                 compatible with sklearn Pipelines.
+            imp_ixs (dict): Dictionary of lists of indices that indicate which
+                data elements to impute per column or None to identify from
+                missing elements per column
 
         Returns:
             self: instance of the SingleImputer class.
@@ -201,6 +204,9 @@ class SingleImputer(BaseImputer, BaseEstimator, TransformerMixin):
 
         Args:
             X (pd.DataFrame): DataFrame to impute (same as fit or new data).
+            imp_ixs (dict): Dictionary of lists of indices that indicate which
+                data elements to impute per column or None to identify from
+                missing elements per column
 
         Returns:
             X (pd.DataFrame): imputed in place or copy of original.
