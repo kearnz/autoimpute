@@ -23,7 +23,7 @@
 ## Creators and Maintainers
 Joseph Kearney – [@kearnz](https://github.com/kearnz)  
 Shahid Barkat - [@shabarka](https://github.com/shabarka)  
-Arnab Bose (Advisor) - [@bosearnab](https://github.com/bosearnab)
+Arnab Bose (Advisor) - [@bosearnab](https://github.com/bosearnab)  
 See the [Authors](https://github.com/kearnz/autoimpute/blob/master/AUTHORS.rst) page to get in touch!
 
 ## Installation
