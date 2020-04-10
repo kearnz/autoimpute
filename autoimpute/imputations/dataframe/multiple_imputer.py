@@ -26,7 +26,7 @@ methods = method_names
 class MultipleImputer(BaseImputer, BaseEstimator, TransformerMixin):
     """Techniques to impute Series with missing values multiple times.
 
-    The MultipleImputer class implements multiple imputation. It leverages the
+    The MultipleImputer class applies imputation multiple times. It leverages the
     methods found in the BaseImputer. This imputer passes all the work for
     each imputation to the SingleImputer, but it controls the arguments
     each imputer receives. The args are flexible depending on what the user

@@ -108,7 +108,7 @@ class SingleImputer(BaseImputer, BaseEstimator, TransformerMixin):
             raise ValueError(err)
 
     @check_nan_columns
-    def fit(self, X, y=None):
+    def fit(self, X, y=None, imp_ixs=None):
         """Fit specified imputation methods to each column within a DataFrame.
 
         The fit method calculates the `statistics` necessary to later
@@ -125,6 +125,9 @@ class SingleImputer(BaseImputer, BaseEstimator, TransformerMixin):
             y (pd.Series, pd.DataFrame Optional): response. Default is None.
                 Determined interally in fit method. Arg is present to remain
                 compatible with sklearn Pipelines.
+            imp_ixs (dict): Dictionary of lists of indices that indicate which
+                data elements to impute per column or None to identify from
+                missing elements per column
 
         Returns:
             self: instance of the SingleImputer class.
@@ -175,6 +178,9 @@ class SingleImputer(BaseImputer, BaseEstimator, TransformerMixin):
                 else:
                     xs = X[preds]
 
+                if imp_ixs is not None:
+                    ys[imp_ixs[column]] = np.nan
+
                 # fit the data on observed values only.
                 x_, y_ = _get_observed(xs, ys)
 
@@ -188,7 +194,7 @@ class SingleImputer(BaseImputer, BaseEstimator, TransformerMixin):
         return self
 
     @check_nan_columns
-    def transform(self, X):
+    def transform(self, X, imp_ixs=None):
         """Impute each column within a DataFrame using fit imputation methods.
 
         The transform step performs the actual imputations. Given a dataset
@@ -198,6 +204,9 @@ class SingleImputer(BaseImputer, BaseEstimator, TransformerMixin):
 
         Args:
             X (pd.DataFrame): DataFrame to impute (same as fit or new data).
+            imp_ixs (dict): Dictionary of lists of indices that indicate which
+                data elements to impute per column or None to identify from
+                missing elements per column
 
         Returns:
             X (pd.DataFrame): imputed in place or copy of original.
@@ -217,7 +226,10 @@ class SingleImputer(BaseImputer, BaseEstimator, TransformerMixin):
         if self.seed is not None:
             np.random.seed(self.seed)
         for column, imputer in self.statistics_.items():
-            imp_ix = X[column][X[column].isnull()].index
+            if imp_ixs is None:
+                imp_ix = X[column][X[column].isnull()].index
+            else:
+                imp_ix = pd.Index(imp_ixs[column])
             self.imputed_[column] = imp_ix.tolist()
 
             # continue if there are no imputations to make
@@ -250,9 +262,10 @@ class SingleImputer(BaseImputer, BaseEstimator, TransformerMixin):
                     x_m = mis_cov.index
                     for col in x_m:
                         d = DefaultUnivarImputer()
-                        d_imps = d.fit_impute(x_[col], None)
                         if mis_cov[col] == x_.shape[0]:
                             d_imps = 0
+                        else:
+                            d_imps = d.fit_impute(x_[col], None)
                         x_null = x_[col][x_[col].isnull()].index
                         x_.loc[x_null, col] = d_imps
 
