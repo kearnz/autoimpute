@@ -15,10 +15,16 @@
 * **[PyData LA](https://pydata.org/la2019/schedule/presentation/22/introducing-autoimpute-a-python-package-for-grappling-with-missing-data/)**: Main talk slot in December 2019. See the video [here!](https://www.youtube.com/watch?v=QZRwg1NHB_Y&t=2041s)
 
 ## Note on Development
-* Summer 2019, we completed what we feel is the first phase of the `Autoimpute`.
+* We've completed what we feel is the first phase of the `Autoimpute`.
 * Since then, we've focused on maintenance and began planning the next steps for the package.
 * If you'd like to get involved, feel free to reach out! Our info is on the [Authors](https://github.com/kearnz/autoimpute/blob/master/AUTHORS.rst) page.
 * We're looking to collaborate and happy to work with those interested!
+
+## Creators and Maintainers
+Joseph Kearney – [@kearnz](https://github.com/kearnz)  
+Shahid Barkat - [@shabarka](https://github.com/shabarka)  
+Arnab Bose (Advisor) - [@bosearnab](https://github.com/bosearnab)
+See the [Authors](https://github.com/kearnz/autoimpute/blob/master/AUTHORS.rst) page to get in touch!
 
 ## Installation
 * `Autoimpute` is now **registered with PyPI!** Download with `pip install autoimpute`.
@@ -187,11 +193,6 @@ For a deeper understanding of how the package works and its available features, 
     - Upgrade joblib in the process, which is reponsible for generating the error (pymc3 uses joblib under the hood).
     - Set `cores=1` in `pm.sample`. This should be a last resort, as it means posterior sampling will use 1 core only. Not using multiprocessing will slow down bayesian imputation methods significantly.
 * Reach out and let us know if you've worked through this issue successfully on Windows and have a better solution!
-
-## Creators and Maintainers
-Joseph Kearney – [@kearnz](https://github.com/kearnz)  
-Shahid Barkat - [@shabarka](https://github.com/shabarka)  
-See the [Authors](https://github.com/kearnz/autoimpute/blob/master/AUTHORS.rst) page to get in touch!
 
 ## License
 Distributed under the MIT license. See [LICENSE](https://github.com/kearnz/autoimpute/blob/master/LICENSE) for more information.
