@@ -6,7 +6,7 @@ import pandas as pd
 from statsmodels.api import add_constant
 from sklearn.utils.validation import check_is_fitted
 from autoimpute.utils.helpers import _one_hot_encode
-from autoimpute.imputations import MultipleImputer
+from autoimpute.imputations import MiceImputer
 
 # pylint:disable=attribute-defined-outside-init
 
@@ -16,8 +16,8 @@ class MiBaseRegressor:
     Every Autoimpute regressor inherits from the MiBaseRegressor. The class
     provides the functionality necessary for Autoimpute regressors to wrap
     sklearn or statsmodels libraries and apply them to multiply imputed
-    datasets. It also creates the MultipleImputer used to impute data if the
-    user does not specify a custom MultipleImputer during instantiation.
+    datasets. It also creates the MiceImputer used to impute data if the
+    user does not specify a custom MiceImputer during instantiation.
 
     Attributes:
         model_libs (tuple): libraries supported by Autoimpute regressors.
@@ -33,19 +33,19 @@ class MiBaseRegressor:
         Autoimpute regressor wraps either sklearn or statsmodels regressors to
         apply them on multiply imputed datasets. The MiBaseRegressor contains
         the logic Autoimpute regressors share. In addition, it creates an
-        instance of the MultipleImputer to impute missing data.
+        instance of the MiceImputer to impute missing data.
 
         Args:
-            mi (MultipleImputer): An instance of a MultipleImputer. If `mi`
+            mi (MiceImputer): An instance of a MiceImputer. If `mi`
                 passed explicitly, this `mi` will be used for MultipleImptuer.
                 Can use `mi_kwgs` instead, although `mi` is cleaner/preferred.
             model_lib (str): library the regressor will use to implement
                 regression. Options are sklearn and statsmodels.
                 Default is statsmodels.
-            mi_kwgs (dict): keyword args to instantiate MultipleImputer.
-                If valid MultipleImputer passed to `mi`, model_kwgs ignored.
+            mi_kwgs (dict): keyword args to instantiate MiceImputer.
+                If valid MiceImputer passed to `mi`, model_kwgs ignored.
                 If `mi_kwgs` is None and `mi` is None, MiBaseRegressor creates
-                default instance of MultipleImputer.
+                default instance of MiceImputer.
             model_kwgs (dict): keyword args to instantiate regressor. Arg is
                 passed along to either sklearn or statsmodels regressor. If
                 `model_kwgs` is None, default instance of regressor created.
@@ -70,7 +70,7 @@ class MiBaseRegressor:
         """Validate the mi_kwgs and set default properties.
 
         The MiBaseRegressor validates mi_kwgs argument. mi_kwgs contain
-        optional keyword arguments to create a MultipleImputer. The argument
+        optional keyword arguments to create a MiceImputer. The argument
         is optional, and its default is None.
 
         Args:
@@ -80,7 +80,7 @@ class MiBaseRegressor:
             ValueError: mi_kwgs not correctly specified as argument.
         """
         if not isinstance(kwgs, (type(None), dict)):
-            err = "mi_kwgs must be None or dict of args for MultipleImputer."
+            err = "mi_kwgs must be None or dict of args for MiceImputer."
             raise ValueError(err)
         self._mi_kwgs = kwgs
 
@@ -94,31 +94,31 @@ class MiBaseRegressor:
         """Validate mi and set default properties.
 
         The MiBaseRegressor validates the mi argument. mi must be a valid
-        instance of a MultipleImputer. It can also be None. If None, the
-        MiBaseRegressor will create a MultipleImputer on its own, either by
+        instance of a MiceImputer. It can also be None. If None, the
+        MiBaseRegressor will create a MiceImputer on its own, either by
         default or with any key values passed to the mi_kwgs args dict.
 
         Args:
-            m (MultipleImputer, None): Instance of a MultipleImputer.
+            m (MiceImputer, None): Instance of a MiceImputer.
 
         Raises:
-            ValueError: mi is not an instance of a MultipleImputer.
+            ValueError: mi is not an instance of a MiceImputer.
         """
 
-        # check if m is None or a MultipleImputer
-        if not isinstance(m, (type(None), MultipleImputer)):
-            err = f"{m} must be None or a valid instance of MultipleImputer."
+        # check if m is None or a MiceImputer
+        if not isinstance(m, (type(None), MiceImputer)):
+            err = f"{m} must be None or a valid instance of MiceImputer."
             raise ValueError(err)
 
-        # handle each case if None or MultipleImputer
+        # handle each case if None or MiceImputer
         if m is not None:
             self._mi = m
         else:
             # handle whether or not mi_kwgs should be passed
             if self.mi_kwgs:
-                self._mi = MultipleImputer(**self.mi_kwgs)
+                self._mi = MiceImputer(**self.mi_kwgs)
             else:
-                self.mi = MultipleImputer()
+                self.mi = MiceImputer()
 
     @property
     def model_kwgs(self):

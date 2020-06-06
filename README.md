@@ -75,17 +75,26 @@ Therefore, this package aids the Python user by providing more clarity to the im
 ## Example Usage
 Autoimpute is designed to be user friendly and flexible. When performing imputation, Autoimpute fits directly into `scikit-learn` machine learning projects. Imputers inherit from sklearn's `BaseEstimator` and `TransformerMixin` and implement `fit` and `transform` methods, making them valid Transformers in an sklearn pipeline.
 
-Right now, there are two `Imputer` classes we'll work with:
+Right now, there are three `Imputer` classes we'll work with:
 ```python
-from autoimpute.imputations import SingleImputer, MultipleImputer
-si = SingleImputer() # imputation methods, passing through the data once
-mi = MultipleImputer() # imputation methods, passing through the data multiple times
+from autoimpute.imputations import SingleImputer, MultipleImputer, MiceImputer
+si = SingleImputer() # pass through data once
+mi = MultipleImputer() # pass through data multiple times
+mice = MiceImputer() # pass through data multiple times and iteratively optimize imputations in each column
 ```
+
+#### Which to use, and When?
+* There are tradeoffs between the three imputers 
+* We won't get into the specifics regarding why, but here are a couple points to keep in mind:  
+* Execution time (best to worst): `SingleImputer`, `MultipleImputer`, `MiceImputer`  
+* Imputation quality (best to worst): `MiceImputer`, `MultipleImputer`, `SingleImputer`  
+* This shouldn't come as a surprise. The `MiceImputer` does the most work, while the `SingleImputer` does the least  
+* The example below use the `MiceImputer`, but you can swap in the `MultipleImputer` or `SingleImputer` as well  
 
 Imputations can be as simple as:
 ```python
-# simple example using default instance of MultipleImputer
-imp = MultipleImputer()
+# simple example using default instance of MiceImputer
+imp = MiceImputer()
 
 # fit transform returns a generator by default, calculating each imputation method lazily
 imp.fit_transform(data)
@@ -93,10 +102,10 @@ imp.fit_transform(data)
 
 Or quite complex, such as:
 ```python
-# create a complex instance of the MultipleImputer
+# create a complex instance of the MiceImputer
 # Here, we specify strategies by column and predictors for each column
 # We also specify what additional arguments any `pmm` strategies should take
-imp = MultipleImputer(
+imp = MiceImputer(
     n=10,
     strategy={"salary": "pmm", "gender": "bayesian binary logistic", "age": "norm"},
     predictors={"salary": "all", "gender": ["salary", "education", "weight"]},
@@ -110,13 +119,13 @@ imp = MultipleImputer(
 imp.fit_transform(data)
 ```
 
-Autoimpute also extends supervised machine learning methods from `scikit-learn` and `statsmodels` to apply them to multiply imputed datasets (using the `MultipleImputer` under the hood). Right now, Autoimpute supports linear regression and binary logistic regression. Additional supervised methods are currently under development.
+Autoimpute also extends supervised machine learning methods from `scikit-learn` and `statsmodels` to apply them to multiply imputed datasets (using the `MiceImputer` under the hood). Right now, Autoimpute supports linear regression and binary logistic regression. Additional supervised methods are currently under development.
 
 As with Imputers, Autoimpute's analysis methods can be simple or complex:
 ```python
 from autoimpute.analysis import MiLinearRegression
 
-# By default, use statsmodels OLS and MultipleImputer()
+# By default, use statsmodels OLS and MiceImputer()
 simple_lm = MiLinearRegression()
 
 # fit the model on each multiply imputed dataset and pool parameters
@@ -129,8 +138,8 @@ simple_lm.summary()
 # make predictions on a new dataset using pooled parameters
 predictions = simple_lm.predict(X_test)
 
-# Control both the regression used and the MultipleImputer itself
-multiple_imputer_arguments = dict(
+# Control both the regression used and the MiceImputer itself
+mice_imputer_arguments = dict(
     n=3,
     strategy={"salary": "pmm", "gender": "bayesian binary logistic", "age": "norm"},
     predictors={"salary": "all", "gender": ["salary", "education", "weight"]},
@@ -139,7 +148,7 @@ multiple_imputer_arguments = dict(
 )
 complex_lm = MiLinearRegression(
     model_lib="sklearn", # use sklearn linear regression
-    mi_kwgs=multiple_imputer_arguments # control the multiple imputer
+    mi_kwgs=mice_imputer_arguments # control the multiple imputer
 )
 
 # fit the model on each multiply imputed dataset
@@ -153,14 +162,14 @@ complex_lm.summary()
 predictions = complex_lm.predict(X_test)
 ```
 
-Note that we can also pass a pre-specified `MultipleImputer` to either analysis model instead of using `mi_kwgs`. The option is ours, and it's a matter of preference. If we pass a pre-specified `MultipleImputer`, anything in `mi_kwgs` is ignored, although the `mi_kwgs` argument is still validated.
+Note that we can also pass a pre-specified `MiceImputer` (or `MultipleIputer`) to either analysis model instead of using `mi_kwgs`. The option is ours, and it's a matter of preference. If we pass a pre-specified `MiceImputer`, anything in `mi_kwgs` is ignored, although the `mi_kwgs` argument is still validated.
 
 ```python
-from autoimpute.imputations import MultipleImputer
+from autoimpute.imputations import MiceImputer
 from autoimpute.analysis import MiLinearRegression
 
 # create a multiple imputer first
-custom_imputer = MultipleImputer(n=3, strategy="pmm", return_list=True)
+custom_imputer = MiceImputer(n=3, strategy="pmm", return_list=True)
 
 # pass the imputer to a linear regression model
 complex_lm = MiLinearRegression(mi=custom_imputer, model_lib="statsmodels")

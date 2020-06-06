@@ -39,13 +39,13 @@ class MiLogisticRegression(MiBaseRegressor, BaseEstimator):
         """Create an instance of the Autoimpute MiLogisticRegression class.
 
         Args:
-            mi (MultipleImputer, Optional): An instance of a MultipleImputer.
+            mi (MiceImputer, Optional): An instance of a MiceImputer.
                 Default is None. Can create one through `mi_kwgs` instead.
             model_lib (str, Optional): library the regressor will use to
                 implement regression. Options are sklearn and statsmodels.
                 Default is statsmodels.
             mi_kwgs (dict, Optional): keyword args to instantiate
-                MultipleImputer. Default is None. If valid MultipleImputer
+                MiceImputer. Default is None. If valid MiceImputer
                 passed as `mi` argument, then `mi_kwgs` ignored.
             model_kwgs (dict, Optional): keyword args to instantiate
                 regressor. Default is None.
@@ -66,7 +66,7 @@ class MiLogisticRegression(MiBaseRegressor, BaseEstimator):
         """Fit model specified to multiply imputed dataset.
 
         Fit a logistic regression on multiply imputed datasets. The method
-        creates multiply imputed data using the MultipleImputer instantiated
+        creates multiply imputed data using the MiceImputer instantiated
         when creating an instance of the class. It then runs a logistic model
         on m datasets. The logistic model comes from sklearn or statsmodels.
         Finally, the fit method calculates pooled parameters from m logistic
