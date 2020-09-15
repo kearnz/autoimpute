@@ -134,7 +134,7 @@ class MissingnessClassifier(BaseEstimator, ClassifierMixin):
         # iterate missingness fit using classifier and all remaining columns
         for column in self.data_mi:
             # only fit non time-based columns...
-            if not np.issubdtype(column, np.datetime64):
+            if not np.issubdtype(self.data_mi[column].dtype, np.datetime64):
                 y = self.data_mi[column]
                 preds = self._preds[column]
                 if preds == "all":
@@ -168,7 +168,7 @@ class MissingnessClassifier(BaseEstimator, ClassifierMixin):
         self._predictor_strategy_validator(X)
         preds_mat = []
         for column in self.data_mi:
-            if not np.issubdtype(column, np.datetime64):
+            if not np.issubdtype(self.data_mi[column].dtype, np.datetime64):
                 preds = self._preds[column]
                 if preds == "all":
                     x = X.drop(column, axis=1)
@@ -208,7 +208,7 @@ class MissingnessClassifier(BaseEstimator, ClassifierMixin):
         self._predictor_strategy_validator(X)
         preds_mat = []
         for column in self.data_mi:
-            if not np.issubdtype(column, np.datetime64):
+            if not np.issubdtype(self.data_mi[column].dtype, np.datetime64):
                 preds = self._preds[column]
                 if preds == "all":
                     x = X.drop(column, axis=1)
