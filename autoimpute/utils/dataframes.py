@@ -22,6 +22,14 @@ df_num["C"] = np.random.choice(np.arange(1, 100), 1000)
 df_num["A"] = df_num["A"].apply(eq_miss)
 df_num["B"] = df_num["B"].apply(val_miss)
 
+# Numerical DataFrame with column names for missingness classifier
+df_mis_classifier = pd.DataFrame()
+df_mis_classifier["a"] = np.random.choice(np.arange(90, 100), 1000)
+df_mis_classifier["k"] = np.random.choice(np.arange(50, 100), 1000)
+df_mis_classifier["c"] = np.random.choice(np.arange(1, 100), 1000)
+df_mis_classifier["a"] = df_mis_classifier["a"].apply(eq_miss)
+df_mis_classifier["k"] = df_mis_classifier["k"].apply(val_miss)
+
 # Mixed DataFrame with different % missingness per column & some dependence
 df_mix = pd.DataFrame()
 df_mix["gender"] = np.random.choice(["Male", "Female", None], 500)
@@ -94,7 +102,7 @@ df_bayes_log.y = df_bayes_log.y.apply(trans_binary)
 
 # partial dependence test
 df_partial_dependence = pd.DataFrame(
-    {'A':np.random.uniform(0,1,100), 
+    {'A':np.random.uniform(0,1,100),
         'B':np.random.uniform(0,1,100)}
 )
 df_partial_dependence['B'][df_partial_dependence['B'] < 0.25] = np.nan
