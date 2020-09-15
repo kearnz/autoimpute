@@ -15,7 +15,7 @@
 * **[PyData LA](https://pydata.org/la2019/schedule/presentation/22/introducing-autoimpute-a-python-package-for-grappling-with-missing-data/)**: Main talk slot in December 2019. See the video [here!](https://www.youtube.com/watch?v=QZRwg1NHB_Y&t=2041s)
 
 ## Notes on Development
-* v 0.12.0 contains the new `MiceImputer`! Thanks to [@gjdv](https://github.com/gjdv) for the help on this issue!  
+* v 0.12+ contains the new `MiceImputer`! Thanks to [@gjdv](https://github.com/gjdv) for the help on this issue!  
 * Check back shortly for an updated README and website with tutorials that include the `MiceImputer`  
 * We're looking to collaborate and happy to work with those interested!
 * If you'd like to get involved, feel free to reach out! Our info is on the [Authors](https://github.com/kearnz/autoimpute/blob/master/AUTHORS.rst) page.
