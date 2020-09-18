@@ -5,7 +5,7 @@ This section documents visualization methods within ``Autoimpute``.
 
 Visualization methods support all functionality within ``Autoimpute``, from missing data exploration to imputation analysis. The documentation below breaks down each visualization method and groups them into their respsective categories. The categories represent other modules within ``Autoimpute``.
 
-NOTE: The visualization module is currently under development. While the functions outlined below are stable in ``0.11.0``, they will likely chage in ``>=0.12``.
+NOTE: The visualization module is currently under development. While the functions outlined below are stable in ``0.12.x``, they might change thereafterr.
 
 Utility
 -------

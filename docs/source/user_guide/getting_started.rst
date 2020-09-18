@@ -103,16 +103,17 @@ Right now, there are two ``Imputer`` classes we'll work with:
 
 .. code-block:: python
 
-   from autoimpute.imputations import SingleImputer, MultipleImputer
-   si = SingleImputer() # imputation methods, passing through the data once
-   mi = MultipleImputer() # imputation methods, passing through the data multiple times
+	from autoimpute.imputations import SingleImputer, MultipleImputer, MiceImputer
+	si = SingleImputer() # pass through data once
+	mi = MultipleImputer() # pass through data multiple times
+	mice = MiceImputer() # pass through data multiple times and iteratively optimize imputations in each column
 
 Imputations can be as simple as:
 
 .. code-block:: python
 
-   # simple example using default instance of MultipleImputer
-   imp = MultipleImputer()
+   # simple example using default instance of MiceImputer
+   imp = MiceImputer()
 
    # fit transform returns a generator by default, calculating each imputation method lazily
    imp.fit_transform(data)
@@ -121,10 +122,10 @@ Or quite complex, such as:
 
 .. code-block:: python
 
-   # create a complex instance of the MultipleImputer
+   # create a complex instance of the MiceImputer
    # Here, we specify strategies by column and predictors for each column
    # We also specify what additional arguments any `pmm` strategies should take
-   imp = MultipleImputer(
+   imp = MiceImputer(
        n=10,
        strategy={"salary": "pmm", "gender": "bayesian binary logistic", "age": "norm"},
        predictors={"salary": "all", "gender": ["salary", "education", "weight"]},
@@ -137,7 +138,7 @@ Or quite complex, such as:
    # This will return M*N, where M is the number of imputations and N is the size of original dataframe.
    imp.fit_transform(data)
 
-Autoimpute also extends supervised machine learning methods from ``scikit-learn`` and ``statsmodels`` to apply them to multiply imputed datasets (using the ``MultipleImputer`` under the hood). Right now, Autoimpute supports linear regression and binary logistic regression. Additional supervised methods are currently under development.
+Autoimpute also extends supervised machine learning methods from ``scikit-learn`` and ``statsmodels`` to apply them to multiply imputed datasets (using the ``MiceImputer`` under the hood). Right now, Autoimpute supports linear regression and binary logistic regression. Additional supervised methods are currently under development.
 
 As with Imputers, Autoimpute's analysis methods can be simple or complex:
 
@@ -145,7 +146,7 @@ As with Imputers, Autoimpute's analysis methods can be simple or complex:
 
    from autoimpute.analysis import MiLinearRegression
 
-   # By default, use statsmodels OLS and MultipleImputer()
+   # By default, use statsmodels OLS and MiceImputer()
    simple_lm = MiLinearRegression()
 
    # fit the model on each multiply imputed dataset and pool parameters
@@ -158,7 +159,7 @@ As with Imputers, Autoimpute's analysis methods can be simple or complex:
    # make predictions on a new dataset using pooled parameters
    predictions = simple_lm.predict(X_test)
 
-   # Control both the regression used and the MultipleImputer itself
+   # Control both the regression used and the MiceImputer itself
    multiple_imputer_arguments = dict(
        n=3,
        strategy={"salary": "pmm", "gender": "bayesian binary logistic", "age": "norm"},
@@ -183,15 +184,15 @@ As with Imputers, Autoimpute's analysis methods can be simple or complex:
    # make predictions on new dataset using pooled parameters
    predictions = complex_lm.predict(X_test)
 
-Note that we can also pass a pre-specified ``MultipleImputer`` to either analysis model instead of using ``mi_kwgs``. The option is ours, and it's a matter of preference. If we pass a pre-specified ``MultipleImputer``\ , anything in ``mi_kwgs`` is ignored, although the ``mi_kwgs`` argument is still validated.
+Note that we can also pass a pre-specified ``MiceImputer`` to either analysis model instead of using ``mi_kwgs``. The option is ours, and it's a matter of preference. If we pass a pre-specified ``MiceImputer``\ , anything in ``mi_kwgs`` is ignored, although the ``mi_kwgs`` argument is still validated.
 
 .. code-block:: python
 
-   from autoimpute.imputations import MultipleImputer
+   from autoimpute.imputations import MiceImputer
    from autoimpute.analysis import MiLinearRegression
 
    # create a multiple imputer first
-   custom_imputer = MultipleImputer(n=3, strategy="pmm", return_list=True)
+   custom_imputer = MiceImputer(n=3, strategy="pmm", return_list=True)
 
    # pass the imputer to a linear regression model
    complex_lm = MiLinearRegression(mi=custom_imputer, model_lib="statsmodels")
