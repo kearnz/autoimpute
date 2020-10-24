@@ -39,40 +39,37 @@ class BaseImputer:
 
     Attributes:
         univariate_strategies (dict): univariate imputation methods.
-            Key = imputation name; Value = function to perform imputation.
-            `univariate default` mean for numerical, mode for categorical.
-            `time default` interpolate for numerical, mode for categorical.
-            `mean` imputes missing values with the average of the series.
-            `median` imputes missing values with the median of the series.
-            `mode` imputes missing values with the mode of the series.
-                Method handles more than one mode (see ModeImputer for info).
-            `random` imputes w/ random choice from set of series unique vals.
-            `norm` imputes series using random draws from normal distribution.
-                Mean and std calculated from observed values of the series.
-            `categorical` imputes series using random draws from pmf.
-                Proportions calculated from non-missing category instances.
-            `interpolate` imputes series using chosen interpolation method.
-                Default is linear. See InterpolateImputer for more info.
-            `locf` imputes series carrying last observation moving forward.
-            `nocb` imputes series carrying next observation moving backward.
+            |  Key = imputation name; Value = function to perform imputation.
+            |  `univariate default` mean for numerical, mode for categorical.
+            |  `time default` interpolate for numerical, mode for categorical.
+            |  `mean` imputes missing values with the average of the series.
+            |  `median` imputes missing values with the median of the series.
+            |  `mode` imputes missing values with the mode of the series.
+            |     Method handles more than one mode (see ModeImputer for info).
+            |  `random` imputes random choice from set of series unique vals.
+            |  `norm` imputes series w/ random draws from normal distribution.
+            |     Mean and std calculated from observed values of the series.
+            |  `categorical` imputes series using random draws from pmf.
+            |     Proportions calculated from non-missing category instances.
+            |  `interpolate` imputes series using chosen interpolation method.
+            |     Default is linear. See InterpolateImputer for more info.
+            |  `locf` imputes series carrying last observation moving forward.
+            |  `nocb` imputes series carrying next observation moving backward.
         predictive_strategies (dict): predictive imputation methods.
-            Key = imputation name; Value = function to perform imputation.
-            `predictive default` pmm for numerical, logistic for categorical.
-            `least squares` predict missing values from linear regression.
-            `binary logistic` predict missing values with 2 classes.
-            `multinomial logistic` predict missing values with multiclass.
-            `stochastic` linear regression + random draw from norm w/ mse std.
-            `bayesian least squares` draw from the posterior predictive
-                distribution for each missing value, using OLS model.
-            `bayesian binary logistic` draw from the posterior predictive
-                distribution for each missing value, using logistic model.
-            `pmm` imputes series using predictive mean matching. PMM is a
-                semi-supervised method using bayesian & hot-deck imputation.
-            `lrd` imputes series using local residual draws. LRD is a
-                semi-supervised method using bayesian & hot-deck imputation.
-        strategies (dict): univariate and predictive strategies merged.
-        visit_sequences: tuple of supported sequences for visiting columns.
-            Right now, default = left-to-right. Only sequence supported.
+            |  Key = imputation name; Value = function to perform imputation.
+            |  `predictive default` pmm for numerical,logistic for categorical.
+            |  `least squares` predict missing values from linear regression.
+            |  `binary logistic` predict missing values with 2 classes.
+            |  `multinomial logistic` predict missing values with multiclass.
+            |  `stochastic` linear regression+random draw from norm w/ mse std.
+            |  `bayesian least squares` draw from the posterior predictive
+            |     distribution for each missing value, using OLS model.
+            |  `bayesian binary logistic` draw from the posterior predictive
+            |     distribution for each missing value, using logistic model.
+            |  `pmm` imputes series using predictive mean matching. PMM is a
+            |     semi-supervised method using bayesian & hot-deck imputation.
+            |  `lrd` imputes series using local residual draws. LRD is a
+            |     semi-supervised method using bayesian & hot-deck imputation.
     """
     univariate_strategies = {
         methods.DEFAULT_UNIVAR: DefaultUnivarImputer,
