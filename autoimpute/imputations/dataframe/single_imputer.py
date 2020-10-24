@@ -26,6 +26,7 @@ from ..series import DefaultUnivarImputer
 # pylint:disable=too-many-instance-attributes
 # pylint:disable=unused-argument
 
+
 class SingleImputer(BaseImputer, BaseEstimator, TransformerMixin):
     """Techniques to impute Series with missing values one time.
 
@@ -53,6 +54,16 @@ class SingleImputer(BaseImputer, BaseEstimator, TransformerMixin):
         used to set up a SingleImputer and perform checks on arguments.
 
         Args:
+            strategy (str, iter, dict; optional): strategy for single imputer.
+                Default value is str --> `predictive default`.
+                See BaseImputer for all available strategies.
+                If str, single strategy broadcast to all series in DataFrame.
+                If iter, must provide 1 strategy per column. Each method w/in
+                iterator applies to column with same index value in DataFrame.
+                If dict, must provide key = column name, value = imputer.
+                Dict the most flexible and PREFERRED way to create custom
+                imputation strategies if not using the default. Dict does not
+                require method for every column; just those specified as keys.
             predictors (str, iter, dict, optional): defaults to `all`, i.e.
                 use all predictors. If `all`, every column will be used for
                 every class prediction. If a list, subset of columns used for

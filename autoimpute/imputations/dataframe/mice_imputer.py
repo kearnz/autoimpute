@@ -35,7 +35,8 @@ class MiceImputer(MultipleImputer):
     but the predictors are allowed to change for each imputation.
     """
 
-    def __init__(self, k=3, n=5, strategy="default predictive", predictors="all",
+    def __init__(self, k=3, n=5,
+                 strategy="default predictive", predictors="all",
                  imp_kwgs=None, seed=None, visit="default",
                  return_list=False):
         """Create an instance of the SeriesImputer class.
@@ -50,6 +51,16 @@ class MiceImputer(MultipleImputer):
                 Value must be greater than or equal to 1.
             n (int, optional): number of imputations to perform. Default is 5.
                 Value must be greater than or equal to 1.
+            strategy (str, iter, dict; optional): strategy for single imputer.
+                Default value is str --> `predictive default`.
+                See BaseImputer for all available strategies.
+                If str, single strategy broadcast to all series in DataFrame.
+                If iter, must provide 1 strategy per column. Each method w/in
+                iterator applies to column with same index value in DataFrame.
+                If dict, must provide key = column name, value = imputer.
+                Dict the most flexible and PREFERRED way to create custom
+                imputation strategies if not using the default. Dict does not
+                require method for every column; just those specified as keys.
             predictors (str, iter, dict, optional): defaults to all, i.e.
                 use all predictors. If all, every column will be used for
                 every class prediction. If a list, subset of columns used for
@@ -69,7 +80,16 @@ class MiceImputer(MultipleImputer):
                 memory efficient. return as list if return_list=True
         """
         self.k = k
-        super(MiceImputer, self).__init__(n=n, strategy=strategy, predictors=predictors, imp_kwgs = imp_kwgs, seed=seed, visit=visit, return_list=return_list)
+        MiceImputer.__init__(
+            self,
+            n=n,
+            strategy=strategy,
+            predictors=predictors,
+            imp_kwgs=imp_kwgs,
+            seed=seed,
+            visit=visit,
+            return_list=return_list
+        )
 
     @property
     def k(self):
@@ -90,7 +110,10 @@ class MiceImputer(MultipleImputer):
 
         # deal with type first
         if not isinstance(k_, int):
-            err = "k must be an integer specifying number of repeated fits and transformations in a series of imputations."
+            err = """
+                k must be an int specifying number of repeated fits
+                and transformations in a series of imputations.
+            """
             raise TypeError(err)
 
         # then check the value is greater than zero

@@ -23,6 +23,7 @@ methods = method_names
 # pylint:disable=too-many-instance-attributes
 # pylint:disable=arguments-differ
 
+
 class MultipleImputer(BaseImputer, BaseEstimator, TransformerMixin):
     """Techniques to impute Series with missing values multiple times.
 
@@ -38,8 +39,7 @@ class MultipleImputer(BaseImputer, BaseEstimator, TransformerMixin):
     """
 
     def __init__(self, n=5, strategy="default predictive", predictors="all",
-                 imp_kwgs=None, seed=None, visit="default",
-                 return_list=False):
+                 imp_kwgs=None, seed=None, visit="default", return_list=False):
         """Create an instance of the MultipleImputer class.
 
         As with sklearn classes, all arguments take default values. Therefore,
@@ -49,6 +49,16 @@ class MultipleImputer(BaseImputer, BaseEstimator, TransformerMixin):
         Args:
             n (int, optional): number of imputations to perform. Default is 5.
                 Value must be greater than or equal to 1.
+            strategy (str, iter, dict; optional): strategy for single imputer.
+                Default value is str --> `predictive default`.
+                See BaseImputer for all available strategies.
+                If str, single strategy broadcast to all series in DataFrame.
+                If iter, must provide 1 strategy per column. Each method w/in
+                iterator applies to column with same index value in DataFrame.
+                If dict, must provide key = column name, value = imputer.
+                Dict the most flexible and PREFERRED way to create custom
+                imputation strategies if not using the default. Dict does not
+                require method for every column; just those specified as keys.
             predictors (str, iter, dict, optional): defaults to all, i.e.
                 use all predictors. If all, every column will be used for
                 every class prediction. If a list, subset of columns used for
