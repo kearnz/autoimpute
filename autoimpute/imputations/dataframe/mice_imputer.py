@@ -47,7 +47,7 @@ class MiceImputer(MultipleImputer):
 
         Args:
             k (int, optional): number of repeated fits and transformations to
-                apply to reach a stable impution. Sefault is 3.
+                apply to reach a stable impution. Default is 3.
                 Value must be greater than or equal to 1.
             n (int, optional): number of imputations to perform. Default is 5.
                 Value must be greater than or equal to 1.
