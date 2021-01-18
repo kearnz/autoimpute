@@ -218,6 +218,7 @@ class SingleImputer(BaseImputer, BaseEstimator, TransformerMixin):
             imp_ixs (dict): Dictionary of lists of indices that indicate which
                 data elements to impute per column or None to identify from
                 missing elements per column
+            **trans_kwargs: dict, optional args for bayesian.
 
         Returns:
             X (pd.DataFrame): imputed in place or copy of original.
@@ -304,6 +305,7 @@ class SingleImputer(BaseImputer, BaseEstimator, TransformerMixin):
             X (pd.DataFrame): DataFrame used for fit and transform steps.
             y (pd.DataFrame, pd.Series, Optional): response. Default is None.
                 Set internally by `fit` method.
+            **trans_kwargs: dict, optional args for bayesian.
 
         Returns:
             X (pd.DataFrame): imputed in place or copy of original.

@@ -211,6 +211,7 @@ class MultipleImputer(BaseImputer, BaseEstimator, TransformerMixin):
 
         Args:
             X (pd.DataFrame): fit DataFrame to impute.
+            **trans_kwargs: dict, optional args for bayesian.
 
         Returns:
             X (pd.DataFrame): imputed in place or copy of original.
