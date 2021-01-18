@@ -201,7 +201,7 @@ class MultipleImputer(BaseImputer, BaseEstimator, TransformerMixin):
         return self
 
     @check_nan_columns
-    def transform(self, X):
+    def transform(self, X, **trans_kwargs):
         """Impute each column within a DataFrame using fit imputation methods.
 
         The transform step performs the actual imputations. Given a dataset
@@ -230,12 +230,12 @@ class MultipleImputer(BaseImputer, BaseEstimator, TransformerMixin):
 
         # right now, return a generator by default
         # sequential only for now
-        imputed = ((i[0], i[1].transform(X))
+        imputed = ((i[0], i[1].transform(X, **trans_kwargs))
                    for i in self.statistics_.items())
         if self.return_list:
             imputed = list(imputed)
         return imputed
 
-    def fit_transform(self, X, y=None):
+    def fit_transform(self, X, y=None, **trans_kwargs):
         """Convenience method to fit then transform the same dataset."""
-        return self.fit(X, y).transform(X)
+        return self.fit(X, y).transform(X, **trans_kwargs)

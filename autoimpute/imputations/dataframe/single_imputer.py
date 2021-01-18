@@ -205,7 +205,7 @@ class SingleImputer(BaseImputer, BaseEstimator, TransformerMixin):
         return self
 
     @check_nan_columns
-    def transform(self, X, imp_ixs=None):
+    def transform(self, X, imp_ixs=None, **trans_kwargs):
         """Impute each column within a DataFrame using fit imputation methods.
 
         The transform step performs the actual imputations. Given a dataset
@@ -284,10 +284,20 @@ class SingleImputer(BaseImputer, BaseEstimator, TransformerMixin):
                 x_ = _one_hot_encode(x_)
 
             # perform imputation given the specified imputer and value for x_
-            X.loc[imp_ix, column] = imputer.impute(x_)
+            # this fix below checks for strategies that need k if Mice used
+            # right now, that's  just bayesian strategies
+            # k defaults to None, which works for non Mice related imputation
+            if imputer.strategy in (
+                "bayesian binary logistic",
+                "bayesian least squares"
+            ):
+                k = trans_kwargs.get("k")
+                X.loc[imp_ix, column] = imputer.impute(x_, k=k)
+            else:
+                X.loc[imp_ix, column] = imputer.impute(x_)
         return X
 
-    def fit_transform(self, X, y=None):
+    def fit_transform(self, X, y=None, **trans_kwargs):
         """Convenience method to fit then transform the same dataset.
 
         Args:
@@ -298,4 +308,4 @@ class SingleImputer(BaseImputer, BaseEstimator, TransformerMixin):
         Returns:
             X (pd.DataFrame): imputed in place or copy of original.
         """
-        return self.fit(X, y).transform(X)
+        return self.fit(X, y).transform(X, **trans_kwargs)

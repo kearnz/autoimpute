@@ -55,6 +55,7 @@ class BaseImputer:
             |     Default is linear. See InterpolateImputer for more info.
             |  `locf` imputes series carrying last observation moving forward.
             |  `nocb` imputes series carrying next observation moving backward.
+            |  `normal unit variance` imputes using unit variance w/ norm.
         predictive_strategies (dict): predictive imputation methods.
             |  Key = imputation name; Value = function to perform imputation.
             |  `predictive default` pmm for numerical,logistic for categorical.

@@ -29,7 +29,7 @@ from .bayesian_regression import BayesianLeastSquaresImputer
 from .bayesian_regression import BayesianBinaryLogisticImputer
 from .pmm import PMMImputer
 from .lrd import LRDImputer
-from .norm_unit_variance_imputation import NormUnitVarianceImputer
+from .norm_unit_variance import NormUnitVarianceImputer
 
 __all__ = [
     "DefaultUnivarImputer",

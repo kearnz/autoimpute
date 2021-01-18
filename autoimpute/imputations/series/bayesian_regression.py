@@ -108,7 +108,7 @@ class BayesianLeastSquaresImputer(ISeriesImputer):
         self.statistics_ = {"param": fit_model, "strategy": self.strategy}
         return self
 
-    def impute(self, X):
+    def impute(self, X, k=None):
         """Generate imputations using predictions from the fit bayesian model.
 
         The transform method returns the values for imputation. Missing values
@@ -117,7 +117,7 @@ class BayesianLeastSquaresImputer(ISeriesImputer):
 
         Args:
             X (pd.DataFrame): predictors to determine imputed values.
-
+            k (integer): optional, pass if and only if receiving from MICE
         Returns:
             np.array: imputed dataset.
         """
@@ -128,9 +128,12 @@ class BayesianLeastSquaresImputer(ISeriesImputer):
         # add a Deterministic node for each missing value
         # sampling then pulls from the posterior predictive distribution
         # each missing data point. I.e. distribution for EACH missing
+        base_name = "mu_pred"
+        if k is not None:
+            base_name = f"{base_name}_{k}"
         with model:
             mu_pred = pm.Deterministic(
-                "mu_pred", model["alpha"]+model["beta"].dot(X.T)
+                base_name, model["alpha"]+model["beta"].dot(X.T)
             )
             tr = pm.sample(
                 self.sample,
@@ -143,9 +146,9 @@ class BayesianLeastSquaresImputer(ISeriesImputer):
         # decide how to impute. Use mean of posterior predictive or random draw
         # not supported yet, but eventually consider using the MAP
         if not self.fill_value or self.fill_value == "mean":
-            imp = tr["mu_pred"].mean(0)
+            imp = tr[base_name].mean(0)
         elif self.fill_value == "random":
-            imp = np.apply_along_axis(np.random.choice, 0, tr["mu_pred"])
+            imp = np.apply_along_axis(np.random.choice, 0, tr[base_name])
         else:
             err = f"{self.fill_value} must be 'mean' or 'random'."
             raise ValueError(err)
@@ -164,6 +167,7 @@ class BayesianLeastSquaresImputer(ISeriesImputer):
         # transform occurs with records from X where y is missing
         miss_y_ix = y[y.isnull()].index
         return self.fit(X, y).impute(X.loc[miss_y_ix])
+
 
 class BayesianBinaryLogisticImputer(ISeriesImputer):
     """Impute missing values using bayesian binary losgistic regression.
@@ -259,7 +263,7 @@ class BayesianBinaryLogisticImputer(ISeriesImputer):
         self.statistics_ = {"param": params, "strategy": self.strategy}
         return self
 
-    def impute(self, X):
+    def impute(self, X, k=None):
         """Generate imputations using predictions from the fit bayesian model.
 
         The impute method returns the values for imputation. Missing values
@@ -268,7 +272,7 @@ class BayesianBinaryLogisticImputer(ISeriesImputer):
 
         Args:
             X (pd.DataFrame): predictors to determine imputed values.
-
+            k (integer): optional, pass if and only if receiving from MICE
         Returns:
             np.array: imputated dataset.
         """
@@ -280,9 +284,12 @@ class BayesianBinaryLogisticImputer(ISeriesImputer):
         # add a Deterministic node for each missing value
         # sampling then pulls from the posterior predictive distribution
         # each missing data point. I.e. distribution for EACH missing
+        base_name = "p_pred"
+        if k is not None:
+            base_name = f"{base_name}_{k}"
         with model:
             p_pred = pm.Deterministic(
-                "p_pred", pm.invlogit(model["alpha"] + model["beta"].dot(X.T))
+                base_name, pm.invlogit(model["alpha"] + model["beta"].dot(X.T))
             )
             tr = pm.sample(
                 self.sample,
@@ -295,9 +302,9 @@ class BayesianBinaryLogisticImputer(ISeriesImputer):
         # decide how to impute. Use mean of posterior predictive or random draw
         # not supported yet, but eventually consider using the MAP
         if not self.fill_value or self.fill_value == "mean":
-            imp = tr["p_pred"].mean(0)
+            imp = tr[base_name].mean(0)
         elif self.fill_value == "random":
-            imp = np.apply_along_axis(np.random.choice, 0, tr["p_pred"])
+            imp = np.apply_along_axis(np.random.choice, 0, tr[base_name])
         else:
             err = f"{self.fill_value} must be 'mean' or 'random'."
             raise ValueError(err)

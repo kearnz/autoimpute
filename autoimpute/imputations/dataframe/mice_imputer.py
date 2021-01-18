@@ -80,7 +80,7 @@ class MiceImputer(MultipleImputer):
                 memory efficient. return as list if return_list=True
         """
         self.k = k
-        MiceImputer.__init__(
+        MultipleImputer.__init__(
             self,
             n=n,
             strategy=strategy,
@@ -136,7 +136,7 @@ class MiceImputer(MultipleImputer):
         X2 = imp.transform(X, imp_ixs=self.imputed_)
         for k in range(self.k - 1):
             imp.fit(X2, imp_ixs=self.imputed_)
-            X2 = imp.transform(X, imp_ixs=self.imputed_)
+            X2 = imp.transform(X, imp_ixs=self.imputed_, k=k)
         return X2
 
     @check_nan_columns
