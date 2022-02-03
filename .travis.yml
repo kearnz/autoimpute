@@ -9,7 +9,7 @@ os:
   - linux
 # f-strings (PEP 498) used extensively in autoimpute, so <3.6 not possible
 python:
-  - "3.6"
+  - "3.8"
 install:
   - pip install -r requirements.txt
 script:
