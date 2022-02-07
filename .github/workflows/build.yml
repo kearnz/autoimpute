@@ -1,0 +1,50 @@
+name: Tests for autoimpute
+on: 
+  push:
+    branches:
+      - dev
+      - master
+
+env:
+  BRANCH: ${{ github.ref_name }}
+
+jobs:
+
+  pybuild:
+    name: Python setup and Unit Tests
+    runs-on: ubuntu-latest
+    steps:
+      
+    # step 1 - echo branch
+    - name: Print vars
+      run: |
+        echo "Branches: $BRANCH"
+    
+    # step 2 - checkout repo
+    - name: Checkout
+      uses: actions/checkout@v2
+
+    # step 4 - deploy python
+    - name: Set up Python 
+      uses: actions/setup-python@v1
+      with:
+        python-version: 3.8
+
+    # step 5 - check cache & install dependencies
+    - name: Check cache
+      uses: actions/cache@v1
+      id: cache
+      with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
+          restore-keys: |
+            ${{ runner.os }}-pip-
+            
+    - name: Install dependencies
+      run: |
+        pip install -r requirements.txt
+
+    # step 6 - run unit tests
+    - name: Test with pytest
+      run: |
+        pytest -v
