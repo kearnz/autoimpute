@@ -89,14 +89,12 @@ class PMMImputer(ISeriesImputer):
         self.fill_value = kwargs.pop("fill_value", "random")
         self.neighbors = kwargs.pop("neighbors", 5)
         self.fit_intercept = kwargs.pop("fit_intercept", True)
-        self.normalize = kwargs.pop("normalize", False)
         self.copy_x = kwargs.pop("copy_x", True)
         self.n_jobs = kwargs.pop("n_jobs", None)
         self.lm = LinearRegression(
-            self.fit_intercept,
-            self.normalize,
-            self.copy_x,
-            self.n_jobs
+            fit_intercept=self.fit_intercept,
+            copy_X=self.copy_x,
+            n_jobs=self.n_jobs
         )
         self.sample_kwargs = kwargs
 
