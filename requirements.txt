@@ -4,7 +4,8 @@ pandas==1.0.0
 statsmodels==0.12.0
 xgboost==0.81
 scikit-learn==1.0.0
-pymc3==3.8
+arviz==0.11.0
+pymc3==3.10
 seaborn==0.9.0
 missingno==0.4.1
 pytest
