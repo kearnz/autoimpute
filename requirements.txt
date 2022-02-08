@@ -7,3 +7,4 @@ scikit-learn==1.0.0
 pymc3==3.8
 seaborn==0.9.0
 missingno==0.4.1
+pytest
