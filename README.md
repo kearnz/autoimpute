@@ -15,7 +15,7 @@
 * **[PyData LA](https://pydata.org/la2019/schedule/presentation/22/introducing-autoimpute-a-python-package-for-grappling-with-missing-data/)**: Main talk slot in December 2019. See the video [here!](https://www.youtube.com/watch?v=QZRwg1NHB_Y&t=2041s)
 
 ## Notes on Development
-* v 0.12.4+ has upgraded to support pymc, the next generation of the pymc3 library
+* v 0.13+ has upgraded to support pymc, the next generation of the pymc3 library
 * v 0.12+ contains the new `MiceImputer`. Thanks to [@gjdv](https://github.com/gjdv) for the help on this issue!  
 * We're looking to collaborate and happy to work with those interested!
 * If you'd like to get involved, feel free to reach out! Our info is on the [Authors](https://github.com/kearnz/autoimpute/blob/master/AUTHORS.rst) page.

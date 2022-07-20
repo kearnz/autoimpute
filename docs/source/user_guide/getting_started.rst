@@ -23,22 +23,22 @@ Versions and Dependencies
 -------------------------
 
 
-* Python 3.6+
+* Python 3.8+
 * Dependencies:
 
-  * ``numpy`` >= 1.15.4
-  * ``scipy`` >= 1.2.1
-  * ``pandas`` >= 0.20.3
-  * ``statsmodels`` >= 0.9.0
-  * ``scikit-learn`` >= 0.20.2
-  * ``xgboost`` >= 0.83
-  * ``pymc`` >= 3.5
-  * ``seaborn`` >= 0.9.0
-  * ``missingno`` >= 0.4.1
+  * ``numpy``
+  * ``scipy``
+  * ``pandas``
+  * ``statsmodels``
+  * ``scikit-learn``
+  * ``xgboost``
+  * ``pymc``
+  * ``seaborn``
+  * ``missingno``
 
 *A note for Windows Users*\ :
 
-
+* Autoimpute 0.13.0+ has not been tested on windows and can't verify support for pymc. Historically we've had some issues with pymc on windows.
 * Autoimpute works on Windows but users may have trouble with pymc for bayesian methods. `(See discourse) <https://discourse.pymc.io/t/an-error-message-about-cant-pickle-fortran-objects/1073>`_
 * Users may receive a runtime error ``‘can’t pickle fortran objects’`` when sampling using multiple chains.
 * There are a couple of things to do to try to overcome this error:

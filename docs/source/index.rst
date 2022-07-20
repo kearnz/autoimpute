@@ -5,8 +5,8 @@ Welcome to Autoimpute!
    :target: https://badge.fury.io/py/autoimpute
    :alt: PyPI version
  
-.. image:: https://travis-ci.com/kearnz/autoimpute.svg?branch=master
-   :target: https://travis-ci.com/kearnz/autoimpute
+.. image:: https://github.com/kearnz/autoimpute/actions/workflows/build.yml/badge.svg
+   :target: https://github.com/kearnz/autoimpute/actions
    :alt: Build Status
  
 .. image:: https://readthedocs.org/projects/autoimpute/badge/?version=latest
@@ -17,9 +17,9 @@ Welcome to Autoimpute!
    :target: https://lbesson.mit-license.org/
    :alt: MIT license
  
-.. image:: https://img.shields.io/badge/python-3.6+-blue.svg
-   :target: https://www.python.org/downloads/release/python-360/
-   :alt: Python 3.6+
+.. image:: https://img.shields.io/badge/python-3.8+-blue.svg
+   :target: https://www.python.org/downloads/release/python-380/
+   :alt: Python 3.8+
 
 Autoimpute_ is a Python package for analysis and implementation of Imputation Methods.
 

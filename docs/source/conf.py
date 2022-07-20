@@ -68,11 +68,11 @@ setattr(sys.modules["numpy"], "__version__", "1.15.4")
 # -- Project information -----------------------------------------------------
 
 project = "Autoimpute"
-copyright = "2019, Joseph Kearney, Shahid Barkat"
+copyright = "2022, Joseph Kearney, Shahid Barkat"
 author = "Joseph Kearney, Shahid Barkat"
 
 # The short X.Y version
-version = "0.12.1"
+version = "0.13.0"
 # The full version, including alpha/beta/rc tags
 release = ""
 
