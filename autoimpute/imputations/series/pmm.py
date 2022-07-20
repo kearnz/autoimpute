@@ -10,6 +10,7 @@ dataframe, or specify this strategy for a given column.
 
 import numpy as np
 import pymc as pm
+import arviz as az
 from pandas import DataFrame
 from scipy.stats import multivariate_normal
 from sklearn.linear_model import LinearRegression
@@ -174,9 +175,10 @@ class PMMImputer(ISeriesImputer):
         # get the mean and covariance of the multivariate betas
         # betas assumed multivariate normal by linear reg rules
         # sample beta w/ cov structure to create realistic variability
-        alpha_bayes = np.random.choice(tr.posterior.alpha)
+        extract = az.extract(tr)
+        alpha_bayes = np.random.choice(extract.alpha)
         beta_means = tr.posterior.beta.mean(0)
-        beta_cov = np.cov(tr.posterior.T)
+        beta_cov = np.cov(tr.posterior.beta.T)
         beta_bayes = np.array(multivariate_normal(beta_means, beta_cov).rvs())
 
         # predictions for missing y, using bayes alpha + coeff samples
