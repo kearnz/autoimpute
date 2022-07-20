@@ -35,11 +35,11 @@ def _local_residuals(x, n, df, choose):
     resids = neighbs + distances
     return choose(resids)
 
-def _pymc3_logger(verbose=False):
-    """Private method to handle pymc3 logging."""
+def _pymc_logger(verbose=False):
+    """Private method to handle pymc logging."""
     progress = 1
     if not verbose:
         progress = 0
-        logger = logging.getLogger('pymc3')
+        logger = logging.getLogger('pymc')
         logger.setLevel(logging.ERROR)
     return progress

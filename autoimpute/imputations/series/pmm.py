@@ -9,7 +9,7 @@ dataframe, or specify this strategy for a given column.
 """
 
 import numpy as np
-import pymc3 as pm
+import pymc as pm
 from pandas import DataFrame
 from scipy.stats import multivariate_normal
 from sklearn.linear_model import LinearRegression
@@ -31,7 +31,7 @@ class PMMImputer(ISeriesImputer):
     PMM finds the `n` closest neighbors from a least squares regression
     prediction set, and samples from the corresponding true values for y of
     each of those `n` predictions. The imputation is the resulting sample.
-    To implement bayesian least squares, the imputer utlilizes the pymc3
+    To implement bayesian least squares, the imputer utlilizes the pymc
     library. The imputer can be used directly, but such behavior is
     discouraged. PmmImputer does not have the flexibility / robustness of
     dataframe imputers, nor is its behavior identical. Preferred use is
@@ -53,7 +53,7 @@ class PMMImputer(ISeriesImputer):
             **kwargs: default keyword arguments for lm & bayesian analysis.
                 Note - kwargs popped for default arguments defined below.
                 Next set of kwargs popped and sent to linear regression.
-                Rest of kwargs passed as params to sampling (see pymc3).
+                Rest of kwargs passed as params to sampling (see pymc).
             am (float, Optional): mean of alpha prior. Default 0.
             asd (float, Optional): std. deviation of alpha prior. Default 10.
             bm (float, Optional): mean of beta priors. Default 0.
@@ -65,7 +65,7 @@ class PMMImputer(ISeriesImputer):
             tune (int, Optional): parameter for tuning. Draws done in addition
                 to sample. Default = 1000.
             init (str, Optional): MCMC algo to use for posterior sampling.
-                Default = 'auto'. See pymc3 docs for more info on choices.
+                Default = 'auto'. See pymc docs for more info on choices.
             fill_value (str, Optional): How to draw from the posterior to
                 create imputations. Default is "random". 'random' and 'mean'
                 supported for explicit options.

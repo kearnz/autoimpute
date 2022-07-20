@@ -22,7 +22,7 @@ REQUIRED = [
     "statsmodels",
     "xgboost",
     "scikit-learn",
-    "pymc3",
+    "pymc",
     "seaborn",
     "missingno"
 ]

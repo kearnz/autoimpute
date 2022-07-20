@@ -43,7 +43,7 @@ MOCK_MODULES = [
     "statsmodels.api",
     "statsmodels.discrete",
     "statsmodels.discrete.discrete_model",
-    "pymc3",
+    "pymc",
     "xgboost"
 ]
 for mod_name in MOCK_MODULES:

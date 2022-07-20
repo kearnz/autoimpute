@@ -32,19 +32,19 @@ Versions and Dependencies
   * ``statsmodels`` >= 0.9.0
   * ``scikit-learn`` >= 0.20.2
   * ``xgboost`` >= 0.83
-  * ``pymc3`` >= 3.5
+  * ``pymc`` >= 3.5
   * ``seaborn`` >= 0.9.0
   * ``missingno`` >= 0.4.1
 
 *A note for Windows Users*\ :
 
 
-* Autoimpute works on Windows but users may have trouble with pymc3 for bayesian methods. `(See discourse) <https://discourse.pymc.io/t/an-error-message-about-cant-pickle-fortran-objects/1073>`_
+* Autoimpute works on Windows but users may have trouble with pymc for bayesian methods. `(See discourse) <https://discourse.pymc.io/t/an-error-message-about-cant-pickle-fortran-objects/1073>`_
 * Users may receive a runtime error ``‘can’t pickle fortran objects’`` when sampling using multiple chains.
 * There are a couple of things to do to try to overcome this error:
 
-  * Reinstall theano and pymc3. Make sure to delete .theano cache in your home folder.
-  * Upgrade joblib in the process, which is reponsible for generating the error (pymc3 uses joblib under the hood).
+  * Reinstall theano and pymc. Make sure to delete .theano cache in your home folder.
+  * Upgrade joblib in the process, which is reponsible for generating the error (pymc uses joblib under the hood).
   * Set ``cores=1`` in ``pm.sample``. This should be a last resort, as it means posterior sampling will use 1 core only. Not using multiprocessing will slow down bayesian imputation methods significantly.
 
 * Reach out and let us know if you've worked through this issue successfully on Windows and have a better solution!

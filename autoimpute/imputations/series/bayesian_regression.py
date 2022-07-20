@@ -10,7 +10,7 @@ columns in a dataframe, or specify either strategy for a given column.
 """
 
 import numpy as np
-import pymc3 as pm
+import pymc as pm
 from pandas import Series
 from sklearn.utils.validation import check_is_fitted
 from autoimpute.imputations import method_names
@@ -32,7 +32,7 @@ class BayesianLeastSquaresImputer(ISeriesImputer):
     parameters of interest (alpha, beta, epsilon). Imputations for missing
     values are samples from posterior predictive distribution of each missing
     point. To implement bayesian least squares, the imputer utlilizes the
-    pymc3 library. The imputer can be used directly, but such behavior is
+    pymc library. The imputer can be used directly, but such behavior is
     discouraged. BayesianLeastSquaresImputer does not have the flexibility /
     robustness of dataframe imputers, nor is its behavior identical. Preferred
     use is MultipleImputer(strategy="bayesian least squares").
@@ -53,7 +53,7 @@ class BayesianLeastSquaresImputer(ISeriesImputer):
         Args:
             **kwargs: default keyword arguments used for bayesian analysis.
                 Note - kwargs popped for default arguments defined below.
-                Rest of kwargs passed as params to sampling (see pymc3).
+                Rest of kwargs passed as params to sampling (see pymc).
             am (float, Optional): mean of alpha prior. Default 0.
             asd (float, Optional): std. deviation of alpha prior. Default 10.
             bm (float, Optional): mean of beta priors. Default 0.
@@ -65,7 +65,7 @@ class BayesianLeastSquaresImputer(ISeriesImputer):
             tune (int, Optional): parameter for tuning. Draws done in addition
                 to sample. Default = 1000.
             init (str, Optional): MCMC algo to use for posterior sampling.
-                Default = 'auto'. See pymc3 docs for more info on choices.
+                Default = 'auto'. See pymc docs for more info on choices.
             fill_value (str, Optional): How to draw from the posterior to
                 create imputations. Default is None. 'random' and 'mean'
                 supported for explicit options.
@@ -177,7 +177,7 @@ class BayesianBinaryLogisticImputer(ISeriesImputer):
     parameters of interest (alpha, beta, epsilon). Imputations for missing
     values are samples from the posterior predictive distribution of each
     missing point. To implement bayesian logistic regression, the imputer uses
-    the pymc3 library. The imputer can be used directly, but such behavior is
+    the pymc library. The imputer can be used directly, but such behavior is
     discouraged. BayesianBinaryLogisticImputer does not have the flexibility /
     robustness of dataframe imputers, nor is its behavior identical.
     Preferred use is MultipleImputer(strategy="bayesian binary logistic").
@@ -191,7 +191,7 @@ class BayesianBinaryLogisticImputer(ISeriesImputer):
         The class requires multiple arguments necessary to create priors for
         a bayesian logistic regression equation. The parameters are the same
         as linear regression, but the regression equation is transformed using
-        pymc3's invlogit method. Because paramaters are treated as random
+        pymc's invlogit method. Because paramaters are treated as random
         variables, we must specify their distributions, including
         the parameters of those distributions. In the init method we also
         include arguments used to sample the posterior distributions.
@@ -199,7 +199,7 @@ class BayesianBinaryLogisticImputer(ISeriesImputer):
         Args:
             **kwargs: default keyword arguments used for bayesian analysis.
                 Note - kwargs popped for default arguments defined below.
-                Rest of kwargs passed as params to sampling (see pymc3).
+                Rest of kwargs passed as params to sampling (see pymc).
             am (float, Optional): mean of alpha prior. Default 0.
             asd (float, Optional): std. deviation of alpha prior. Default 10.
             bm (float, Optional): mean of beta priors. Default 0.
@@ -213,7 +213,7 @@ class BayesianBinaryLogisticImputer(ISeriesImputer):
             tune (int, Optional): parameter for tuning. Draws done in addition
                 to sample. Default = 1000.
             init (str, Optional): MCMC algo to use for posterior sampling.
-                Default = 'auto'. See pymc3 docs for more info on choices.
+                Default = 'auto'. See pymc docs for more info on choices.
             fill_value (str, Optional): How to draw from the posterior to
                 create imputations. Default is None. 'random' and 'mean'
                 supported for explicit options.
