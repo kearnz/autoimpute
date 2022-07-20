@@ -145,7 +145,7 @@ class BayesianLeastSquaresImputer(ISeriesImputer):
 
         # decide how to impute. Use mean of posterior predictive or random draw
         # not supported yet, but eventually consider using the MAP
-        post = tr.posterior_predictive[base_name].values
+        post = tr.posterior[base_name].values
         post = post.reshape(post[0]*post[1], post[2])
         if not self.fill_value or self.fill_value == "mean":
             imp = post.mean(0)
