@@ -176,7 +176,7 @@ class PMMImputer(ISeriesImputer):
         # sample beta w/ cov structure to create realistic variability
         post = tr.posterior
         alpha_, beta_ = post.alpha.values, post.beta.values
-        beta_ = beta.reshape(beta_.shape[0]*beta_.shape[1], beta_.shape[2])
+        beta_ = beta_.reshape(beta_.shape[0]*beta_.shape[1], beta_.shape[2])
         alpha_bayes = np.random.choice(alpha_.ravel())
         beta_means = beta_.mean(0)
         beta_cov = np.cov(beta_.values.T)
