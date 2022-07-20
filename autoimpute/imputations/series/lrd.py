@@ -175,8 +175,8 @@ class LRDImputer(ISeriesImputer):
         # betas assumed multivariate normal by linear reg rules
         # sample beta w/ cov structure to create realistic variability
         alpha_bayes = np.random.choice(tr.posterior.alpha.values.ravel())
-        beta_means = tr.posterior.beta.mean(0)
-        beta_cov = np.cov(tr.posterior.beta.T)
+        beta_means = tr.posterior.beta.values.mean(0)
+        beta_cov = np.cov(tr.posterior.beta.values.T)
         beta_bayes = np.array(multivariate_normal(beta_means, beta_cov).rvs())
 
         # predictions for missing y, using bayes alpha + coeff samples
