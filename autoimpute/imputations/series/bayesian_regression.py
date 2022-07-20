@@ -100,11 +100,11 @@ class BayesianLeastSquaresImputer(ISeriesImputer):
         # separately, also assumes each beta is normal and "independent"
         # while betas likely not independent, this is technically a rule of OLS
         with pm.Model() as fit_model:
-            alpha = pm.Normal("alpha", self.am, sd=self.asd)
-            beta = pm.Normal("beta", self.bm, sd=self.bsd, shape=nc)
+            alpha = pm.Normal("alpha", self.am, self.asd)
+            beta = pm.Normal("beta", self.bm, self.bsd, shape=nc)
             sigma = pm.HalfCauchy("σ", self.sig)
             mu = alpha+beta.dot(X.T)
-            score = pm.Normal("score", mu, sd=sigma, observed=y)
+            score = pm.Normal("score", mu, sigma, observed=y)
         self.statistics_ = {"param": fit_model, "strategy": self.strategy}
         return self
 
@@ -254,8 +254,8 @@ class BayesianBinaryLogisticImputer(ISeriesImputer):
         # separately, also assumes each beta is normal and "independent"
         # while betas likely not independent, this is technically a rule of OLS
         with pm.Model() as fit_model:
-            alpha = pm.Normal("alpha", self.am, sd=self.asd)
-            beta = pm.Normal("beta", self.bm, sd=self.bsd, shape=nc)
+            alpha = pm.Normal("alpha", self.am, self.asd)
+            beta = pm.Normal("beta", self.bm, self.bsd, shape=nc)
             p = pm.invlogit(alpha + beta.dot(X.T))
             score = pm.Bernoulli("score", p, observed=y.codes)
 
