@@ -143,9 +143,14 @@ class BayesianLeastSquaresImputer(ISeriesImputer):
             )
         self.trace_ = tr
 
+        # support for pymc - handling InferenceData obj instead of MultiTrace
+        # we have to compress chains ourselves w/ InferenceData obj (xarray)
+        post = tr.posterior[base_name].values
+        chain, draws, dim = post.shape
+        post = post.reshape(chain*draws, dim)
+
         # decide how to impute. Use mean of posterior predictive or random draw
         # not supported yet, but eventually consider using the MAP
-        post = tr.posterior[base_name].values
         if not self.fill_value or self.fill_value == "mean":
             imp = post.mean(0)
         elif self.fill_value == "random":
@@ -300,12 +305,18 @@ class BayesianBinaryLogisticImputer(ISeriesImputer):
             )
         self.trace_ = tr
 
+        # support for pymc - handling InferenceData obj instead of MultiTrace
+        # we have to compress chains ourselves w/ InferenceData obj (xarray)
+        post = tr.posterior[base_name].values
+        chain, draws, dim = post.shape
+        post = post.reshape(chain*draws, dim)
+
         # decide how to impute. Use mean of posterior predictive or random draw
         # not supported yet, but eventually consider using the MAP
         if not self.fill_value or self.fill_value == "mean":
-            imp = tr.posterior[base_name].mean(0)
+            imp = post.mean(0)
         elif self.fill_value == "random":
-            imp = np.apply_along_axis(np.random.choice, 0, tr.posterior[base_name])
+            imp = np.apply_along_axis(np.random.choice, 0, post)
         else:
             err = f"{self.fill_value} must be 'mean' or 'random'."
             raise ValueError(err)

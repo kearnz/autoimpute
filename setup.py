@@ -11,7 +11,7 @@ DESCRIPTION = "Imputation Methods in Python"
 URL = "https://github.com/kearnz/autoimpute"
 EMAIL = "josephkearney14@gmail.com, shahidbarkat@gmail.com"
 AUTHOR = "Joseph Kearney, Shahid Barkat"
-REQUIRES_PYTHON = ">=3.6.0"
+REQUIRES_PYTHON = ">=3.8.0"
 INLCUDE_PACKAGE_DATA = True
 LICENSE = "MIT"
 VERSION = None
@@ -33,8 +33,8 @@ CLASSIFIERS = [
     "License :: OSI Approved :: MIT License",
     "Programming Language :: Python",
     "Programming Language :: Python :: 3",
-    "Programming Language :: Python :: 3.6",
-    "Programming Language :: Python :: 3.7",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
     "Operating System :: OS Independent",
     "Topic :: Software Development",
     "Topic :: Scientific/Engineering"

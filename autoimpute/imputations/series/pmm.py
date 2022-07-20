@@ -170,16 +170,19 @@ class PMMImputer(ISeriesImputer):
             )
         self.trace_ = tr
 
+        # support for pymc - handling InferenceData obj instead of MultiTrace
+        # we have to compress chains ourselves w/ InferenceData obj (xarray)
+        post = tr.posterior
+        alpha_, beta_ = post.alpha.values, post.beta.values
+        chain, draws, beta_dim = beta_.shape
+        beta_ = beta_.reshape(chain*draws, beta_dim)
+
         # sample random alpha from alpha posterior distribution
+        alpha_bayes = np.random.choice(alpha_.ravel())
+
         # get the mean and covariance of the multivariate betas
         # betas assumed multivariate normal by linear reg rules
         # sample beta w/ cov structure to create realistic variability
-        post = tr.posterior
-        alpha_, beta_ = post.alpha.values, post.beta.values
-
-        # here we have to reshape beta to compress chains into one sample
-        beta_ = beta_.reshape(beta_.shape[0]*beta_.shape[1], beta_.shape[2])
-        alpha_bayes = np.random.choice(alpha_.ravel())
         beta_means, beta_cov = beta_.mean(0), np.cov(beta_.T)
         beta_bayes = np.array(multivariate_normal(beta_means, beta_cov).rvs())
 

@@ -1,11 +1,11 @@
 <img alt="autoimpute-logo" class="autoimpute-logo" height="250" width="500" src="https://kearnz.github.io/autoimpute-tutorials/img/home/autoimpute-logo-transparent.png">
 
 # Autoimpute
-[![PyPI version](https://badge.fury.io/py/autoimpute.svg)](https://badge.fury.io/py/autoimpute) [![Build Status](https://travis-ci.com/kearnz/autoimpute.svg?branch=master)](https://travis-ci.com/kearnz/autoimpute) [![Documentation Status](https://readthedocs.org/projects/autoimpute/badge/?version=latest)](https://autoimpute.readthedocs.io/en/latest/?badge=latest) [![MIT license](https://img.shields.io/badge/License-MIT-blue.svg)](https://lbesson.mit-license.org/) [![Python 3.6+](https://img.shields.io/badge/python-3.6+-blue.svg)](https://www.python.org/downloads/release/python-360/)
+[![PyPI version](https://badge.fury.io/py/autoimpute.svg)](https://badge.fury.io/py/autoimpute) [![Build Status](https://github.com/kearnz/autoimpute/actions/workflows/build.yml/badge.svg)](https://github.com/kearnz/autoimpute/actions) [![Documentation Status](https://readthedocs.org/projects/autoimpute/badge/?version=latest)](https://autoimpute.readthedocs.io/en/latest/?badge=latest) [![MIT license](https://img.shields.io/badge/License-MIT-blue.svg)](https://lbesson.mit-license.org/) [![Python 3.8+](https://img.shields.io/badge/python-3.8+-blue.svg)](https://www.python.org/downloads/release/python-380/)
 
 <span style="font-size:1.5em;">[`Autoimpute`](https://pypi.org/project/autoimpute/) is a Python package for analysis and implementation of <b>Imputation Methods!</b></span>
 
-<span style="font-size:1.5em;">[View our website](https://kearnz.github.io/autoimpute-tutorials/) to explore `Autoimpute` in more detail.</span>
+<span style="font-size:1.5em;">[View our website](https://kearnz.github.io/autoimpute-tutorials/) to explore `Autoimpute` in more detail. New tutorials coming soon!</span>
 
 <span style="font-size:1.5em;">[Check out our docs](https://autoimpute.readthedocs.io/en/latest/) to get the developer guide to `Autoimpute`.</span>
 
@@ -15,8 +15,8 @@
 * **[PyData LA](https://pydata.org/la2019/schedule/presentation/22/introducing-autoimpute-a-python-package-for-grappling-with-missing-data/)**: Main talk slot in December 2019. See the video [here!](https://www.youtube.com/watch?v=QZRwg1NHB_Y&t=2041s)
 
 ## Notes on Development
-* v 0.12+ contains the new `MiceImputer`! Thanks to [@gjdv](https://github.com/gjdv) for the help on this issue!  
-* Check back shortly for an updated README and website with tutorials that include the `MiceImputer`  
+* v 0.12.4+ has upgraded to support pymc, the next generation of the pymc3 library
+* v 0.12+ contains the new `MiceImputer`. Thanks to [@gjdv](https://github.com/gjdv) for the help on this issue!  
 * We're looking to collaborate and happy to work with those interested!
 * If you'd like to get involved, feel free to reach out! Our info is on the [Authors](https://github.com/kearnz/autoimpute/blob/master/AUTHORS.rst) page.
 
@@ -27,7 +27,7 @@ Arnab Bose (Advisor) - [@bosearnab](https://github.com/bosearnab)
 See the [Authors](https://github.com/kearnz/autoimpute/blob/master/AUTHORS.rst) page to get in touch!
 
 ## Installation
-* `Autoimpute` is now **registered with PyPI!** Download with `pip install autoimpute`.
+* `Autoimpute` is **registered with PyPI!** Download with `pip install autoimpute`.
 * If `pip` cached an older version, try `pip install --no-cache-dir --upgrade autoimpute`.
 * If you want to work with the development branch, use the script below:
 
@@ -182,7 +182,7 @@ complex_lm.summary()
 For a deeper understanding of how the package works and its available features, see our [tutorials website](https://kearnz.github.io/autoimpute-tutorials/).
 
 ## Versions and Dependencies
-* Python 3.6+
+* Python 3.8+
 * Dependencies:
     - `numpy`
     - `scipy`
@@ -196,6 +196,7 @@ For a deeper understanding of how the package works and its available features, 
 * See `requirements.txt` for versioning info
 
 *A note for Windows Users*:
+* Autoimpute has NOT been tested on Windows using the upgrade to pymc. Historically, autoimpute has had trouble on Windows, as demonstrated by bullets below.
 * Autoimpute works on Windows but users may have trouble with pymc for bayesian methods. [(See discourse)](https://discourse.pymc.io/t/an-error-message-about-cant-pickle-fortran-objects/1073)
 * Users may receive a runtime error `‘can’t pickle fortran objects’` when sampling using multiple chains.
 * There are a couple of things to do to try to overcome this error:
