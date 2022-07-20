@@ -179,7 +179,7 @@ class PMMImputer(ISeriesImputer):
         beta_ = beta_.reshape(beta_.shape[0]*beta_.shape[1], beta_.shape[2])
         alpha_bayes = np.random.choice(alpha_.ravel())
         beta_means = beta_.mean(0)
-        beta_cov = np.cov(beta_.values.T)
+        beta_cov = np.cov(beta_.T)
         beta_bayes = np.array(multivariate_normal(beta_means, beta_cov).rvs())
 
         # predictions for missing y, using bayes alpha + coeff samples
