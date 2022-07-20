@@ -146,9 +146,9 @@ class BayesianLeastSquaresImputer(ISeriesImputer):
         # decide how to impute. Use mean of posterior predictive or random draw
         # not supported yet, but eventually consider using the MAP
         if not self.fill_value or self.fill_value == "mean":
-            imp = tr[base_name].mean(0)
+            imp = tr.posterior[base_name].mean(0)
         elif self.fill_value == "random":
-            imp = np.apply_along_axis(np.random.choice, 0, tr[base_name])
+            imp = np.apply_along_axis(np.random.choice, 0, tr.posterior[base_name])
         else:
             err = f"{self.fill_value} must be 'mean' or 'random'."
             raise ValueError(err)
@@ -302,9 +302,9 @@ class BayesianBinaryLogisticImputer(ISeriesImputer):
         # decide how to impute. Use mean of posterior predictive or random draw
         # not supported yet, but eventually consider using the MAP
         if not self.fill_value or self.fill_value == "mean":
-            imp = tr[base_name].mean(0)
+            imp = tr.posterior[base_name].mean(0)
         elif self.fill_value == "random":
-            imp = np.apply_along_axis(np.random.choice, 0, tr[base_name])
+            imp = np.apply_along_axis(np.random.choice, 0, tr.posterior[base_name])
         else:
             err = f"{self.fill_value} must be 'mean' or 'random'."
             raise ValueError(err)
