@@ -158,6 +158,7 @@ class SingleImputer(BaseImputer, BaseEstimator, TransformerMixin):
         # note that right now, operations are COLUMN-by-COLUMN, iteratively
         if self.seed is not None:
             np.random.seed(self.seed)
+        self._used_columns = {}
         for column, method in self._strats.items():
             imp = self.strategies[method]
             imp_params = self._fit_init_params(column, method, self.imp_kwgs)
@@ -197,6 +198,7 @@ class SingleImputer(BaseImputer, BaseEstimator, TransformerMixin):
 
                 # before imputing, need to encode categoricals
                 x_ = _one_hot_encode(x_)
+                self._used_columns[column] = x_.columns
 
                 imputer.fit(x_, y_)
 
@@ -282,7 +284,7 @@ class SingleImputer(BaseImputer, BaseEstimator, TransformerMixin):
                         x_.loc[x_null, col] = d_imps
 
                 # handling encoding again for prediction of imputations
-                x_ = _one_hot_encode(x_)
+                x_ = _one_hot_encode(x_, self._used_columns[column])
 
             # perform imputation given the specified imputer and value for x_
             # this fix below checks for strategies that need k if Mice used

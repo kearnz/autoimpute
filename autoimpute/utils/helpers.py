@@ -29,9 +29,21 @@ def _nan_col_dropper(data):
         warnings.warn(wrn)
     return data, cdiff
 
-def _one_hot_encode(X):
+def _one_hot_encode(X, used_columns=None):
     """Private method to handle one hot encoding for categoricals."""
     cats = X.select_dtypes(include=(np.object,)).columns.size
     if cats > 0:
-        X = pd.get_dummies(X, drop_first=True)
+        X_temp = pd.get_dummies(X, drop_first=True)
+        if used_columns is None:
+            used_columns = X_temp.columns
+        if len(X_temp.columns) != len(used_columns):
+            one_hot = pd.get_dummies(X)
+            # if wasn't in `used_columns`, then it's the first category
+            to_drop = set(one_hot.columns).difference(used_columns)
+            one_hot.drop(to_drop, axis=1, inplace=True)
+            # if wasn't in `one_hot`, there were no instances of this category
+            to_add = set(used_columns).difference(one_hot.columns)
+            X_temp = one_hot.assign(**{col:0 for col in to_add})
+            X_temp = X_temp.reindex(columns=used_columns, copy=False)
+        X = X_temp
     return X
