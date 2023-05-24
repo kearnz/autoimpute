@@ -103,11 +103,11 @@ def check_missingness(func):
         """
         # b/c of check_data_structure, we know 1 of (d, a) is DataFrame
         if isinstance(d, pd.DataFrame):
-            n_ts = d.select_dtypes(include=(np.number, np.object))
+            n_ts = d.select_dtypes(include=(np.number, object))
             ts = d.select_dtypes(include=(np.datetime64,))
         else:
             a = args[0]
-            n_ts = a.select_dtypes(include=(np.number, np.object))
+            n_ts = a.select_dtypes(include=(np.number, object))
             ts = a.select_dtypes(include=(np.datetime64,))
 
         # check if non-time series columns are all missing, and if so, error
