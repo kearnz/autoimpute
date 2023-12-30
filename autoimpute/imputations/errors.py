@@ -25,8 +25,8 @@ def _not_num_matrix(m, mat):
 
 def _not_cat_series(m, s):
     """Private method to detect Series that are not categorical."""
-    if not is_string_dtype(s):
-        t = s.dtype
+    t = s.dtype
+    if not is_string_dtype(s) and t != "object":
         err = f"{m} not appropriate for Series {s.name} of type {t}."
         raise TypeError(err)
 
